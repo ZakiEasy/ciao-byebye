@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS orders (
 -- 4. Produits / Menu du restaurant
 CREATE TABLE IF NOT EXISTS products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
     price_cents INTEGER NOT NULL,
     category VARCHAR(100) NOT NULL, -- 'entree', 'plat', 'dessert', 'boisson'
@@ -66,3 +66,21 @@ CREATE INDEX IF NOT EXISTS idx_orders_session_id ON orders(session_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(order_status);
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
+
+-- 6. Insertion de données de démonstration (Seeding)
+-- Insertion des tables physiques
+INSERT INTO tables (number, qr_code_token, status) VALUES 
+('01', 'token_table_01', 'libre'),
+('02', 'token_table_02', 'libre'),
+('03', 'token_table_03', 'libre'),
+('04', 'token_table_04', 'libre'),
+('05', 'token_table_05', 'libre')
+ON CONFLICT (qr_code_token) DO NOTHING;
+
+-- Insertion des produits du menu
+INSERT INTO products (name, description, price_cents, category, image_url) VALUES
+('Moscow Mule Premium', 'Vodka artisanale, bière de gingembre bio, jus de citron vert frais, menthe fraîche.', 1250, 'boisson', 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=400'),
+('IPA Locale "La Barbaque"', 'Bière blonde IPA artisanale locale, notes intenses d''agrumes et amertume fraîche.', 750, 'boisson', 'https://images.unsplash.com/photo-1600718374662-0483d2b9da44?auto=format&fit=crop&q=80&w=400'),
+('Planche de Charcuteries fines', 'Sélection de charcuteries ibériques, cornichons, pain au levain et beurre demi-sel.', 1600, 'entree', 'https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&q=80&w=400'),
+('Burger Signature L''Atelier', 'Bœuf charolais, cheddar affiné de 18 mois, oignons caramélisés, sauce secrète, frites fraîches.', 1850, 'plat', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400')
+ON CONFLICT (name) DO NOTHING;
