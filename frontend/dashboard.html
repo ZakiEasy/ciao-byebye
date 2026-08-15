@@ -226,12 +226,16 @@
         <div class="logo">
             <span class="logo-accent">Ciao</span> Byebye <span style="font-size: 14px; font-weight:400; color:var(--text-muted); margin-left: 10px;">Tableau de Bord Cuisine</span>
         </div>
-        <div class="stats-container">
+        <div class="stats-container" style="display: flex; align-items: center; gap: 15px;">
             <div class="stat-badge">
                 <i class="fa-solid fa-fire-burner"></i> En Cuisine : <span id="stat-cooking">0</span>
             </div>
             <div class="stat-badge">
                 <i class="fa-solid fa-mug-hot"></i> Prêtes au Comptoir : <span id="stat-ready">0</span>
+            </div>
+            <div class="user-profile" style="display: flex; align-items: center; gap: 12px; margin-left: 5px; border-left: 1px solid var(--glass-border); padding-left: 15px;">
+                <span id="user-email" style="font-size: 13px; color: var(--text-muted);">chef@atelier-chris.fr</span>
+                <button onclick="logout()" style="background: none; border: none; color: #ef4444; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-family: var(--font-main);"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </div>
     </header>
@@ -266,6 +270,23 @@
     <!-- WebSockets & Logic -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        // SSO / Session Authentication guard
+        if (sessionStorage.getItem('ciao_byebye_auth') !== 'true') {
+            window.location.href = 'login.html';
+        }
+
+        // Show user email
+        const userEmail = sessionStorage.getItem('ciao_byebye_user') || 'chef@atelier-chris.fr';
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('user-email').innerText = userEmail;
+        });
+
+        function logout() {
+            sessionStorage.removeItem('ciao_byebye_auth');
+            sessionStorage.removeItem('ciao_byebye_user');
+            window.location.href = 'login.html';
+        }
+
         const socket = typeof io !== 'undefined' ? io() : null;
         
         let orders = [];

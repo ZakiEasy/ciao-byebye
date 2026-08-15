@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ciao Byebye - Connexion Portail Pro</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style variables -->
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        body {
+            padding-bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0a0c 0%, #121217 100%);
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 440px;
+            padding: 20px;
+        }
+
+        .login-card {
+            padding: 40px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--glass-border);
+            text-align: center;
+            box-shadow: var(--shadow-main);
+        }
+
+        .login-card h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .login-card p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        /* SSO Provider Buttons */
+        .sso-buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .sso-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sso-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .sso-btn i {
+            font-size: 16px;
+        }
+
+        .sso-btn.google i {
+            color: #ea4335;
+        }
+
+        .sso-btn.apple i {
+            color: var(--text-primary);
+        }
+
+        .sso-btn.microsoft i {
+            color: #00a4ef;
+        }
+
+        /* Separator */
+        .separator {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 12px;
+            margin: 24px 0;
+        }
+
+        .separator::before,
+        .separator::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .separator:not(:empty)::before {
+            margin-right: 12px;
+        }
+
+        .separator:not(:empty)::after {
+            margin-left: 12px;
+        }
+
+        /* Traditional form */
+        .input-group {
+            text-align: left;
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+        }
+
+        .login-submit-btn {
+            width: 100%;
+            background: var(--primary);
+            border: 1px solid var(--primary);
+            color: #000;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            font-family: var(--font-main);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .login-submit-btn:hover {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="login-card glass animate-fade-in">
+            <div class="logo" style="margin-bottom: 15px; font-size: 28px;">
+                <span class="logo-accent">Ciao</span> Byebye
+            </div>
+            <h2>Portail Pro Cuisine</h2>
+            <p>Connectez-vous pour accéder au KDS</p>
+
+            <!-- SSO Options -->
+            <div class="sso-buttons-container">
+                <button class="sso-btn google" onclick="triggerSSO('Google')">
+                    <i class="fa-brands fa-google"></i> Se connecter avec Google
+                </button>
+                <button class="sso-btn apple" onclick="triggerSSO('Apple')">
+                    <i class="fa-brands fa-apple"></i> Se connecter avec Apple
+                </button>
+                <button class="sso-btn microsoft" onclick="triggerSSO('Microsoft')">
+                    <i class="fa-brands fa-windows"></i> Se connecter avec Microsoft
+                </button>
+            </div>
+
+            <div class="separator">ou identifiants de secours</div>
+
+            <!-- Traditional login form -->
+            <form onsubmit="handleManualLogin(event)">
+                <div class="input-group">
+                    <label for="email">Adresse e-mail</label>
+                    <input type="email" id="email" required placeholder="chef@atelier-chris.fr">
+                </div>
+                <div class="input-group">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="login-submit-btn">Se connecter</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Check if already authenticated
+        if (sessionStorage.getItem('ciao_byebye_auth') === 'true') {
+            window.location.href = 'dashboard.html';
+        }
+
+        // SSO triggers (Mocking redirect behavior to simulated OAuth callbacks)
+        function triggerSSO(provider) {
+            console.log(`Initialisation de l'authentification SSO avec ${provider}...`);
+            // Simuler l'appel vers la route d'authentification SSO du serveur
+            const mockState = Math.random().toString(36).substring(7);
+            
+            // Redirection vers le callback d'authentification simulant le retour de l'OAuth Provider
+            window.location.href = `/api/auth/sso/callback?provider=${provider.toLowerCase()}&state=${mockState}`;
+        }
+
+        // Manual fallback login handling
+        function handleManualLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // Mock check (Accepting any input for demo purposes)
+            if (email && password) {
+                sessionStorage.setItem('ciao_byebye_auth', 'true');
+                sessionStorage.setItem('ciao_byebye_user', email);
+                window.location.href = 'dashboard.html';
+            }
+        }
+    </script>
+</body>
+</html>

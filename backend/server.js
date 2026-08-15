@@ -324,6 +324,26 @@ app.patch('/api/orders/:id/status', async (req, res) => {
   }
 });
 
+// 7. Endpoint SSO Callback pour le portail cuisine / pro
+app.get('/api/auth/sso/callback', (req, res) => {
+  const { provider, state } = req.query;
+  
+  if (!provider) {
+    return res.status(400).send('SSO Provider manquant');
+  }
+
+  console.log(`[SSO AUTH] Authentification réussie via ${provider} (state: ${state})`);
+
+  // Renvoyer un script pour enregistrer la session d'authentification et rediriger vers le dashboard
+  res.send(`
+    <script>
+      sessionStorage.setItem('ciao_byebye_auth', 'true');
+      sessionStorage.setItem('ciao_byebye_user', 'sso_${provider}_user@atelier-chris.fr');
+      window.location.href = '/dashboard.html';
+    </script>
+  `);
+});
+
 // Connexion WebSocket pour le suivi en temps réel
 io.on('connection', (socket) => {
   console.log('Client connecté aux mises à jour temps réel:', socket.id);
