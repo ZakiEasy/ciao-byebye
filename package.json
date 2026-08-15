@@ -1,0 +1,21 @@
+{
+  "name": "kz-menu-solution",
+  "version": "0.1.0",
+  "description": "Solution de commande et de paiement sur table pour les restaurants via QR Code.",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pg": "^8.11.5",
+    "socket.io": "^4.7.5",
+    "stripe": "^15.12.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "private": true
+}

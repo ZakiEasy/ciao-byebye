@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KZ Menu - Commande à table</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header / Navbar -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="logo">
+                <span class="logo-accent">KZ</span> Menu
+            </div>
+            <div class="table-badge">
+                <i class="fa-solid fa-chair"></i> Table <span id="table-number">05</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="app-main">
+        <!-- Welcoming & Client Identification -->
+        <section class="welcome-section glass">
+            <h2>Bienvenue chez <span class="restaurant-name">L'Atelier de Chris</span></h2>
+            <p>Passez votre commande en direct et payez en toute liberté.</p>
+            
+            <div class="client-ident-input">
+                <label for="client-name"><i class="fa-solid fa-user"></i> Votre Prénom pour la commande :</label>
+                <input type="text" id="client-name" placeholder="Ex. Thomas, Sarah..." value="Alex">
+            </div>
+        </section>
+
+        <!-- Category Selector -->
+        <nav class="category-nav">
+            <button class="category-btn active" data-category="all">Tout</button>
+            <button class="category-btn" data-category="boisson"><i class="fa-solid fa-glass-martini-alt"></i> Boissons</button>
+            <button class="category-btn" data-category="entree"><i class="fa-solid fa-utensils"></i> Entrées</button>
+            <button class="category-btn" data-category="plat"><i class="fa-solid fa-hamburger"></i> Plats</button>
+            <button class="category-btn" data-category="dessert"><i class="fa-solid fa-ice-cream"></i> Desserts</button>
+        </nav>
+
+        <!-- Menu Grid -->
+        <section class="menu-section">
+            <div class="menu-grid" id="menu-grid">
+                <!-- Mockup Items for visual wow effect (will be fetched dynamically later) -->
+                <div class="menu-item glass" data-category="boisson">
+                    <div class="item-img" style="background-image: url('https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=400');"></div>
+                    <div class="item-details">
+                        <span class="item-category">Cocktails</span>
+                        <h3>Moscow Mule Premium</h3>
+                        <p class="item-desc">Vodka artisanale, bière de gingembre bio, jus de citron vert frais, menthe fraîche.</p>
+                        <div class="item-footer">
+                            <span class="item-price">12.50 €</span>
+                            <button class="add-to-cart-btn" onclick="addToCart('Moscow Mule Premium', 12.50, 'boisson')">
+                                <i class="fa-solid fa-plus"></i> Ajouter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-item glass" data-category="boisson">
+                    <div class="item-img" style="background-image: url('https://images.unsplash.com/photo-1600718374662-0483d2b9da44?auto=format&fit=crop&q=80&w=400');"></div>
+                    <div class="item-details">
+                        <span class="item-category">Bières</span>
+                        <h3>IPA Locale "La Barbaque"</h3>
+                        <p class="item-desc">Bière blonde IPA artisanale locale, notes intenses d'agrumes et amertume fraîche.</p>
+                        <div class="item-footer">
+                            <span class="item-price">7.50 €</span>
+                            <button class="add-to-cart-btn" onclick="addToCart('IPA Locale &quot;La Barbaque&quot;', 7.50, 'boisson')">
+                                <i class="fa-solid fa-plus"></i> Ajouter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-item glass" data-category="entree">
+                    <div class="item-img" style="background-image: url('https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&q=80&w=400');"></div>
+                    <div class="item-details">
+                        <span class="item-category">À partager</span>
+                        <h3>Planche de Charcuteries fines</h3>
+                        <p class="item-desc">Sélection de charcuteries ibériques, cornichons, pain au levain et beurre demi-sel.</p>
+                        <div class="item-footer">
+                            <span class="item-price">16.00 €</span>
+                            <button class="add-to-cart-btn" onclick="addToCart('Planche de Charcuteries fines', 16.00, 'entree')">
+                                <i class="fa-solid fa-plus"></i> Ajouter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-item glass" data-category="plat">
+                    <div class="item-img" style="background-image: url('https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400');"></div>
+                    <div class="item-details">
+                        <span class="item-category">Plats</span>
+                        <h3>Burger Signature L'Atelier</h3>
+                        <p class="item-desc">Bœuf charolais, cheddar affiné de 18 mois, oignons caramélisés, sauce secrète, frites fraîches.</p>
+                        <div class="item-footer">
+                            <span class="item-price">18.50 €</span>
+                            <button class="add-to-cart-btn" onclick="addToCart('Burger Signature L\'Atelier', 18.50, 'plat')">
+                                <i class="fa-solid fa-plus"></i> Ajouter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Floating Shopping Cart Button -->
+    <div class="cart-floating-btn" id="cart-floating-btn" onclick="toggleCart()">
+        <div class="cart-icon-wrapper">
+            <i class="fa-solid fa-shopping-bag"></i>
+            <span class="cart-badge" id="cart-badge">0</span>
+        </div>
+        <span class="cart-btn-total" id="cart-btn-total">0.00 €</span>
+    </div>
+
+    <!-- Shopping Cart Slide-over Panel -->
+    <div class="cart-panel-overlay" id="cart-panel-overlay" onclick="toggleCart()"></div>
+    <div class="cart-panel glass" id="cart-panel">
+        <div class="cart-header">
+            <h3><i class="fa-solid fa-shopping-cart"></i> Votre Panier</h3>
+            <button class="close-cart-btn" onclick="toggleCart()"><i class="fa-solid fa-times"></i></button>
+        </div>
+        
+        <div class="cart-items" id="cart-items-container">
+            <!-- Dynamically populated -->
+            <div class="empty-cart-message">Votre panier est vide.</div>
+        </div>
+
+        <div class="cart-summary">
+            <div class="summary-line">
+                <span>Sous-total</span>
+                <span id="summary-subtotal">0.00 €</span>
+            </div>
+            <div class="summary-line total">
+                <span>Total</span>
+                <span id="summary-total">0.00 €</span>
+            </div>
+            
+            <button class="pay-btn" onclick="proceedToPayment()">
+                <i class="fa-solid fa-lock"></i> Payer et Envoyer en Cuisine
+            </button>
+        </div>
+    </div>
+
+    <!-- Payment Modal Mockup -->
+    <div class="payment-modal-overlay" id="payment-modal-overlay"></div>
+    <div class="payment-modal glass" id="payment-modal">
+        <div class="payment-header">
+            <h3>Paiement Sécurisé Stripe</h3>
+            <button class="close-payment-btn" onclick="closePayment()"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="payment-body">
+            <div class="total-to-pay">Montant à régler : <span id="payment-amount">0.00 €</span></div>
+            
+            <!-- Simulated Credit Card Inputs -->
+            <div class="stripe-mock-input">
+                <label>Numéro de carte</label>
+                <div class="card-number-wrapper">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <input type="text" placeholder="4242 4242 4242 4242" value="4242 4242 4242 4242" readonly>
+                </div>
+                <div class="card-details-row">
+                    <div class="card-detail-field">
+                        <label>Expiration</label>
+                        <input type="text" placeholder="12/28" value="12/28" readonly>
+                    </div>
+                    <div class="card-detail-field">
+                        <label>CVC</label>
+                        <input type="text" placeholder="123" value="123" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Apple Pay / Google Pay Quick Buttons -->
+            <div class="quick-pay-btns">
+                <button class="apple-pay-btn"><i class="fa-brands fa-apple-pay"></i> Apple Pay</button>
+                <button class="google-pay-btn"><i class="fa-brands fa-google-pay"></i> Google Pay</button>
+            </div>
+
+            <button class="confirm-payment-btn" id="confirm-payment-btn" onclick="simulatePaymentSuccess()">
+                <i class="fa-solid fa-shield-halved"></i> Confirmer le paiement
+            </button>
+            
+            <p class="security-disclaimer"><i class="fa-solid fa-lock"></i> Paiement 100% sécurisé et direct pour L'Atelier de Chris.</p>
+        </div>
+    </div>
+
+    <!-- Success Modal Mockup -->
+    <div class="success-modal-overlay" id="success-modal-overlay"></div>
+    <div class="success-modal glass" id="success-modal">
+        <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <h2>Paiement Réussi !</h2>
+        <p>Merci <span id="success-client-name">Alex</span>, votre commande a été validée.</p>
+        <div class="success-details">
+            <p><strong>Table :</strong> <span id="success-table-num">05</span></p>
+            <p><strong>Commande :</strong> #<span id="success-order-id">M-8492</span></p>
+            <p class="pickup-notif-toast"><i class="fa-solid fa-bell"></i> Vous recevrez une alerte sur votre écran dès qu'elle sera prête au comptoir de retrait !</p>
+        </div>
+        
+        <!-- Live order status tracking -->
+        <div class="order-status-tracker">
+            <div class="status-step active">
+                <div class="step-bullet"><i class="fa-solid fa-receipt"></i></div>
+                <span>Payée</span>
+            </div>
+            <div class="status-step active">
+                <div class="step-bullet progress-pulse"><i class="fa-solid fa-fire-burner"></i></div>
+                <span>En cuisine</span>
+            </div>
+            <div class="status-step">
+                <div class="step-bullet"><i class="fa-solid fa-mug-hot"></i></div>
+                <span>Prête</span>
+            </div>
+        </div>
+
+        <button class="back-to-menu-btn" onclick="resetApp()">Retour au Menu</button>
+    </div>
+
+    <!-- App Logic Script -->
+    <script src="app.js"></script>
+</body>
+</html>
