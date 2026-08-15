@@ -1,45 +1,7 @@
-// State management & mock products data
+// State management & dynamic products data
 const cart = [];
 let currentCategory = 'all';
-
-const products = [
-  {
-    id: "p1",
-    name: "Moscow Mule Premium",
-    price: 12.50,
-    category: "boisson",
-    categoryLabel: "Cocktails",
-    description: "Vodka artisanale, bière de gingembre bio, jus de citron vert frais, menthe fraîche.",
-    image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=400"
-  },
-  {
-    id: "p2",
-    name: "IPA Locale \"La Barbaque\"",
-    price: 7.50,
-    category: "boisson",
-    categoryLabel: "Bières",
-    description: "Bière blonde IPA artisanale locale, notes intenses d'agrumes et amertume fraîche.",
-    image: "https://images.unsplash.com/photo-1600718374662-0483d2b9da44?auto=format&fit=crop&q=80&w=400"
-  },
-  {
-    id: "p3",
-    name: "Planche de Charcuteries fines",
-    price: 16.00,
-    category: "entree",
-    categoryLabel: "À partager",
-    description: "Sélection de charcuteries ibériques, cornichons, pain au levain et beurre demi-sel.",
-    image: "https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&q=80&w=400"
-  },
-  {
-    id: "p4",
-    name: "Burger Signature L'Atelier",
-    price: 18.50,
-    category: "plat",
-    categoryLabel: "Plats",
-    description: "Bœuf charolais, cheddar affiné de 18 mois, oignons caramélisés, sauce secrète, frites fraîches.",
-    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400"
-  }
-];
+let products = []; // Chargés dynamiquement depuis l'API
 
 // DOM Elements
 const menuGrid = document.getElementById('menu-grid');
@@ -65,11 +27,53 @@ const successClientName = document.getElementById('success-client-name');
 const successTableNum = document.getElementById('success-table-num');
 const successOrderId = document.getElementById('success-order-id');
 
-// Ask notification permission on startup
+// Ask notification permission and fetch menu on startup
 document.addEventListener('DOMContentLoaded', () => {
     requestNotificationPermission();
-    renderMenu();
+    loadMenu();
 });
+
+// Fetch menu dynamically from Backend database API
+async function loadMenu() {
+    try {
+        const response = await fetch('/api/menu');
+        if (!response.ok) throw new Error('Erreur de chargement du menu');
+        const data = await response.json();
+        
+        // Map database schema to frontend properties
+        products = data.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price_cents / 100, // Conversion centimes -> euros
+            category: item.category,
+            categoryLabel: getCategoryLabel(item.category),
+            description: item.description,
+            image: item.image_url || 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=400'
+        }));
+        
+        renderMenu();
+    } catch (error) {
+        console.error('Erreur chargement menu depuis l\'API:', error);
+        // Fallback locale pour prévisualisation locale pure
+        products = [
+            { id: "p1", name: "Moscow Mule Premium", price: 12.50, category: "boisson", categoryLabel: "Cocktails", description: "Vodka artisanale, bière de gingembre bio, jus de citron vert frais, menthe fraîche.", image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=400" },
+            { id: "p2", name: "IPA Locale \"La Barbaque\"", price: 7.50, category: "boisson", categoryLabel: "Bières", description: "Bière blonde IPA artisanale locale, notes intenses d'agrumes et amertume fraîche.", image: "https://images.unsplash.com/photo-1600718374662-0483d2b9da44?auto=format&fit=crop&q=80&w=400" },
+            { id: "p3", name: "Planche de Charcuteries fines", price: 16.00, category: "entree", categoryLabel: "À partager", description: "Sélection de charcuteries ibériques, cornichons, pain au levain et beurre demi-sel.", image: "https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&q=80&w=400" },
+            { id: "p4", name: "Burger Signature L'Atelier", price: 18.50, category: "plat", categoryLabel: "Plats", description: "Bœuf charolais, cheddar affiné de 18 mois, oignons caramélisés, sauce secrète, frites fraîches.", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400" }
+        ];
+        renderMenu();
+    }
+}
+
+function getCategoryLabel(category) {
+    switch (category) {
+        case 'boisson': return 'Boissons';
+        case 'entree': return 'À partager';
+        case 'plat': return 'Plats';
+        case 'dessert': return 'Desserts';
+        default: return category.charAt(0).toUpperCase() + category.slice(1);
+    }
+}
 
 function requestNotificationPermission() {
     if ('Notification' in window) {
