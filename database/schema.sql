@@ -59,6 +59,16 @@ CREATE TABLE IF NOT EXISTS order_items (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 6. Table des utilisateurs du personnel (SSO & Rôles)
+CREATE TABLE IF NOT EXISTS staff_users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    role VARCHAR(50) NOT NULL, -- 'cuisine', 'chef_de_salle', 'serveur', 'gestionnaire', 'technique', 'bar'
+    assigned_tables VARCHAR(100)[] DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+
 -- Index pour optimiser les performances des requêtes fréquentes
 CREATE INDEX IF NOT EXISTS idx_tables_qr_token ON tables(qr_code_token);
 CREATE INDEX IF NOT EXISTS idx_table_sessions_status ON table_sessions(status);
@@ -84,3 +94,14 @@ INSERT INTO products (name, description, price_cents, category, image_url) VALUE
 ('Planche de Charcuteries fines', 'Sélection de charcuteries ibériques, cornichons, pain au levain et beurre demi-sel.', 1600, 'entree', 'https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&q=80&w=400'),
 ('Burger Signature L''Atelier', 'Bœuf charolais, cheddar affiné de 18 mois, oignons caramélisés, sauce secrète, frites fraîches.', 1850, 'plat', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400')
 ON CONFLICT (name) DO NOTHING;
+
+-- Insertion du personnel par défaut pour tests
+INSERT INTO staff_users (email, role, assigned_tables) VALUES 
+('chef@atelier-chris.fr', 'cuisine', '{}'),
+('maitre@atelier-chris.fr', 'chef_de_salle', '{}'),
+('david@atelier-chris.fr', 'serveur', '{"05", "08", "12"}'),
+('sophie@atelier-chris.fr', 'serveur', '{"01", "02", "03"}'),
+('boss@atelier-chris.fr', 'gestionnaire', '{}'),
+('pickup@atelier-chris.fr', 'technique', '{}'),
+('barman@atelier-chris.fr', 'bar', '{}')
+ON CONFLICT (email) DO NOTHING;

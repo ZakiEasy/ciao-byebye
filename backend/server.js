@@ -254,34 +254,55 @@ app.post('/api/orders/mock-create', async (req, res) => {
       }
     }
     
+    const queueResult = await pool.query("SELECT COUNT(*) as count FROM orders WHERE order_status = 'en_cuisine'");
+    const queuePos = parseInt(queueResult.rows[0].count || 1);
+
     io.emit('new_order', {
       orderId,
       tableNumber,
       clientName,
       items,
+      queuePos,
       message: `Nouvelle commande de ${clientName} (Table ${tableNumber})`
     });
     
-    res.json({ success: true, orderId });
+    res.json({ success: true, orderId, queuePos });
   } catch (error) {
     console.error('Erreur mock order create:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
-// 5. Récupérer toutes les commandes actives pour la cuisine
+// 5. Récupérer toutes les commandes actives filtrées par rôle
 app.get('/api/orders', async (req, res) => {
+  const { email } = req.query;
+  let userRole = 'cuisine'; // par défaut
+  let assignedTables = [];
+
+  if (email) {
+    try {
+      const userRes = await pool.query('SELECT role, assigned_tables FROM staff_users WHERE email = $1', [email]);
+      if (userRes.rows.length > 0) {
+        userRole = userRes.rows[0].role;
+        assignedTables = userRes.rows[0].assigned_tables || [];
+      }
+    } catch (e) {
+      console.error('Erreur récupération rôle utilisateur:', e);
+    }
+  }
+
   try {
-    const result = await pool.query(`
+    let queryText = `
       SELECT o.id, o.client_name, o.order_status, o.payment_status, o.created_at, t.number as table_number,
              COALESCE(
                json_agg(
                  json_build_object(
                    'name', p.name,
                    'quantity', oi.quantity,
-                   'price', oi.unit_price_cents / 100.0
+                   'price', oi.unit_price_cents / 100.0,
+                   'category', p.category
                  )
-               ) FILTER (WHERE p.name IS NOT NULL),
+               ) FILTER (WHERE p.name IS NOT NULL ${userRole === 'bar' ? "AND p.category = 'boisson'" : ""}),
                '[]'
              ) as items
       FROM orders o
@@ -290,10 +311,28 @@ app.get('/api/orders', async (req, res) => {
       LEFT JOIN order_items oi ON o.id = oi.order_id
       LEFT JOIN products p ON oi.product_id = p.id
       WHERE o.order_status IN ('en_cuisine', 'prete')
+    `;
+
+    const queryParams = [];
+
+    if (userRole === 'serveur') {
+      queryParams.push(assignedTables);
+      queryText += ` AND t.number = ANY($${queryParams.length})`;
+    }
+
+    queryText += `
       GROUP BY o.id, t.number
-      ORDER BY o.created_at DESC
-    `);
-    res.json(result.rows);
+      ORDER BY o.created_at ASC
+    `;
+
+    const result = await pool.query(queryText, queryParams);
+    let rows = result.rows;
+
+    if (userRole === 'bar') {
+      rows = rows.filter(order => order.items && order.items.length > 0);
+    }
+
+    res.json(rows);
   } catch (error) {
     console.error('Erreur récupération commandes:', error);
     res.status(500).json({ error: 'Erreur serveur' });
@@ -324,24 +363,105 @@ app.patch('/api/orders/:id/status', async (req, res) => {
   }
 });
 
+// 6.1. Récupérer la liste du personnel (serveurs) pour affectation
+app.get('/api/staff', async (req, res) => {
+  try {
+    const result = await pool.query("SELECT email, role, assigned_tables FROM staff_users WHERE role = 'serveur' ORDER BY email");
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Erreur récupération personnel:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 6.2. Affecter des tables à un serveur
+app.post('/api/staff/assign-tables', async (req, res) => {
+  const { email, tables } = req.body;
+  if (!email || !Array.isArray(tables)) {
+    return res.status(400).json({ error: 'Paramètres invalides' });
+  }
+  try {
+    await pool.query('UPDATE staff_users SET assigned_tables = $1 WHERE email = $2', [tables, email]);
+    io.emit('tables_assigned', { email, tables });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erreur affectation tables:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 6.3. Récupérer tout le menu (pour l'activation/désactivation en cuisine)
+app.get('/api/menu/all', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, name, category, is_available FROM products ORDER BY category, name');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Erreur récupération tout le menu:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 6.4. Modifier la disponibilité d'un produit du menu
+app.patch('/api/menu/:id/availability', async (req, res) => {
+  const { id } = req.params;
+  const { is_available } = req.body;
+  try {
+    const result = await pool.query(
+      'UPDATE products SET is_available = $1 WHERE id = $2 RETURNING id, name, is_available',
+      [is_available, id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Produit non trouvé' });
+    }
+    io.emit('menu_updated');
+    res.json({ success: true, product: result.rows[0] });
+  } catch (error) {
+    console.error('Erreur mise à jour dispo produit:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // 7. Endpoint SSO Callback pour le portail cuisine / pro
-app.get('/api/auth/sso/callback', (req, res) => {
-  const { provider, state } = req.query;
+// 7. Endpoint SSO Callback pour le portail cuisine / pro
+app.get('/api/auth/sso/callback', async (req, res) => {
+  const { provider, state, email } = req.query;
   
   if (!provider) {
     return res.status(400).send('SSO Provider manquant');
   }
 
-  console.log(`[SSO AUTH] Authentification réussie via ${provider} (state: ${state})`);
+  // Choix de l'email par défaut selon le provider si non fourni
+  let loginEmail = email;
+  if (!loginEmail) {
+    if (provider === 'google') loginEmail = 'chef@atelier-chris.fr';
+    else if (provider === 'apple') loginEmail = 'maitre@atelier-chris.fr';
+    else if (provider === 'microsoft') loginEmail = 'david@atelier-chris.fr';
+    else loginEmail = 'boss@atelier-chris.fr';
+  }
 
-  // Renvoyer un script pour enregistrer la session d'authentification et rediriger vers le dashboard
-  res.send(`
-    <script>
-      sessionStorage.setItem('ciao_byebye_auth', 'true');
-      sessionStorage.setItem('ciao_byebye_user', 'sso_${provider}_user@atelier-chris.fr');
-      window.location.href = '/dashboard.html';
-    </script>
-  `);
+  console.log(`[SSO AUTH] Authentification réussie via ${provider} pour ${loginEmail} (state: ${state})`);
+
+  try {
+    const userRes = await pool.query('SELECT role, assigned_tables FROM staff_users WHERE email = $1', [loginEmail]);
+    if (userRes.rows.length === 0) {
+      return res.status(401).send(`Utilisateur non autorisé: ${loginEmail}`);
+    }
+    const staff = userRes.rows[0];
+
+    // Renvoyer un script pour enregistrer la session d'authentification et rediriger vers le dashboard
+    res.send(`
+      <script>
+        sessionStorage.setItem('ciao_byebye_auth', 'true');
+        sessionStorage.setItem('ciao_byebye_user', '${loginEmail}');
+        sessionStorage.setItem('ciao_byebye_role', '${staff.role}');
+        sessionStorage.setItem('ciao_byebye_tables', JSON.stringify(${JSON.stringify(staff.assigned_tables)}));
+        window.location.href = '/dashboard.html';
+      </script>
+    `);
+  } catch (error) {
+    console.error('Erreur SSO Callback DB:', error);
+    res.status(500).send('Erreur d\'authentification');
+  }
 });
 
 // Connexion WebSocket pour le suivi en temps réel

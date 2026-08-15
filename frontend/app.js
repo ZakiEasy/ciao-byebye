@@ -279,6 +279,12 @@ async function simulatePaymentSuccess() {
         successOrderId.innerText = data.orderId.substring(0, 8).toUpperCase();
         successOrderId.dataset.dbId = data.orderId;
 
+        // Show queue position
+        const queuePosEl = document.getElementById('success-queue-pos');
+        if (queuePosEl) {
+            queuePosEl.innerText = `#Q-${data.queuePos || 1}`;
+        }
+
         // Reset step trackers
         const steps = document.querySelectorAll('.order-status-tracker .status-step');
         steps[0].classList.add('active'); // Payé
@@ -333,3 +339,37 @@ if (socket) {
         }
     });
 }
+
+// Client SSO simulation
+function clientSSO(provider) {
+    console.log(`Client authentifié via SSO ${provider}`);
+    const mockNames = {
+        'Google': 'Thomas',
+        'Apple': 'Sarah'
+    };
+    const chosenName = mockNames[provider] || 'Alex';
+    
+    // Fill form and save session
+    clientNameInput.value = chosenName;
+    sessionStorage.setItem('ciao_byebye_client_auth', 'true');
+    sessionStorage.setItem('ciao_byebye_client_name', chosenName);
+    
+    // Close overlay
+    dismissClientAuth();
+}
+
+function dismissClientAuth() {
+    const authOverlay = document.getElementById('client-auth-overlay');
+    if (authOverlay) {
+        authOverlay.classList.remove('active');
+    }
+}
+
+// Auto-login client on page reload if previously connected
+document.addEventListener('DOMContentLoaded', () => {
+    const savedName = sessionStorage.getItem('ciao_byebye_client_name');
+    if (savedName) {
+        if (clientNameInput) clientNameInput.value = savedName;
+        dismissClientAuth();
+    }
+});

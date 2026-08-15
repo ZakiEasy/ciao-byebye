@@ -187,6 +187,20 @@
             <h2>Portail Pro Cuisine</h2>
             <p>Connectez-vous pour accéder au KDS</p>
 
+            <!-- Staff Profile Selector -->
+            <div class="input-group" style="margin-bottom: 20px;">
+                <label for="sso-profile">Profil de démonstration (SSO)</label>
+                <select id="sso-profile" style="width: 100%; padding: 12px 16px; border-radius: var(--radius-md); background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: var(--text-primary); font-family: var(--font-main); font-size: 14px; outline: none; cursor: pointer;">
+                    <option value="chef@atelier-chris.fr">👨‍🍳 Chef Cuisine (chef@atelier-chris.fr)</option>
+                    <option value="maitre@atelier-chris.fr">🤵 Chef de Salle (maitre@atelier-chris.fr)</option>
+                    <option value="david@atelier-chris.fr">🏃‍♂️ Serveur David (david@atelier-chris.fr - Tables 5, 8, 12)</option>
+                    <option value="sophie@atelier-chris.fr">🏃‍♀️ Serveuse Sophie (sophie@atelier-chris.fr - Tables 1, 2, 3)</option>
+                    <option value="boss@atelier-chris.fr">📈 Gestionnaire / Admin (boss@atelier-chris.fr)</option>
+                    <option value="pickup@atelier-chris.fr">📺 Comptoir Technique (pickup@atelier-chris.fr)</option>
+                    <option value="barman@atelier-chris.fr">🍹 Barman (barman@atelier-chris.fr - Boissons uniquement)</option>
+                </select>
+            </div>
+
             <!-- SSO Options -->
             <div class="sso-buttons-container">
                 <button class="sso-btn google" onclick="triggerSSO('Google')">
@@ -225,25 +239,22 @@
 
         // SSO triggers (Mocking redirect behavior to simulated OAuth callbacks)
         function triggerSSO(provider) {
-            console.log(`Initialisation de l'authentification SSO avec ${provider}...`);
-            // Simuler l'appel vers la route d'authentification SSO du serveur
+            const email = document.getElementById('sso-profile').value;
+            console.log(`Initialisation de l'authentification SSO avec ${provider} pour ${email}...`);
             const mockState = Math.random().toString(36).substring(7);
             
             // Redirection vers le callback d'authentification simulant le retour de l'OAuth Provider
-            window.location.href = `/api/auth/sso/callback?provider=${provider.toLowerCase()}&state=${mockState}`;
+            window.location.href = `/api/auth/sso/callback?provider=${provider.toLowerCase()}&state=${mockState}&email=${encodeURIComponent(email)}`;
         }
 
         // Manual fallback login handling
         function handleManualLogin(e) {
             e.preventDefault();
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
 
-            // Mock check (Accepting any input for demo purposes)
             if (email && password) {
-                sessionStorage.setItem('ciao_byebye_auth', 'true');
-                sessionStorage.setItem('ciao_byebye_user', email);
-                window.location.href = 'dashboard.html';
+                window.location.href = `/api/auth/sso/callback?provider=manual&email=${encodeURIComponent(email)}`;
             }
         }
     </script>

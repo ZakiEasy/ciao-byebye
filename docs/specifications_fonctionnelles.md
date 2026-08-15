@@ -82,11 +82,11 @@ Ce protocole définit les tests de recette requis pour valider le bon fonctionne
 * **Étapes de test** :
   1. Tenter d'ouvrir `dashboard.html` directement.
   2. Vérifier la redirection automatique vers `login.html`.
-  3. Sur la page `login.html`, cliquer sur le bouton « Se connecter avec Google ».
+  3. Sur la page `login.html`, sélectionner le profil « Chef Cuisine » et cliquer sur le bouton « Se connecter avec Google ».
 * **Résultat Attendu** :
   - L'accès direct à `dashboard.html` est bloqué et redirige vers `login.html`.
   - Le clic sur « Se connecter avec Google » déclenche la simulation SSO et redirige vers `dashboard.html`.
-  - Le header affiche l'adresse e-mail `sso_google_user@atelier-chris.fr`.
+  - Le header affiche l'adresse e-mail `chef@atelier-chris.fr` et active les fonctionnalités de cuisine.
   - Cliquer sur le bouton de déconnexion (icône de sortie) renvoie immédiatement vers `login.html` et invalide la session.
 
 ### TC-04 : Système de Notification Push Navigateur
@@ -99,3 +99,42 @@ Ce protocole définit les tests de recette requis pour valider le bon fonctionne
   - Sur l'écran cuisine, la commande glisse de la colonne *« En Préparation »* vers la colonne *« Prêtes / À Retirer »*.
   - Sur l'écran client, l'étape *Prête* du tracker de statut passe au vert (WebSocket `order_status_updated`).
   - Le navigateur du client affiche une notification système push : *« Ciao Byebye - Commande Prête ! [Nom], votre commande est prête au comptoir. Ciao byebye ! »*.
+
+### TC-05 : Affichage KDS Filtré par Rôle (Serveur & Bar)
+* **Objectif** : Valider que le serveur et le barman ne voient que les commandes qui les concernent.
+* **Étapes de test** :
+  1. Se connecter avec le profil `david@atelier-chris.fr` (Serveur - Tables 5, 8, 12).
+  2. Vérifier que seules les commandes des tables 5, 8 ou 12 sont affichées dans la liste.
+  3. Se déconnecter, puis se connecter avec le profil `barman@atelier-chris.fr` (Barman).
+  4. Vérifier que seules les boissons (ex: cocktails, bières) apparaissent sur les fiches de commande, et que les commandes sans boissons sont totalement masquées.
+* **Résultat Attendu** :
+  - Filtrage automatique et immédiat des fiches KDS selon le profil de l'utilisateur connecté.
+
+### TC-06 : Affectation de Tables en Temps Réel (Chef de salle)
+* **Objectif** : Permettre au chef de salle d'attribuer des tables aux serveurs en direct.
+* **Étapes de test** :
+  1. Se connecter avec le profil `maitre@atelier-chris.fr` (Chef de salle).
+  2. Sur le tableau d'affectation, attribuer la **Table 05** à **David**.
+  3. Dans un autre onglet, se connecter en tant que David et vérifier que la commande de la table 05 apparaît instantanément.
+* **Résultat Attendu** :
+  - Les changements d'affectation se synchronisent en temps réel sur tous les écrans KDS via WebSockets.
+
+### TC-07 : Gestion de la Disponibilité du Menu (Cuisine)
+* **Objectif** : Masquer un produit en rupture de stock pour empêcher les clients de le commander.
+* **Étapes de test** :
+  1. Se connecter en tant que Chef Cuisine (`chef@atelier-chris.fr`).
+  2. Cliquer sur le bouton « Gérer dispo Menu » dans le header.
+  3. Désactiver l'interrupteur à côté de *Moscow Mule Premium*.
+  4. Sur l'écran client, rafraîchir le menu et vérifier que le *Moscow Mule Premium* n'est plus proposé ou est marqué indisponible.
+* **Résultat Attendu** :
+  - Le produit indisponible disparaît du catalogue client instantanément sans redémarrer le serveur.
+
+### TC-08 : Écran Public de Retrait (Pickup public Starbucks)
+* **Objectif** : Afficher un écran géant d'information pour les clients au comptoir.
+* **Étapes de test** :
+  1. Se connecter avec le profil `pickup@atelier-chris.fr`.
+  2. Vérifier que l'affichage bascule en mode Kiosque public (aucune action possible, pas de prix affiché).
+  3. Placer une commande pour "Thomas" et la marquer comme prête en cuisine.
+* **Résultat Attendu** :
+  - Le prénom de Thomas apparaît dans la colonne *« En Préparation »* puis glisse dans la colonne *« Prêt au comptoir »* en clignotant.
+

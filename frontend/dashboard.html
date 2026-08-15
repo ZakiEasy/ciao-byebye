@@ -217,31 +217,265 @@
             padding: 40px 0;
             font-style: italic;
         }
+
+        /* Role Switcher Toolbar (Gestionnaire) */
+        .role-switcher-bar {
+            background: rgba(245, 158, 11, 0.1);
+            border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+            padding: 10px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .role-switcher-bar select {
+            background: #111827;
+            border: 1px solid var(--primary);
+            color: var(--text-primary);
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* Order Metadata (Queue & Timers) */
+        .elapsed-timer {
+            font-size: 11px;
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+        }
+
+        .queue-badge {
+            font-size: 11px;
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
+        }
+
+        /* Waiter Table Assignments Grid */
+        .assignment-view {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 40px;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .assignment-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .assignment-table th, .assignment-table td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .assignment-table th {
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        /* Kiosk Pickup Screen (Technique) */
+        .pickup-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            width: 100%;
+            height: 100%;
+            padding: 20px 0;
+        }
+
+        .pickup-column {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .pickup-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .pickup-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            align-items: center;
+        }
+
+        .pickup-name-card {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px 40px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--glass-border);
+            width: 80%;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .pickup-name-card.ready {
+            color: #10b981;
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.08);
+            animation: pulseGlow 2s infinite ease-in-out;
+        }
+
+        /* Menu Management Panel */
+        .menu-mgmt-panel {
+            background: #111827;
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        .menu-mgmt-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .menu-mgmt-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: .3s;
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #10b981;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
     </style>
 </head>
 <body>
 
+    <!-- Role Switcher for Managers -->
+    <div id="manager-switcher-container" style="display: none;">
+        <div class="role-switcher-bar">
+            <div>
+                <i class="fa-solid fa-user-shield" style="color: #f59e0b; margin-right: 6px;"></i>
+                <strong>Mode Gestionnaire Actif</strong> : Vous supervisez toutes les fonctionnalités.
+            </div>
+            <div>
+                Simuler le profil :
+                <select id="active-profile-select" onchange="changeSimulatedProfile(this.value)">
+                    <option value="boss@atelier-chris.fr">📈 Gestionnaire (Toutes les fonctions)</option>
+                    <option value="chef@atelier-chris.fr">👨‍🍳 Cuisine / Chef (chef@atelier-chris.fr)</option>
+                    <option value="maitre@atelier-chris.fr">🤵 Chef de Salle (maitre@atelier-chris.fr)</option>
+                    <option value="david@atelier-chris.fr">🏃‍♂️ Serveur David (david@ - Tables 5, 8, 12)</option>
+                    <option value="sophie@atelier-chris.fr">🏃‍♀️ Serveuse Sophie (sophie@ - Tables 1, 2, 3)</option>
+                    <option value="pickup@atelier-chris.fr">📺 Comptoir Public (pickup@ - Mode Starbucks)</option>
+                    <option value="barman@atelier-chris.fr">🍹 Barman (barman@ - Boissons)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="dashboard-header">
         <div class="logo">
-            <span class="logo-accent">Ciao</span> Byebye <span style="font-size: 14px; font-weight:400; color:var(--text-muted); margin-left: 10px;">Tableau de Bord Cuisine</span>
+            <span class="logo-accent">Ciao</span> Byebye 
+            <span id="dashboard-role-title" style="font-size: 14px; font-weight:400; color:var(--text-muted); margin-left: 10px;">Tableau de Bord</span>
         </div>
         <div class="stats-container" style="display: flex; align-items: center; gap: 15px;">
+            <div id="header-btn-container" style="margin-right: 10px;">
+                <!-- Buttons like 'Gérer le Menu' load here -->
+            </div>
             <div class="stat-badge">
                 <i class="fa-solid fa-fire-burner"></i> En Cuisine : <span id="stat-cooking">0</span>
             </div>
             <div class="stat-badge">
-                <i class="fa-solid fa-mug-hot"></i> Prêtes au Comptoir : <span id="stat-ready">0</span>
+                <i class="fa-solid fa-mug-hot"></i> Prêtes : <span id="stat-ready">0</span>
             </div>
             <div class="user-profile" style="display: flex; align-items: center; gap: 12px; margin-left: 5px; border-left: 1px solid var(--glass-border); padding-left: 15px;">
                 <span id="user-email" style="font-size: 13px; color: var(--text-muted);">chef@atelier-chris.fr</span>
-                <button onclick="logout()" style="background: none; border: none; color: #ef4444; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-family: var(--font-main);"><i class="fa-solid fa-right-from-bracket"></i></button>
+                <button onclick="logout()" title="Déconnexion" style="background: none; border: none; color: #ef4444; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-family: var(--font-main);"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </div>
     </header>
 
     <!-- Main Columns Grid -->
-    <main class="dashboard-content">
+    <main class="dashboard-content" id="dashboard-main-content">
         
         <!-- Column 1: Cooking -->
         <section class="kds-column">
@@ -275,26 +509,93 @@
             window.location.href = 'login.html';
         }
 
-        // Show user email
-        const userEmail = sessionStorage.getItem('ciao_byebye_user') || 'chef@atelier-chris.fr';
+        // Get user session data
+        const loggedUserEmail = sessionStorage.getItem('ciao_byebye_user') || 'chef@atelier-chris.fr';
+        const loggedUserRole = sessionStorage.getItem('ciao_byebye_role') || 'cuisine';
+        
+        // Active role context (can be changed on the fly by manager)
+        let activeEmail = loggedUserEmail;
+        let activeRole = loggedUserRole;
+        let showMenuManagement = false;
+
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('user-email').innerText = userEmail;
+            document.getElementById('user-email').innerText = loggedUserEmail;
+            
+            // Show Manager Switcher if role is 'gestionnaire'
+            if (loggedUserRole === 'gestionnaire') {
+                document.getElementById('manager-switcher-container').style.display = 'block';
+                document.getElementById('active-profile-select').value = activeEmail;
+            }
+            
+            updateRoleTitle();
+            fetchOrders();
+            
+            // Periodically refresh timers (every 10s)
+            setInterval(updateTimersDisplay, 10000);
         });
 
+        function changeSimulatedProfile(email) {
+            activeEmail = email;
+            // Map email to role
+            if (email === 'chef@atelier-chris.fr') activeRole = 'cuisine';
+            else if (email === 'maitre@atelier-chris.fr') activeRole = 'chef_de_salle';
+            else if (email.startsWith('david') || email.startsWith('sophie')) activeRole = 'serveur';
+            else if (email === 'pickup@atelier-chris.fr') activeRole = 'technique';
+            else if (email === 'barman@atelier-chris.fr') activeRole = 'bar';
+            else activeRole = 'gestionnaire';
+
+            showMenuManagement = false;
+            updateRoleTitle();
+            fetchOrders();
+        }
+
+        function updateRoleTitle() {
+            const roleLabels = {
+                'cuisine': 'Tableau de Bord Cuisine',
+                'chef_de_salle': 'Supervision Chef de Salle',
+                'serveur': 'KDS Serveur affecté',
+                'bar': 'KDS Boissons / Bar',
+                'technique': 'Comptoir Public Starbucks',
+                'gestionnaire': 'Administration Ciao Byebye'
+            };
+            document.getElementById('dashboard-role-title').innerText = roleLabels[activeRole] || 'Tableau de Bord';
+
+            // Show or hide 'Gérer le Menu' button in header if cuisine/gestionnaire
+            const headerBtnContainer = document.getElementById('header-btn-container');
+            if (activeRole === 'cuisine' || activeRole === 'gestionnaire') {
+                headerBtnContainer.innerHTML = `
+                    <button class="action-btn secondary" onclick="toggleMenuManagement()">
+                        <i class="fa-solid fa-utensils"></i> ${showMenuManagement ? 'Voir Commandes' : 'Gérer dispo Menu'}
+                    </button>
+                `;
+            } else {
+                headerBtnContainer.innerHTML = '';
+            }
+        }
+
+        function toggleMenuManagement() {
+            showMenuManagement = !showMenuManagement;
+            updateRoleTitle();
+            if (showMenuManagement) {
+                renderMenuManagement();
+            } else {
+                fetchOrders();
+            }
+        }
+
         function logout() {
-            sessionStorage.removeItem('ciao_byebye_auth');
-            sessionStorage.removeItem('ciao_byebye_user');
+            sessionStorage.clear();
             window.location.href = 'login.html';
         }
 
         const socket = typeof io !== 'undefined' ? io() : null;
-        
         let orders = [];
 
-        // Fetch active orders from REST API
+        // Fetch active orders from REST API (including email filters)
         async function fetchOrders() {
+            if (showMenuManagement) return;
             try {
-                const response = await fetch('/api/orders');
+                const response = await fetch(`/api/orders?email=${encodeURIComponent(activeEmail)}`);
                 if (!response.ok) throw new Error('Failed to fetch orders');
                 orders = await response.json();
                 renderDashboard();
@@ -305,6 +606,69 @@
 
         // Render Cards inside correct columns
         function renderDashboard() {
+            const mainContent = document.getElementById('dashboard-main-content');
+            
+            // 1. PUBLIC PICKUP SCREEN VIEW (Starbucks Model)
+            if (activeRole === 'technique') {
+                const cookingOrders = orders.filter(o => o.order_status === 'en_cuisine');
+                const readyOrders = orders.filter(o => o.order_status === 'prete');
+
+                mainContent.innerHTML = `
+                    <div class="pickup-container">
+                        <div class="pickup-column">
+                            <div class="pickup-title"><i class="fa-solid fa-spinner fa-spin" style="color:#ef4444;"></i> En Préparation</div>
+                            <div class="pickup-list">
+                                ${cookingOrders.length === 0 ? '<div style="color:var(--text-muted); font-style:italic;">Aucune commande</div>' : 
+                                  cookingOrders.map((o, index) => `
+                                    <div class="pickup-name-card">
+                                        ${o.client_name} <span style="font-size:16px; color:var(--text-muted); margin-left:10px;">#Q-${index+1}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="pickup-column">
+                            <div class="pickup-title" style="color:#10b981;"><i class="fa-solid fa-bell"></i> Prêt au comptoir</div>
+                            <div class="pickup-list">
+                                ${readyOrders.length === 0 ? '<div style="color:var(--text-muted); font-style:italic;">Aucune commande prête</div>' : 
+                                  readyOrders.map((o) => `
+                                    <div class="pickup-name-card ready">
+                                        🎉 ${o.client_name} <span style="font-size:16px; color:#10b981; margin-left:10px;">(Table ${o.table_number})</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // 2. CHEF DE SALLE VIEW (Room Manager - Table Assignments)
+            if (activeRole === 'chef_de_salle') {
+                renderChefDeSalleView();
+                return;
+            }
+
+            // 3. STANDARD KDS VIEW (Cuisine, Waiter, Bar, Gestionnaire)
+            mainContent.innerHTML = `
+                <!-- Column 1: Cooking -->
+                <section class="kds-column">
+                    <div class="column-header">
+                        <h2><i class="fa-solid fa-fire-burner" style="color: #ef4444;"></i> En Préparation</h2>
+                        <span class="count" id="count-cooking" style="background:#ef4444; color:#fff;">0</span>
+                    </div>
+                    <div class="cards-list" id="list-cooking"></div>
+                </section>
+
+                <!-- Column 2: Ready -->
+                <section class="kds-column">
+                    <div class="column-header">
+                        <h2><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Prêtes / À Retirer</h2>
+                        <span class="count" id="count-ready" style="background:#10b981; color:#fff;">0</span>
+                    </div>
+                    <div class="cards-list" id="list-ready"></div>
+                </section>
+            `;
+
             const cookingList = document.getElementById('list-cooking');
             const readyList = document.getElementById('list-ready');
 
@@ -321,33 +685,39 @@
             if (cookingOrders.length === 0) {
                 cookingList.innerHTML = '<div class="empty-column-msg">Aucune commande en préparation.</div>';
             } else {
-                cookingList.innerHTML = cookingOrders.map(o => `
-                    <div class="order-card glass">
-                        <div class="card-header">
-                            <div class="client-info">
-                                <h3>${o.client_name}</h3>
-                                <span>Commandé à ${new Date(o.created_at).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}</span>
-                            </div>
-                            <span class="table-num">Table ${o.table_number}</span>
-                        </div>
-                        <ul class="card-items">
-                            ${o.items.map(item => `
-                                <li>
-                                    <div class="item-qty-name">
-                                        <span class="item-qty">${item.quantity}x</span>
-                                        <span>${item.name}</span>
+                cookingList.innerHTML = cookingOrders.map((o, index) => {
+                    const elapsedMin = Math.floor((new Date() - new Date(o.created_at)) / 60000);
+                    return `
+                        <div class="order-card glass">
+                            <div class="card-header">
+                                <div class="client-info">
+                                    <h3>${o.client_name}</h3>
+                                    <div style="display:flex; gap: 6px; margin-top:4px;">
+                                        <span class="queue-badge">#Q-${index+1}</span>
+                                        <span class="elapsed-timer" data-time="${o.created_at}">⏱️ ${elapsedMin} min</span>
                                     </div>
-                                    <span>${(item.price * item.quantity).toFixed(2)} €</span>
-                                </li>
-                            `).join('')}
-                        </ul>
-                        <div class="card-actions">
-                            <button class="action-btn" onclick="updateOrderStatus('${o.id}', 'prete')">
-                                <i class="fa-solid fa-mug-hot"></i> Prête à servir !
-                            </button>
+                                </div>
+                                <span class="table-num">Table ${o.table_number}</span>
+                            </div>
+                            <ul class="card-items" style="max-height: 220px; overflow-y: auto; padding-right: 5px;">
+                                ${o.items.map(item => `
+                                    <li>
+                                        <div class="item-qty-name">
+                                            <span class="item-qty">${item.quantity}x</span>
+                                            <span>${item.name}</span>
+                                        </div>
+                                        <span>${(item.price * item.quantity).toFixed(2)} €</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                            <div class="card-actions">
+                                <button class="action-btn" onclick="updateOrderStatus('${o.id}', 'prete')">
+                                    <i class="fa-solid fa-mug-hot"></i> Prête à servir !
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
 
             // Render Ready Orders
@@ -363,7 +733,7 @@
                             </div>
                             <span class="table-num" style="background: rgba(16, 185, 129, 0.15); border-color:#10b981; color:#10b981;">Table ${o.table_number}</span>
                         </div>
-                        <ul class="card-items">
+                        <ul class="card-items" style="max-height: 220px; overflow-y: auto; padding-right: 5px;">
                             ${o.items.map(item => `
                                 <li>
                                     <div class="item-qty-name">
@@ -384,6 +754,185 @@
             }
         }
 
+        // 4. RENDERING FOR CHEF DE SALLE (ROOM MANAGER)
+        let staffList = [];
+        async function renderChefDeSalleView() {
+            const mainContent = document.getElementById('dashboard-main-content');
+            
+            // Fetch waitstaff assignments
+            try {
+                const response = await fetch('/api/staff');
+                staffList = await response.json();
+            } catch (err) {
+                console.error(err);
+            }
+
+            const tables = ['01', '02', '03', '04', '05'];
+
+            mainContent.innerHTML = `
+                <div class="assignment-view">
+                    <!-- Left column: Table assignments -->
+                    <div class="menu-mgmt-panel">
+                        <h2><i class="fa-solid fa-chair" style="color:var(--primary);"></i> Affectation des Serveurs</h2>
+                        <p style="font-size:12px; color:var(--text-muted); margin-bottom: 20px;">Attribuez chaque table physique à un serveur de l'équipe.</p>
+                        
+                        <table class="assignment-table">
+                            <thead>
+                                <tr>
+                                    <th>Table</th>
+                                    <th>Serveur Responsable</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tables.map(tableNum => {
+                                    // Find waiter assigned to this table
+                                    const assignedWaiter = staffList.find(s => s.assigned_tables && s.assigned_tables.includes(tableNum));
+                                    const assignedEmail = assignedWaiter ? assignedWaiter.email : '';
+                                    return `
+                                        <tr>
+                                            <td><strong>Table ${tableNum}</strong></td>
+                                            <td>
+                                                <select onchange="assignTableToStaff('${tableNum}', this.value)" style="width:100%; padding:8px; background:#000; border:1px solid var(--glass-border); color:#fff; border-radius:4px; outline:none; cursor:pointer;">
+                                                    <option value="">Non assignée</option>
+                                                    <option value="david@atelier-chris.fr" ${assignedEmail === 'david@atelier-chris.fr' ? 'selected' : ''}>David (david@)</option>
+                                                    <option value="sophie@atelier-chris.fr" ${assignedEmail === 'sophie@atelier-chris.fr' ? 'selected' : ''}>Sophie (sophie@)</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Right column: All active orders with assigned tags -->
+                    <div class="kds-column">
+                        <div class="column-header">
+                            <h2><i class="fa-solid fa-receipt"></i> Commandes en cours de service</h2>
+                            <span class="count" style="background:var(--primary); color:#000;">${orders.length}</span>
+                        </div>
+                        <div class="cards-list" style="overflow-y:auto; height: 100%;">
+                            ${orders.length === 0 ? '<div class="empty-column-msg">Aucune commande active</div>' : 
+                              orders.map(o => {
+                                const server = staffList.find(s => s.assigned_tables && s.assigned_tables.includes(o.table_number));
+                                const serverName = server ? (server.email.startsWith('david') ? 'David' : 'Sophie') : 'Non assigné';
+                                const serverColor = server ? (server.email.startsWith('david') ? '#3b82f6' : '#ec4899') : '#9ca3af';
+                                return `
+                                    <div class="order-card glass">
+                                        <div class="card-header">
+                                            <div class="client-info">
+                                                <h3>${o.client_name}</h3>
+                                                <span>Statut: <strong>${o.order_status === 'en_cuisine' ? 'En préparation' : 'Prête / À retirer'}</strong></span>
+                                            </div>
+                                            <div>
+                                                <span class="table-num" style="margin-right:8px;">Table ${o.table_number}</span>
+                                                <span style="font-size:11px; background:${serverColor}; color:#000; font-weight:700; padding:4px 8px; border-radius:4px;">
+                                                    👤 ${serverName}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <ul class="card-items">
+                                            ${o.items.map(item => `<li><span>${item.quantity}x ${item.name}</span></li>`).join('')}
+                                        </ul>
+                                    </div>
+                                `;
+                              }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function assignTableToStaff(tableNum, email) {
+            // First, remove table from any waiter currently holding it
+            for (const waiter of staffList) {
+                if (waiter.assigned_tables.includes(tableNum)) {
+                    waiter.assigned_tables = waiter.assigned_tables.filter(t => t !== tableNum);
+                    await saveWaiterAssignment(waiter.email, waiter.assigned_tables);
+                }
+            }
+
+            // Next, add table to newly selected waiter if specified
+            if (email) {
+                const targetWaiter = staffList.find(s => s.email === email);
+                if (targetWaiter) {
+                    targetWaiter.assigned_tables.push(tableNum);
+                    await saveWaiterAssignment(email, targetWaiter.assigned_tables);
+                }
+            }
+
+            // Refresh UI
+            fetchOrders();
+        }
+
+        async function saveWaiterAssignment(email, tables) {
+            try {
+                await fetch('/api/staff/assign-tables', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, tables })
+                });
+            } catch (err) {
+                console.error('Failed to assign table:', err);
+            }
+        }
+
+        // 5. RENDERING FOR MENU MANAGEMENT (Kitchen Toggles)
+        async function renderMenuManagement() {
+            const mainContent = document.getElementById('dashboard-main-content');
+            try {
+                const response = await fetch('/api/menu/all');
+                const menuItems = await response.json();
+
+                mainContent.innerHTML = `
+                    <div class="menu-mgmt-panel">
+                        <h2><i class="fa-solid fa-utensils" style="color:var(--primary);"></i> Disponibilité du Menu</h2>
+                        <p style="font-size:12px; color:var(--text-muted); margin-bottom: 20px;">Désactivez les produits temporairement en rupture de stock pour bloquer leur commande.</p>
+                        <div class="menu-mgmt-list">
+                            ${menuItems.map(item => `
+                                <div class="menu-mgmt-item">
+                                    <div>
+                                        <strong style="font-size:15px; color:#fff;">${item.name}</strong>
+                                        <span style="display:block; font-size:11px; color:var(--text-muted); text-transform:uppercase;">Catégorie: ${item.category}</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" ${item.is_available ? 'checked' : ''} onchange="toggleProductAvailability('${item.id}', this.checked)">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function toggleProductAvailability(productId, isAvailable) {
+            try {
+                await fetch(`/api/menu/${productId}/availability`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_available: isAvailable })
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Helper to recalculate and update visual timers on KDS cards
+        function updateTimersDisplay() {
+            const badges = document.querySelectorAll('.elapsed-timer');
+            badges.forEach(badge => {
+                const createdAt = badge.dataset.time;
+                if (createdAt) {
+                    const elapsedMin = Math.floor((new Date() - new Date(createdAt)) / 60000);
+                    badge.innerText = `⏱️ ${elapsedMin} min`;
+                }
+            });
+        }
+
         // Update Order prep status via API
         async function updateOrderStatus(orderId, status) {
             try {
@@ -394,8 +943,6 @@
                 });
 
                 if (!response.ok) throw new Error('Failed to update order status');
-                
-                // Locally update or refetch
                 fetchOrders();
             } catch (error) {
                 console.error('Error updating order status:', error);
@@ -404,7 +951,6 @@
 
         // Setup WebSockets
         if (socket) {
-            // Listen for new orders
             socket.on('new_order', () => {
                 fetchOrders();
                 // Play notification alert sound
@@ -424,14 +970,22 @@
                 }
             });
 
-            // Listen for status updates
             socket.on('order_status_updated', () => {
                 fetchOrders();
             });
-        }
 
-        // Load initially
-        fetchOrders();
+            socket.on('tables_assigned', () => {
+                if (activeRole === 'chef_de_salle' || activeRole === 'serveur') {
+                    fetchOrders();
+                }
+            });
+
+            socket.on('menu_updated', () => {
+                if (showMenuManagement) {
+                    renderMenuManagement();
+                }
+            });
+        }
     </script>
 </body>
 </html>

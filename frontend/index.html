@@ -15,6 +15,28 @@
 </head>
 <body>
 
+    <!-- Client Optional Authentication Modal (Splash) -->
+    <div class="client-auth-overlay active" id="client-auth-overlay">
+        <div class="client-auth-modal glass">
+            <div class="logo" style="font-size: 28px; margin-bottom: 15px; text-align: center;">
+                <span class="logo-accent">Ciao</span> Byebye
+            </div>
+            <h2>Bienvenue sur Ciao Byebye</h2>
+            <p>Pour lier votre commande et retrouver vos reçus, connectez-vous ou continuez en tant qu'invité.</p>
+            <div class="auth-options">
+                <button class="auth-btn sso-google" onclick="clientSSO('Google')">
+                    <i class="fa-brands fa-google"></i> Se connecter avec Google
+                </button>
+                <button class="auth-btn sso-apple" onclick="clientSSO('Apple')">
+                    <i class="fa-brands fa-apple"></i> Se connecter avec Apple
+                </button>
+                <button class="auth-btn guest-btn" onclick="dismissClientAuth()">
+                    <i class="fa-solid fa-user-clock"></i> Continuer en tant qu'invité
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Header / Navbar -->
     <header class="app-header">
         <div class="header-container">
@@ -147,6 +169,7 @@
         <div class="success-details">
             <p><strong>Table :</strong> <span id="success-table-num">05</span></p>
             <p><strong>Commande :</strong> #<span id="success-order-id">M-8492</span></p>
+            <p><strong>Position File d'Attente :</strong> <span id="success-queue-pos" style="color:var(--primary); font-weight:700;">#Q-1</span></p>
             <p class="pickup-notif-toast"><i class="fa-solid fa-bell"></i> Vous recevrez une alerte sur votre écran dès qu'elle sera prête au comptoir de retrait !</p>
         </div>
         
