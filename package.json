@@ -1,7 +1,7 @@
 {
-  "name": "kz-menu-solution",
+  "name": "ciao-byebye-solution",
   "version": "0.1.0",
-  "description": "Solution de commande et de paiement sur table pour les restaurants via QR Code.",
+  "description": "Solution Ciao Byebye de commande et de paiement sur table pour les restaurants via QR Code.",
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",

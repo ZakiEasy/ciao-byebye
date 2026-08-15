@@ -1,6 +1,45 @@
-// State management
+// State management & mock products data
 const cart = [];
-let tableSessionId = null;
+let currentCategory = 'all';
+
+const products = [
+  {
+    id: "p1",
+    name: "Moscow Mule Premium",
+    price: 12.50,
+    category: "boisson",
+    categoryLabel: "Cocktails",
+    description: "Vodka artisanale, bière de gingembre bio, jus de citron vert frais, menthe fraîche.",
+    image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=400"
+  },
+  {
+    id: "p2",
+    name: "IPA Locale \"La Barbaque\"",
+    price: 7.50,
+    category: "boisson",
+    categoryLabel: "Bières",
+    description: "Bière blonde IPA artisanale locale, notes intenses d'agrumes et amertume fraîche.",
+    image: "https://images.unsplash.com/photo-1600718374662-0483d2b9da44?auto=format&fit=crop&q=80&w=400"
+  },
+  {
+    id: "p3",
+    name: "Planche de Charcuteries fines",
+    price: 16.00,
+    category: "entree",
+    categoryLabel: "À partager",
+    description: "Sélection de charcuteries ibériques, cornichons, pain au levain et beurre demi-sel.",
+    image: "https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&q=80&w=400"
+  },
+  {
+    id: "p4",
+    name: "Burger Signature L'Atelier",
+    price: 18.50,
+    category: "plat",
+    categoryLabel: "Plats",
+    description: "Bœuf charolais, cheddar affiné de 18 mois, oignons caramélisés, sauce secrète, frites fraîches.",
+    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400"
+  }
+];
 
 // DOM Elements
 const menuGrid = document.getElementById('menu-grid');
@@ -26,6 +65,68 @@ const successClientName = document.getElementById('success-client-name');
 const successTableNum = document.getElementById('success-table-num');
 const successOrderId = document.getElementById('success-order-id');
 
+// Ask notification permission on startup
+document.addEventListener('DOMContentLoaded', () => {
+    requestNotificationPermission();
+    renderMenu();
+});
+
+function requestNotificationPermission() {
+    if ('Notification' in window) {
+        if (Notification.permission === 'default') {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    console.log('Autorisation de notification accordée.');
+                }
+            });
+        }
+    }
+}
+
+// Render Menu Cards dynamically
+function renderMenu() {
+    const filteredProducts = products.filter(product => {
+        return currentCategory === 'all' || product.category === currentCategory;
+    });
+
+    menuGrid.innerHTML = filteredProducts.map(product => {
+        const cartItem = cart.find(item => item.name === product.name);
+        const quantity = cartItem ? cartItem.quantity : 0;
+
+        // Dynamic quantity selection button / stepper
+        const actionHtml = quantity > 0 ? `
+            <div class="item-stepper">
+                <button class="stepper-btn" onclick="updateQty('${product.name.replace(/'/g, "\\'")}', -1)">
+                    <i class="fa-solid fa-minus"></i>
+                </button>
+                <span class="stepper-val">${quantity}</span>
+                <button class="stepper-btn" onclick="updateQty('${product.name.replace(/'/g, "\\'")}', 1)">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+        ` : `
+            <button class="add-to-cart-btn" onclick="addToCart('${product.name.replace(/'/g, "\\'")}', ${product.price}, '${product.category}')">
+                <i class="fa-solid fa-plus"></i> Ajouter
+            </button>
+        `;
+
+        return `
+            <div class="menu-item glass" data-category="${product.category}">
+                <div class="item-img" style="background-image: url('${product.image}');"></div>
+                <div class="item-details">
+                    <span class="item-category">${product.categoryLabel}</span>
+                    <h3>${product.name}</h3>
+                    <p class="item-desc">${product.description}</p>
+                    <div class="item-footer">
+                        <span class="item-price">${product.price.toFixed(2)} €</span>
+                        ${actionHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
 // Add item to cart
 function addToCart(name, price, category) {
     const existingItem = cart.find(item => item.name === name);
@@ -37,15 +138,16 @@ function addToCart(name, price, category) {
     }
     
     updateCartUI();
+    renderMenu();
     
-    // Tiny bounce effect on cart button
+    // Bounce effect on cart floating button
     cartFloatingBtn.style.transform = 'translateX(-50%) scale(1.05)';
     setTimeout(() => {
         cartFloatingBtn.style.transform = 'translateX(-50%) scale(1)';
     }, 150);
 }
 
-// Update Qty
+// Update Qty from both cart slider and main menu card stepper
 function updateQty(name, amount) {
     const item = cart.find(item => item.name === name);
     if (!item) return;
@@ -58,22 +160,20 @@ function updateQty(name, amount) {
     }
     
     updateCartUI();
+    renderMenu();
 }
 
-// Update Cart UI
+// Update Cart UI totals and badges
 function updateCartUI() {
-    // Total count
     const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
     cartBadge.innerText = totalCount;
     
-    // Total price
     const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const formattedTotal = totalPrice.toFixed(2) + ' €';
     cartBtnTotal.innerText = formattedTotal;
     summarySubtotal.innerText = formattedTotal;
     summaryTotal.innerText = formattedTotal;
     
-    // Toggle cart floating button visibility
     if (totalCount > 0) {
         cartFloatingBtn.classList.add('active');
     } else {
@@ -82,7 +182,6 @@ function updateCartUI() {
         cartPanelOverlay.classList.remove('active');
     }
     
-    // Populate cart items container
     if (cart.length === 0) {
         cartItemsContainer.innerHTML = '<div class="empty-cart-message">Votre panier est vide.</div>';
         return;
@@ -103,36 +202,29 @@ function updateCartUI() {
     `).join('');
 }
 
-// Toggle Cart Overlay/Panel
+// Toggle Cart overlay and panel
 function toggleCart() {
     if (cart.length === 0) return;
     cartPanel.classList.toggle('active');
     cartPanelOverlay.classList.toggle('active');
 }
 
-// Category filter
+// Category filter event listeners
 document.querySelectorAll('.category-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         
-        const targetCategory = btn.getAttribute('data-category');
-        document.querySelectorAll('.menu-item').forEach(item => {
-            if (targetCategory === 'all' || item.getAttribute('data-category') === targetCategory) {
-                item.style.display = 'flex';
-            } else {
-                item.style.display = 'none';
-            }
-        });
+        currentCategory = btn.getAttribute('data-category');
+        renderMenu();
     });
 });
 
-// Proceed to payment
+// Proceed to payment modal
 function proceedToPayment() {
     const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     paymentAmount.innerText = totalPrice.toFixed(2) + ' €';
     
-    // Close cart first, then open payment modal
     cartPanel.classList.remove('active');
     cartPanelOverlay.classList.remove('active');
     
@@ -148,40 +240,60 @@ function closePayment() {
     paymentModalOverlay.classList.remove('active');
 }
 
-// Simulate successful payment
+// Simulate successful payment and trigger simulated preparation workflow
 function simulatePaymentSuccess() {
     const confirmBtn = document.getElementById('confirm-payment-btn');
     confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Traitement...';
     confirmBtn.disabled = true;
 
-    // Simulate Stripe round-trip API call
+    // Simulate Stripe round-trip
     setTimeout(() => {
         closePayment();
         
-        // Populate success screen fields
         const clientName = clientNameInput.value.trim() || 'Alex';
         successClientName.innerText = clientName;
         successTableNum.innerText = document.getElementById('table-number').innerText;
         
-        // Generate random order ID
         const randomId = 'M-' + Math.floor(1000 + Math.random() * 9000);
         successOrderId.innerText = randomId;
         
-        // Open success modal
+        // Reset status steps back to "En cuisine" (Preparation)
+        const steps = document.querySelectorAll('.order-status-tracker .status-step');
+        steps[0].classList.add('active'); // Payé
+        steps[1].classList.add('active'); // En cuisine
+        steps[1].querySelector('.step-bullet').classList.add('progress-pulse');
+        steps[2].classList.remove('active'); // Prête
+        steps[2].querySelector('.step-bullet').classList.remove('progress-pulse');
+
         successModal.classList.add('active');
         successModalOverlay.classList.add('active');
         
-        // Restore button state
         confirmBtn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Confirmer le paiement';
         confirmBtn.disabled = false;
         
-        // Clear cart
         cart.length = 0;
         updateCartUI();
+        renderMenu();
+
+        // Simulate preparation time and notify client when ready
+        setTimeout(() => {
+            // Update UI tracker to "Prête"
+            steps[1].querySelector('.step-bullet').classList.remove('progress-pulse');
+            steps[2].classList.add('active');
+            
+            // Push actual native browser notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification("Ciao Byebye - Commande Prête !", {
+                    body: `${clientName}, votre commande est prête au comptoir. Ciao byebye !`,
+                    icon: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=100'
+                });
+            }
+        }, 5000);
+
     }, 1500);
 }
 
-// Reset app back to initial state
+// Reset success modal
 function resetApp() {
     successModal.classList.remove('active');
     successModalOverlay.classList.remove('active');

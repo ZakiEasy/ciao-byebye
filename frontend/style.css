@@ -278,6 +278,42 @@ body {
     border-color: var(--primary);
 }
 
+/* Stepper for Menu Items */
+.item-stepper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--glass-border);
+    padding: 5px 12px;
+    border-radius: var(--radius-lg);
+}
+
+.stepper-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 11px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.stepper-btn:hover {
+    color: var(--primary);
+}
+
+.stepper-val {
+    font-size: 14px;
+    font-weight: 600;
+    width: 16px;
+    text-align: center;
+}
+
 /* Floating Cart Button */
 .cart-floating-btn {
     position: fixed;

@@ -222,5 +222,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`Serveur KZ Menu démarré sur le port ${PORT}`);
+  console.log(`Serveur Ciao Byebye démarré sur le port ${PORT}`);
 });
