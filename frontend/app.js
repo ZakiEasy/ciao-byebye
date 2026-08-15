@@ -245,23 +245,41 @@ function closePayment() {
 }
 
 // Simulate successful payment and trigger simulated preparation workflow
-function simulatePaymentSuccess() {
+async function simulatePaymentSuccess() {
     const confirmBtn = document.getElementById('confirm-payment-btn');
     confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Traitement...';
     confirmBtn.disabled = true;
 
-    // Simulate Stripe round-trip
-    setTimeout(() => {
+    const clientName = clientNameInput.value.trim() || 'Alex';
+    const tableNumber = document.getElementById('table-number').innerText;
+
+    try {
+        const response = await fetch('/api/orders/mock-create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber,
+                clientName,
+                items: cart.map(item => ({
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity
+                }))
+            })
+        });
+
+        if (!response.ok) throw new Error('Erreur de création de la commande');
+        const data = await response.json();
+        
         closePayment();
         
-        const clientName = clientNameInput.value.trim() || 'Alex';
+        // Populate success fields
         successClientName.innerText = clientName;
-        successTableNum.innerText = document.getElementById('table-number').innerText;
-        
-        const randomId = 'M-' + Math.floor(1000 + Math.random() * 9000);
-        successOrderId.innerText = randomId;
-        
-        // Reset status steps back to "En cuisine" (Preparation)
+        successTableNum.innerText = tableNumber;
+        successOrderId.innerText = data.orderId.substring(0, 8).toUpperCase();
+        successOrderId.dataset.dbId = data.orderId;
+
+        // Reset step trackers
         const steps = document.querySelectorAll('.order-status-tracker .status-step');
         steps[0].classList.add('active'); // Payé
         steps[1].classList.add('active'); // En cuisine
@@ -272,33 +290,46 @@ function simulatePaymentSuccess() {
         successModal.classList.add('active');
         successModalOverlay.classList.add('active');
         
-        confirmBtn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Confirmer le paiement';
-        confirmBtn.disabled = false;
-        
         cart.length = 0;
         updateCartUI();
         renderMenu();
 
-        // Simulate preparation time and notify client when ready
-        setTimeout(() => {
-            // Update UI tracker to "Prête"
-            steps[1].querySelector('.step-bullet').classList.remove('progress-pulse');
-            steps[2].classList.add('active');
-            
-            // Push actual native browser notification
-            if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification("Ciao Byebye - Commande Prête !", {
-                    body: `${clientName}, votre commande est prête au comptoir. Ciao byebye !`,
-                    icon: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=100'
-                });
-            }
-        }, 5000);
-
-    }, 1500);
+    } catch (error) {
+        console.error('Erreur lors de la création de la commande :', error);
+        alert('Erreur lors de l\'envoi de la commande. Veuillez réessayer.');
+    } finally {
+        confirmBtn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Confirmer le paiement';
+        confirmBtn.disabled = false;
+    }
 }
 
 // Reset success modal
 function resetApp() {
     successModal.classList.remove('active');
     successModalOverlay.classList.remove('active');
+}
+
+// WebSockets listener for real-time order status tracking (Cook to Client)
+const socket = typeof io !== 'undefined' ? io() : null;
+
+if (socket) {
+    socket.on('order_status_updated', (data) => {
+        const dbId = successOrderId.dataset.dbId;
+        if (data.orderId === dbId) {
+            const steps = document.querySelectorAll('.order-status-tracker .status-step');
+            if (data.status === 'prete') {
+                steps[1].querySelector('.step-bullet').classList.remove('progress-pulse');
+                steps[2].classList.add('active');
+                
+                // Native desktop notification trigger
+                const clientName = successClientName.innerText;
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification("Ciao Byebye - Commande Prête !", {
+                        body: `${clientName}, votre commande est prête au comptoir. Ciao byebye !`,
+                        icon: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=100'
+                    });
+                }
+            }
+        }
+    });
 }

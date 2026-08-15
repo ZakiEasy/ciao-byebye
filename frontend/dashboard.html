@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ciao Byebye - KDS Cuisine</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style variables -->
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* Specific Dashboard overrides */
+        body {
+            padding-bottom: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .dashboard-header {
+            padding: 20px 40px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dashboard-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .stats-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-badge span {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .dashboard-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px 40px;
+            height: calc(100vh - 80px);
+            overflow: hidden;
+        }
+
+        .kds-column {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .column-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .column-header .count {
+            background: var(--primary);
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+
+        .cards-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding-right: 10px;
+        }
+
+        .order-card {
+            padding: 20px;
+            border-radius: var(--radius-md);
+            transition: all 0.3s ease;
+        }
+
+        .order-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .client-info h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .client-info span {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .table-num {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+        }
+
+        .card-items {
+            list-style: none;
+            border-top: 1px dashed var(--glass-border);
+            border-bottom: 1px dashed var(--glass-border);
+            padding: 12px 0;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .card-items li {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .item-qty-name {
+            display: flex;
+            gap: 8px;
+        }
+
+        .item-qty {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .card-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            background: var(--primary);
+            border: 1px solid var(--primary);
+            color: #000;
+            font-family: var(--font-main);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .action-btn.secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--glass-border);
+            color: var(--text-primary);
+        }
+
+        .action-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .empty-column-msg {
+            color: var(--text-muted);
+            text-align: center;
+            font-size: 14px;
+            padding: 40px 0;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="logo">
+            <span class="logo-accent">Ciao</span> Byebye <span style="font-size: 14px; font-weight:400; color:var(--text-muted); margin-left: 10px;">Tableau de Bord Cuisine</span>
+        </div>
+        <div class="stats-container">
+            <div class="stat-badge">
+                <i class="fa-solid fa-fire-burner"></i> En Cuisine : <span id="stat-cooking">0</span>
+            </div>
+            <div class="stat-badge">
+                <i class="fa-solid fa-mug-hot"></i> Prêtes au Comptoir : <span id="stat-ready">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Columns Grid -->
+    <main class="dashboard-content">
+        
+        <!-- Column 1: Cooking -->
+        <section class="kds-column">
+            <div class="column-header">
+                <h2><i class="fa-solid fa-fire-burner" style="color: #ef4444;"></i> En Préparation</h2>
+                <span class="count" id="count-cooking" style="background:#ef4444; color:#fff;">0</span>
+            </div>
+            <div class="cards-list" id="list-cooking">
+                <!-- Loaded dynamically -->
+            </div>
+        </section>
+
+        <!-- Column 2: Ready -->
+        <section class="kds-column">
+            <div class="column-header">
+                <h2><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Prêtes / À Retirer</h2>
+                <span class="count" id="count-ready" style="background:#10b981; color:#fff;">0</span>
+            </div>
+            <div class="cards-list" id="list-ready">
+                <!-- Loaded dynamically -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- WebSockets & Logic -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = typeof io !== 'undefined' ? io() : null;
+        
+        let orders = [];
+
+        // Fetch active orders from REST API
+        async function fetchOrders() {
+            try {
+                const response = await fetch('/api/orders');
+                if (!response.ok) throw new Error('Failed to fetch orders');
+                orders = await response.json();
+                renderDashboard();
+            } catch (error) {
+                console.error('Error fetching orders:', error);
+            }
+        }
+
+        // Render Cards inside correct columns
+        function renderDashboard() {
+            const cookingList = document.getElementById('list-cooking');
+            const readyList = document.getElementById('list-ready');
+
+            const cookingOrders = orders.filter(o => o.order_status === 'en_cuisine');
+            const readyOrders = orders.filter(o => o.order_status === 'prete');
+
+            // Update Header counters
+            document.getElementById('stat-cooking').innerText = cookingOrders.length;
+            document.getElementById('count-cooking').innerText = cookingOrders.length;
+            document.getElementById('stat-ready').innerText = readyOrders.length;
+            document.getElementById('count-ready').innerText = readyOrders.length;
+
+            // Render Cooking Orders
+            if (cookingOrders.length === 0) {
+                cookingList.innerHTML = '<div class="empty-column-msg">Aucune commande en préparation.</div>';
+            } else {
+                cookingList.innerHTML = cookingOrders.map(o => `
+                    <div class="order-card glass">
+                        <div class="card-header">
+                            <div class="client-info">
+                                <h3>${o.client_name}</h3>
+                                <span>Commandé à ${new Date(o.created_at).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}</span>
+                            </div>
+                            <span class="table-num">Table ${o.table_number}</span>
+                        </div>
+                        <ul class="card-items">
+                            ${o.items.map(item => `
+                                <li>
+                                    <div class="item-qty-name">
+                                        <span class="item-qty">${item.quantity}x</span>
+                                        <span>${item.name}</span>
+                                    </div>
+                                    <span>${(item.price * item.quantity).toFixed(2)} €</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                        <div class="card-actions">
+                            <button class="action-btn" onclick="updateOrderStatus('${o.id}', 'prete')">
+                                <i class="fa-solid fa-mug-hot"></i> Prête à servir !
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Render Ready Orders
+            if (readyOrders.length === 0) {
+                readyList.innerHTML = '<div class="empty-column-msg">Aucune commande en attente de retrait.</div>';
+            } else {
+                readyList.innerHTML = readyOrders.map(o => `
+                    <div class="order-card glass" style="border-color: rgba(16, 185, 129, 0.2);">
+                        <div class="card-header">
+                            <div class="client-info">
+                                <h3>${o.client_name}</h3>
+                                <span>Prêt au comptoir</span>
+                            </div>
+                            <span class="table-num" style="background: rgba(16, 185, 129, 0.15); border-color:#10b981; color:#10b981;">Table ${o.table_number}</span>
+                        </div>
+                        <ul class="card-items">
+                            ${o.items.map(item => `
+                                <li>
+                                    <div class="item-qty-name">
+                                        <span class="item-qty" style="color:#10b981;">${item.quantity}x</span>
+                                        <span>${item.name}</span>
+                                    </div>
+                                    <span>${(item.price * item.quantity).toFixed(2)} €</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                        <div class="card-actions">
+                            <button class="action-btn secondary" onclick="updateOrderStatus('${o.id}', 'servie')">
+                                <i class="fa-solid fa-circle-check"></i> Livrée
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Update Order prep status via API
+        async function updateOrderStatus(orderId, status) {
+            try {
+                const response = await fetch(`/api/orders/${orderId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+
+                if (!response.ok) throw new Error('Failed to update order status');
+                
+                // Locally update or refetch
+                fetchOrders();
+            } catch (error) {
+                console.error('Error updating order status:', error);
+            }
+        }
+
+        // Setup WebSockets
+        if (socket) {
+            // Listen for new orders
+            socket.on('new_order', () => {
+                fetchOrders();
+                // Play notification alert sound
+                try {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.15);
+                } catch (e) {
+                    console.log('Audio alert blocked or failed');
+                }
+            });
+
+            // Listen for status updates
+            socket.on('order_status_updated', () => {
+                fetchOrders();
+            });
+        }
+
+        // Load initially
+        fetchOrders();
+    </script>
+</body>
+</html>

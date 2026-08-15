@@ -211,6 +211,119 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
   res.json({ received: true });
 });
 
+// 4. Créer une commande de test (Simulée) directe
+app.post('/api/orders/mock-create', async (req, res) => {
+  const { tableNumber, clientName, items } = req.body;
+  
+  try {
+    const tableResult = await pool.query('SELECT id FROM tables WHERE number = $1', [tableNumber]);
+    if (tableResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Table non trouvée' });
+    }
+    const tableId = tableResult.rows[0].id;
+    
+    let sessionResult = await pool.query('SELECT id FROM table_sessions WHERE table_id = $1 AND status = $2', [tableId, 'active']);
+    let sessionId;
+    if (sessionResult.rows.length === 0) {
+      const newSession = await pool.query(
+        'INSERT INTO table_sessions (table_id, status) VALUES ($1, $2) RETURNING id',
+        [tableId, 'active']
+      );
+      sessionId = newSession.rows[0].id;
+    } else {
+      sessionId = sessionResult.rows[0].id;
+    }
+    
+    const priceSumCents = items.reduce((sum, item) => sum + Math.round(item.price * 100 * item.quantity), 0);
+    const orderResult = await pool.query(
+      `INSERT INTO orders (session_id, total_amount_cents, payment_status, order_status, client_name)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+      [sessionId, priceSumCents, 'complete', 'en_cuisine', clientName]
+    );
+    const orderId = orderResult.rows[0].id;
+    
+    for (const item of items) {
+      const prodResult = await pool.query('SELECT id FROM products WHERE name = $1', [item.name]);
+      if (prodResult.rows.length > 0) {
+        const productId = prodResult.rows[0].id;
+        await pool.query(
+          `INSERT INTO order_items (order_id, product_id, quantity, unit_price_cents)
+           VALUES ($1, $2, $3, $4)`,
+          [orderId, productId, item.quantity, Math.round(item.price * 100)]
+        );
+      }
+    }
+    
+    io.emit('new_order', {
+      orderId,
+      tableNumber,
+      clientName,
+      items,
+      message: `Nouvelle commande de ${clientName} (Table ${tableNumber})`
+    });
+    
+    res.json({ success: true, orderId });
+  } catch (error) {
+    console.error('Erreur mock order create:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 5. Récupérer toutes les commandes actives pour la cuisine
+app.get('/api/orders', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT o.id, o.client_name, o.order_status, o.payment_status, o.created_at, t.number as table_number,
+             COALESCE(
+               json_agg(
+                 json_build_object(
+                   'name', p.name,
+                   'quantity', oi.quantity,
+                   'price', oi.unit_price_cents / 100.0
+                 )
+               ) FILTER (WHERE p.name IS NOT NULL),
+               '[]'
+             ) as items
+      FROM orders o
+      JOIN table_sessions ts ON o.session_id = ts.id
+      JOIN tables t ON ts.table_id = t.id
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      LEFT JOIN products p ON oi.product_id = p.id
+      WHERE o.order_status IN ('en_cuisine', 'prete')
+      GROUP BY o.id, t.number
+      ORDER BY o.created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Erreur récupération commandes:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 6. Mettre à jour le statut d'une commande
+app.patch('/api/orders/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  
+  try {
+    const result = await pool.query(
+      'UPDATE orders SET order_status = $1 WHERE id = $2 RETURNING id',
+      [status, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Commande non trouvée' });
+    }
+    
+    io.emit('order_status_updated', { orderId: id, status });
+    
+    res.json({ success: true, status });
+  } catch (error) {
+    console.error('Erreur mise à jour statut:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // Connexion WebSocket pour le suivi en temps réel
 io.on('connection', (socket) => {
   console.log('Client connecté aux mises à jour temps réel:', socket.id);
