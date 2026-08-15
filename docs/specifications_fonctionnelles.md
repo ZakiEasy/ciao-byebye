@@ -1,0 +1,101 @@
+# Spécifications Fonctionnelles & Cahier de Recette : Ciao Byebye
+
+Ce document définit les spécifications détaillées des fonctionnalités de la solution de commande et de paiement sur table **Ciao Byebye**, ainsi que les cas de tests fonctionnels pour valider chaque parcours.
+
+---
+
+## 1. Description Générale & Philosophie
+
+**Ciao Byebye** est une solution SaaS conçue pour fluidifier le service en restaurant et bar.
+
+### Philosophie du Produit
+* **Replacer l'humain au cœur de son métier, et non le remplacer** : Automatiser la prise de commande, l'encaissement et le suivi logistique libère le personnel des tâches répétitives pour se concentrer sur l'accueil, le conseil et la relation humaine.
+* **Friction Zéro** : Le client s'installe, scanne le QR code, saisit son prénom, commande, paie, consomme et s'en va (*Ciao byebye*). Pas de compte à créer, pas d'application à installer depuis un store.
+
+---
+
+## 2. Parcours Fonctionnels & Flux de Données
+
+### A. Parcours Client (Progressive Web App - PWA)
+1. **Accès** : Scan d'un QR Code de table redirigeant vers `https://<domaine>/index.html?table=05`.
+2. **Identification** : Saisie obligatoire du prénom (champ `client_name` en base de données) pour identifier le client lors du retrait.
+3. **Sélection** : Navigation à travers les catégories du menu (Boissons, Plats, Entrées, Desserts) chargées dynamiquement depuis la base de données.
+4. **Panier** : Ajustement des quantités directement sur les cartes du menu via un sélecteur dynamique `[ - ] [ quantité ] [ + ]` ou dans le tiroir de panier coulissant.
+5. **Paiement** : Simulation ou déclenchement du paiement Stripe (bouton Apple Pay / Google Pay ou carte).
+6. **Suivi** : Redirection vers l'écran de succès affichant les étapes de préparation en direct (*Payé* -> *En cuisine* -> *Prête*).
+7. **Retrait** : Réception d'une notification push navigateur lorsque le statut passe à *Prête*.
+
+### B. Parcours Cuisine (Kitchen Display System - KDS)
+1. **Accès Sécurisé (SSO)** : Connexion obligatoire via le portail pro (`login.html`) avec authentification rapide Google, Apple ou Microsoft.
+2. **Affichage Cuisine** : Visualisation en temps réel des commandes actives sous forme de cartes dans la colonne *« En Préparation »*.
+3. **Bip Sonore** : Déclenchement automatique d'un son système à chaque nouvelle commande reçue.
+4. **Mise en disponibilité** : Le cuisinier clique sur *« Prête à servir ! »*. La commande est déplacée dans la colonne *« Prêtes / À Retirer »* et notifie instantanément le client par WebSockets.
+5. **Clôture** : Le serveur clique sur *« Livrée »* une fois la commande récupérée pour l'archiver.
+
+---
+
+## 3. Schéma de Base de Données
+
+Les données de test exploitent la base PostgreSQL de Render selon le modèle suivant :
+* `tables` : Contient la liste des tables physiques et leur jeton QR unique associé (`qr_code_token`).
+* `table_sessions` : Session active (`active`, `closed`) ouverte lors du premier scan de table.
+* `orders` : Enregistrement des transactions (statut de paiement `complete`, statut de préparation `en_cuisine`/`prete`/`servie`, prénom client `client_name`).
+* `products` : Liste des articles du menu avec contrainte d'unicité sur `name` pour éviter les doublons.
+* `order_items` : Lignes de commande détaillant la quantité et le prix unitaire en centimes à l'instant de l'achat.
+
+---
+
+## 4. Cahier de Recette & Cas de Tests Fonctionnels
+
+Ce protocole définit les tests de recette requis pour valider le bon fonctionnement de l'application avant sa mise en production.
+
+### TC-01 : Parcours d'Achat & Commande Client (PWA)
+* **Objectif** : Valider le parcours complet de commande, de la sélection au paiement fictif.
+* **Pré-requis** : Base de données en ligne active avec produits pré-ensemencés.
+* **Étapes de test** :
+  1. Ouvrir `index.html` dans le navigateur.
+  2. Modifier le champ prénom à « Thomas ».
+  3. Cliquer sur le bouton « Ajouter » sur le plat *Burger Signature L'Atelier*.
+  4. Augmenter la quantité à `2` via le stepper direct de la carte produit.
+  5. Cliquer sur le bouton flottant du panier pour l'ouvrir.
+  6. Cliquer sur « Passer commande ».
+  7. Cliquer sur « Confirmer le paiement ».
+* **Résultat Attendu** :
+  - Le panier se vide après paiement.
+  - L'écran de succès s'affiche avec le prénom « Thomas », la table « 05 » et un identifiant de commande court (ex: `M-A4B8`).
+  - L'étape *En cuisine* est marquée active (statut de préparation `en_cuisine` en base de données).
+
+### TC-02 : Synchronisation & Alerte Cuisine en Temps Réel (KDS)
+* **Objectif** : Valider la réception instantanée et l'alerte sonore en cuisine via WebSockets.
+* **Pré-requis** : Avoir ouvert `dashboard.html` dans un second onglet (authentifié).
+* **Étapes de test** :
+  1. Placer une commande sur l'écran client (TC-01).
+  2. Observer l'écran cuisine `dashboard.html` immédiatement après la confirmation de paiement.
+* **Résultat Attendu** :
+  - Un bip audio retentit sur l'écran cuisine.
+  - La commande apparaît instantanément dans la colonne *« En Préparation »* sans rechargement de page.
+  - Les détails affichent : Prénom du client, table, heure de commande et le détail exact des plats et quantités.
+
+### TC-03 : Portail de Connexion SSO & Authentification
+* **Objectif** : Valider le blocage d'accès non autorisé au KDS et la connexion SSO Google/Apple/Microsoft.
+* **Pré-requis** : Session effacée (sessionStorage vide).
+* **Étapes de test** :
+  1. Tenter d'ouvrir `dashboard.html` directement.
+  2. Vérifier la redirection automatique vers `login.html`.
+  3. Sur la page `login.html`, cliquer sur le bouton « Se connecter avec Google ».
+* **Résultat Attendu** :
+  - L'accès direct à `dashboard.html` est bloqué et redirige vers `login.html`.
+  - Le clic sur « Se connecter avec Google » déclenche la simulation SSO et redirige vers `dashboard.html`.
+  - Le header affiche l'adresse e-mail `sso_google_user@atelier-chris.fr`.
+  - Cliquer sur le bouton de déconnexion (icône de sortie) renvoie immédiatement vers `login.html` et invalide la session.
+
+### TC-04 : Système de Notification Push Navigateur
+* **Objectif** : Valider la demande d'autorisation de notifications et l'alerte push lors du retrait.
+* **Pré-requis** : Avoir autorisé les notifications système lors du premier chargement de `index.html`.
+* **Étapes de test** :
+  1. Effectuer une commande client (TC-01) et rester sur l'écran de succès (suivi de commande).
+  2. Sur l'écran cuisine (TC-02), identifier la commande et cliquer sur le bouton « Prête à servir ! ».
+* **Résultat Attendu** :
+  - Sur l'écran cuisine, la commande glisse de la colonne *« En Préparation »* vers la colonne *« Prêtes / À Retirer »*.
+  - Sur l'écran client, l'étape *Prête* du tracker de statut passe au vert (WebSocket `order_status_updated`).
+  - Le navigateur du client affiche une notification système push : *« Ciao Byebye - Commande Prête ! [Nom], votre commande est prête au comptoir. Ciao byebye ! »*.
