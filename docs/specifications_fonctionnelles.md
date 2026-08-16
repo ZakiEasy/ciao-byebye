@@ -129,14 +129,15 @@ Ce protocole définit les tests de recette requis pour valider le bon fonctionne
 * **Résultat Attendu** :
   - Le produit indisponible disparaît du catalogue client instantanément sans redémarrer le serveur.
 
-### TC-08 : Écran Public de Retrait (Pickup public Starbucks)
-* **Objectif** : Afficher un écran géant d'information pour les clients au comptoir.
+### TC-08 : Écran Public de Retrait (Borne Comptoir & Kiosque d'Appel)
+* **Objectif** : Afficher un écran géant d'information pour les clients au comptoir avec diffusion vidéo de démonstration.
 * **Étapes de test** :
   1. Se connecter avec le profil `pickup@atelier-chris.fr`.
-  2. Vérifier que l'affichage bascule en mode Kiosque public (aucune action possible, pas de prix affiché).
+  2. Vérifier que l'affichage bascule en mode Kiosque de comptoir public (commandes en cours, commandes prêtes et carrousel vidéo de préparation).
   3. Placer une commande pour "Thomas" et la marquer comme prête en cuisine.
 * **Résultat Attendu** :
   - Le prénom de Thomas apparaît dans la colonne *« En Préparation »* puis glisse dans la colonne *« Prêt au comptoir »* en clignotant.
+  - La 3ème colonne diffuse en continu les vidéos de préparation du chef (Milkshake, Tacos, Burgers, Cocktails) avec sélection interactive.
 
 ### TC-09 : Internationalisation (Multi-langue & Support RTL Arabe)
 * **Objectif** : Valider le basculement instantané de la langue et de l'orientation droite-à-gauche.
@@ -166,5 +167,36 @@ Ce protocole définit les tests de recette requis pour valider le bon fonctionne
   3. Afficher le mode Comptoir Public (`pickup@atelier-chris.fr`) sur un écran haute résolution (1080p / 4K).
 * **Résultat Attendu** :
   - Les cartes de commande et les prénoms des clients s'affichent avec une typographie géante et un contraste élevé lisible à plus de 10 mètres.
+
+### TC-12 : Persistance de Session Invité (Rétention 3 Heures) & Restauration Automatique
+* **Objectif** : Valider que le client invité conserve sa session et sa commande active pendant 3 heures, même après rechargement ou réouverture du navigateur.
+* **Étapes de test** :
+  1. Accéder à `index.html` en tant qu'invité et passer une commande pour la Table 05.
+  2. Vérifier que la clé `ciao_guest_expires_at` est initialisée à `Date.now() + 3h` dans le `localStorage`.
+  3. Rafraîchir la page (F5) ou fermer l'onglet puis rouvrir `index.html`.
+* **Résultat Attendu** :
+  - La commande en cours est immédiatement restaurée.
+  - La bannière flottante de suivi actif réapparaît au bas de l'écran avec le statut temps réel (`🔥 En cuisine`).
+  - L'ouverture du tiroir de compte indique le temps restant de la session invité (ex: `Valide encore 2h 58min`).
+
+### TC-13 : Espace Client Authentifié & Barre Flottante Minimisable
+* **Objectif** : Permettre au client de continuer à naviguer sur le menu tout en gardant un accès direct à sa commande.
+* **Étapes de test** :
+  1. Passer commande puis cliquer sur « Réduire & Continuer à Parcourir ».
+  2. Vérifier que la modale se ferme et que la barre flottante reste active en bas de l'écran.
+  3. Cliquer sur le bouton « Invité / Mon Espace » dans le header pour ouvrir le tiroir latéral.
+  4. Vérifier la présence de la carte de commande active avec son statut et le bouton de suivi direct.
+* **Résultat Attendu** :
+  - Navigation fluide sans perte de contexte de commande.
+
+### TC-14 : Carrousel Vidéo de Préparation & Offres Spéciales sur Borne Comptoir
+* **Objectif** : Vérifier la lecture et le changement interactif des vidéos de démonstration et promotions.
+* **Étapes de test** :
+  1. Sur l'écran comptoir (`pickup@atelier-chris.fr`), observer la 3ème colonne média.
+  2. Cliquer sur l'onglet « 🥤 Milkshake Gourmet Fraise & Chantilly » : vérifier que la vidéo démarre automatiquement en boucle.
+  3. Cliquer sur « 🌮 Tacos & Smash Burgers Grill » puis « 🍹 Cocktails & Mocktails Maison ».
+* **Résultat Attendu** :
+  - Lecture vidéo fluide et instantanée avec mise à jour du badge de démonstration.
+
 
 

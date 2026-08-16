@@ -248,33 +248,33 @@
             border: 1px solid rgba(245, 158, 11, 0.2);
         }
 
-        /* PUBLIC PICKUP SCREEN STYLING (Starbucks Model & 4K Large Display) */
+        /* PUBLIC PICKUP SCREEN STYLING (Comptoir Public & 4K Large Display) */
         .pickup-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
+            grid-template-columns: 1fr 1fr 1.1fr;
+            gap: 24px;
             height: 100%;
-            padding: 20px 0;
+            padding: 10px 0;
         }
 
         .pickup-column {
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--glass-border);
             border-radius: var(--radius-lg);
-            padding: 30px;
+            padding: 24px;
             display: flex;
             flex-direction: column;
         }
 
         .pickup-title {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 800;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
             border-bottom: 2px solid var(--glass-border);
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
         }
 
         .pickup-list {
@@ -282,14 +282,14 @@
             display: flex;
             flex-wrap: wrap;
             align-content: flex-start;
-            gap: 15px;
+            gap: 12px;
             overflow-y: auto;
         }
 
         .pickup-name-card {
-            font-size: 26px;
+            font-size: 22px;
             font-weight: 700;
-            padding: 16px 24px;
+            padding: 14px 20px;
             border-radius: var(--radius-md);
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--glass-border);
@@ -312,25 +312,118 @@
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
 
+        /* Video Showcase Column on Pickup Display */
+        .pickup-media-column {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow: hidden;
+        }
+
+        .promo-video-wrapper {
+            position: relative;
+            width: 100%;
+            height: 240px;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            background: #000;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-md);
+        }
+
+        .promo-video-wrapper video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-overlay-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .video-playlist-tabs {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .playlist-tab {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .playlist-tab:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary);
+        }
+
+        .playlist-tab.active {
+            background: rgba(245, 158, 11, 0.15);
+            border-color: var(--primary);
+        }
+
+        .playlist-tab-info strong {
+            display: block;
+            font-size: 13px;
+            color: #fff;
+        }
+
+        .playlist-tab-info span {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
         /* 4K TV & Huge Display Screen Adaptation */
         @media (min-width: 1800px) {
             .dashboard-header h1 { font-size: 28px; }
-            .pickup-title { font-size: 38px; }
-            .pickup-name-card { font-size: 36px; padding: 22px 32px; }
+            .pickup-title { font-size: 34px; }
+            .pickup-name-card { font-size: 32px; padding: 20px 30px; }
             .column-header h2 { font-size: 24px; }
             .client-info h3 { font-size: 24px; }
             .card-items li { font-size: 18px; }
             .order-card { padding: 26px; }
-            .dashboard-content { gap: 40px; padding: 40px; }
+            .dashboard-content { gap: 30px; padding: 30px; }
+            .promo-video-wrapper { height: 340px; }
         }
 
         /* Responsive Mobile / Small Displays */
+        @media (max-width: 1100px) {
+            .pickup-container { grid-template-columns: 1fr 1fr; }
+            .pickup-media-column { grid-column: span 2; }
+        }
+
         @media (max-width: 900px) {
             body { height: auto; overflow: auto; }
             .dashboard-header { flex-direction: column; gap: 12px; align-items: stretch; }
             .stats-container { justify-content: space-between; flex-wrap: wrap; }
             .dashboard-content { grid-template-columns: 1fr; height: auto; padding: 20px 16px; overflow: visible; }
             .pickup-container { grid-template-columns: 1fr; }
+            .pickup-media-column { grid-column: span 1; }
         }
 
         /* RTL Overrides for KDS */
@@ -341,13 +434,15 @@
         html[dir="rtl"] .stats-container,
         html[dir="rtl"] .card-header,
         html[dir="rtl"] .item-qty-name,
-        html[dir="rtl"] .pickup-title {
+        html[dir="rtl"] .pickup-title,
+        html[dir="rtl"] .playlist-tab {
             flex-direction: row-reverse;
         }
         html[dir="rtl"] .client-info,
         html[dir="rtl"] .column-header h2,
         html[dir="rtl"] .menu-mgmt-panel h2,
-        html[dir="rtl"] .menu-mgmt-panel p {
+        html[dir="rtl"] .menu-mgmt-panel p,
+        html[dir="rtl"] .playlist-tab-info {
             text-align: right;
         }
 
@@ -435,7 +530,7 @@
                     <option value="maitre@atelier-chris.fr">🤵 Chef de Salle (maitre@atelier-chris.fr)</option>
                     <option value="david@atelier-chris.fr">🏃‍♂️ Serveur David (david@ - Tables 5, 8, 12)</option>
                     <option value="sophie@atelier-chris.fr">🏃‍♀️ Serveuse Sophie (sophie@ - Tables 1, 2, 3)</option>
-                    <option value="pickup@atelier-chris.fr">📺 Comptoir Public (pickup@ - Mode Starbucks)</option>
+                    <option value="pickup@atelier-chris.fr">📺 Comptoir Public (pickup@ - Mode Kiosque Retrait)</option>
                     <option value="barman@atelier-chris.fr">🍹 Barman (barman@ - Boissons)</option>
                 </select>
             </div>
@@ -496,6 +591,54 @@
     <!-- WebSockets & Logic -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        // Promotional & Preparation Video Playlist for Public Display
+        const promoVideos = [
+            {
+                id: "milkshake",
+                title: "🥤 Milkshake Gourmet Fraise & Chantilly",
+                desc: "Préparation onctueuse et crémeuse au lait bio et coulis de fraises fraîches.",
+                src: "https://assets.mixkit.co/videos/preview/mixkit-pouring-milk-into-a-glass-with-strawberries-42995-large.mp4",
+                badge: "Recette du Chef"
+            },
+            {
+                id: "tacos",
+                title: "🌮 Tacos & Smash Burgers Grill",
+                desc: "Cuisson de viande hachée fraîche, cheddar fondant et sauce maison.",
+                src: "https://assets.mixkit.co/videos/preview/mixkit-frying-a-hamburger-patty-on-a-grill-42939-large.mp4",
+                badge: "En direct du Grill"
+            },
+            {
+                id: "cocktail",
+                title: "🍹 Cocktails & Mocktails Signature",
+                desc: "Mixologie artisanale avec jus de fruits pressés et herbes aromatiques.",
+                src: "https://assets.mixkit.co/videos/preview/mixkit-bartender-pouring-a-drink-into-a-glass-42997-large.mp4",
+                badge: "Mixologie Live"
+            },
+            {
+                id: "promo",
+                title: "🔥 Formule Midi & Happy Hour",
+                desc: "-20% sur les cocktails et desserts tous les soirs de 17h à 19h !",
+                src: "https://assets.mixkit.co/videos/preview/mixkit-hands-holding-and-serving-food-plates-42937-large.mp4",
+                badge: "Offre Spéciale"
+            }
+        ];
+
+        let currentPromoVideoIndex = 0;
+
+        function setPromoVideo(index) {
+            currentPromoVideoIndex = index;
+            const videoEl = document.getElementById('kiosk-promo-video');
+            const badgeEl = document.getElementById('kiosk-video-badge');
+            if (videoEl && promoVideos[index]) {
+                videoEl.src = promoVideos[index].src;
+                videoEl.play().catch(e => console.log('Autoplay handled'));
+                if (badgeEl) badgeEl.innerText = promoVideos[index].badge;
+            }
+            document.querySelectorAll('.playlist-tab').forEach((tab, i) => {
+                tab.classList.toggle('active', i === index);
+            });
+        }
+
         // Translations dictionary for KDS
         const kdsTranslations = {
             fr: {
@@ -525,7 +668,8 @@
                 th_table: "Table",
                 th_server: "Serveur Responsable",
                 unassigned: "Non assignée",
-                active_orders_service: "Commandes en cours de service"
+                active_orders_service: "Commandes en cours de service",
+                media_title: "En direct de nos Ateliers"
             },
             en: {
                 title_kds: "Dashboard",
@@ -554,7 +698,8 @@
                 th_table: "Table",
                 th_server: "Assigned Server",
                 unassigned: "Unassigned",
-                active_orders_service: "Active Table Orders"
+                active_orders_service: "Active Table Orders",
+                media_title: "Live from our Kitchen"
             },
             ar: {
                 title_kds: "لوحة التحكم",
@@ -583,7 +728,8 @@
                 th_table: "الطاولة",
                 th_server: "النادل المسؤول",
                 unassigned: "غير معينة",
-                active_orders_service: "الطلبات الجارية في الصالة"
+                active_orders_service: "الطلبات الجارية في الصالة",
+                media_title: "مباشر من مطابخنا وعروض اليوم"
             },
             es: {
                 title_kds: "Panel de Control",
@@ -612,7 +758,8 @@
                 th_table: "Mesa",
                 th_server: "Camarero Asignado",
                 unassigned: "Sin asignar",
-                active_orders_service: "Pedidos Activos en Sala"
+                active_orders_service: "Pedidos Activos en Sala",
+                media_title: "En directo desde la cocina"
             }
         };
 
@@ -728,7 +875,7 @@
                 'chef_de_salle': '🤵 ' + t.title_kds + ' - Chef de Salle',
                 'serveur': '🏃 ' + t.title_kds + ' - Serveur',
                 'bar': '🍹 ' + t.title_kds + ' - Bar',
-                'technique': '📺 ' + t.pickup_ready + ' (Starbucks)',
+                'technique': '📺 ' + t.pickup_ready + ' (Borne Retrait)',
                 'gestionnaire': '📈 ' + t.title_kds + ' - Direction'
             };
             document.getElementById('dashboard-role-title').innerText = roleLabels[activeRole] || t.title_kds;
@@ -784,31 +931,60 @@
             const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
             const mainContent = document.getElementById('dashboard-main-content');
             
-            // 1. PUBLIC PICKUP SCREEN VIEW (Starbucks Model)
+            // 1. PUBLIC PICKUP SCREEN VIEW (Comptoir Public de Retrait avec Vidéo Démo & Promos)
             if (activeRole === 'technique') {
                 const cookingOrders = orders.filter(o => o.order_status === 'en_cuisine');
                 const readyOrders = orders.filter(o => o.order_status === 'prete');
+                const activePromo = promoVideos[currentPromoVideoIndex] || promoVideos[0];
 
                 mainContent.innerHTML = `
                     <div class="pickup-container">
+                        <!-- Column 1: Cooking / In Prep -->
                         <div class="pickup-column">
                             <div class="pickup-title"><i class="fa-solid fa-spinner fa-spin" style="color:#ef4444;"></i> ${t.pickup_cooking}</div>
                             <div class="pickup-list">
                                 ${cookingOrders.length === 0 ? `<div style="color:var(--text-muted); font-style:italic;">${t.pickup_no_cooking}</div>` : 
                                   cookingOrders.map((o, index) => `
                                     <div class="pickup-name-card">
-                                        ${o.client_name} <span style="font-size:16px; color:var(--text-muted); margin-left:10px;">#Q-${index+1}</span>
+                                        ${o.client_name} <span style="font-size:15px; color:var(--text-muted); margin-left:10px;">#Q-${index+1}</span>
                                     </div>
                                 `).join('')}
                             </div>
                         </div>
+
+                        <!-- Column 2: Ready for Pickup -->
                         <div class="pickup-column">
                             <div class="pickup-title" style="color:#10b981;"><i class="fa-solid fa-bell"></i> ${t.pickup_ready}</div>
                             <div class="pickup-list">
                                 ${readyOrders.length === 0 ? `<div style="color:var(--text-muted); font-style:italic;">${t.pickup_no_ready}</div>` : 
                                   readyOrders.map((o) => `
                                     <div class="pickup-name-card ready">
-                                        🎉 ${o.client_name} <span style="font-size:16px; color:#10b981; margin-left:10px;">(${t.table_prefix} ${o.table_number})</span>
+                                        🎉 ${o.client_name} <span style="font-size:15px; color:#10b981; margin-left:10px;">(${t.table_prefix} ${o.table_number})</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Column 3: Live Preparation Video Reel & Promotions Showcase -->
+                        <div class="pickup-media-column">
+                            <div class="pickup-title" style="font-size:20px; color:var(--primary); margin-bottom:12px; padding-bottom:8px;">
+                                <i class="fa-solid fa-play-circle"></i> ${t.media_title}
+                            </div>
+                            
+                            <!-- Main Video Player Screen -->
+                            <div class="promo-video-wrapper">
+                                <video id="kiosk-promo-video" src="${activePromo.src}" autoplay muted loop playsinline></video>
+                                <span class="video-overlay-badge" id="kiosk-video-badge">${activePromo.badge}</span>
+                            </div>
+
+                            <!-- Playlist Switcher Tabs -->
+                            <div class="video-playlist-tabs">
+                                ${promoVideos.map((vid, idx) => `
+                                    <div class="playlist-tab ${idx === currentPromoVideoIndex ? 'active' : ''}" onclick="setPromoVideo(${idx})">
+                                        <div class="playlist-tab-info">
+                                            <strong>${vid.title}</strong>
+                                            <span>${vid.desc}</span>
+                                        </div>
                                     </div>
                                 `).join('')}
                             </div>

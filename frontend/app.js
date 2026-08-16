@@ -29,9 +29,9 @@ const translations = {
         btn_confirm_payment: "Confirmer le paiement",
         btn_processing: "Traitement...",
         security_badge: "Paiement 100% sécurisé et direct pour L'Atelier de Chris.",
-        success_title: "Paiement Réussi !",
+        success_title: "Suivi de Commande en Direct",
         success_thanks: "Merci",
-        success_validated: "votre commande a été validée.",
+        success_validated: "votre commande est en cours de préparation.",
         order_prefix: "Commande",
         queue_prefix: "Position File d'Attente",
         pickup_toast: "Vous recevrez une alerte sur votre écran dès qu'elle sera prête au comptoir de retrait !",
@@ -39,8 +39,18 @@ const translations = {
         step_kitchen: "En cuisine",
         step_ready: "Prête",
         btn_back_menu: "Retour au Menu",
+        btn_minimize_tracker: "Réduire & Continuer à Parcourir",
         notif_ready_title: "Ciao Byebye - Commande Prête !",
-        notif_ready_body: "votre commande est prête au comptoir. Ciao byebye !"
+        notif_ready_body: "votre commande est prête au comptoir. Ciao byebye !",
+        account_title: "Mon Espace Client",
+        order_in_progress: "Commande en cours",
+        btn_track: "Suivre",
+        btn_link_account: "Se connecter / Lier un compte",
+        btn_logout: "Réinitialiser / Se déconnecter",
+        drawer_active_order_title: "Commande en cours de préparation",
+        btn_view_live_tracker: "Voir le suivi en direct",
+        status_cooking_bar: "🔥 En cuisine (Table {table}) - File #{queue}",
+        status_ready_bar: "🎉 Prête au comptoir de retrait !"
     },
     en: {
         splash_title: "Welcome to Ciao Byebye",
@@ -71,9 +81,9 @@ const translations = {
         btn_confirm_payment: "Confirm Payment",
         btn_processing: "Processing...",
         security_badge: "100% direct & secure payment for L'Atelier de Chris.",
-        success_title: "Payment Successful!",
+        success_title: "Live Order Tracker",
         success_thanks: "Thank you",
-        success_validated: "your order has been validated.",
+        success_validated: "your order is being prepared in the kitchen.",
         order_prefix: "Order",
         queue_prefix: "Queue Position",
         pickup_toast: "You will receive an alert as soon as it's ready at the pickup counter!",
@@ -81,8 +91,18 @@ const translations = {
         step_kitchen: "Cooking",
         step_ready: "Ready",
         btn_back_menu: "Back to Menu",
+        btn_minimize_tracker: "Minimize & Continue Browsing",
         notif_ready_title: "Ciao Byebye - Order Ready!",
-        notif_ready_body: "your order is ready at the counter. Ciao byebye!"
+        notif_ready_body: "your order is ready at the counter. Ciao byebye!",
+        account_title: "My Client Space",
+        order_in_progress: "Active Order",
+        btn_track: "Track",
+        btn_link_account: "Sign in / Link Account",
+        btn_logout: "Reset / Sign Out",
+        drawer_active_order_title: "Active Order Preparation",
+        btn_view_live_tracker: "View live tracking",
+        status_cooking_bar: "🔥 Cooking (Table {table}) - Queue #{queue}",
+        status_ready_bar: "🎉 Ready for pickup at the counter!"
     },
     ar: {
         splash_title: "مرحباً بكم في تشاو باي باي",
@@ -113,9 +133,9 @@ const translations = {
         btn_confirm_payment: "تأكيد الدفع",
         btn_processing: "جاري المعالجة...",
         security_badge: "دفع آمن ومباشر 100% لمطعم ورشة كريس.",
-        success_title: "تم الدفع بنجاح !",
+        success_title: "تتبع الطلب مباشرة",
         success_thanks: "شكراً لك",
-        success_validated: "تم تأكيد طلبك وإرساله للمطبخ.",
+        success_validated: "طلبك قيد التحضير في المطبخ حالياً.",
         order_prefix: "رقم الطلب",
         queue_prefix: "الترتيب في قائمة الانتظار",
         pickup_toast: "ستتلقى إشعاراً فور أن يصبح طلبك جاهزاً للاستلام عند المنصة !",
@@ -123,8 +143,18 @@ const translations = {
         step_kitchen: "في المطبخ",
         step_ready: "جاهز",
         btn_back_menu: "العودة للقائمة",
+        btn_minimize_tracker: "تصغير ومتابعة التصفح",
         notif_ready_title: "تشاو باي باي - طلبك جاهز !",
-        notif_ready_body: "طلبك جاهز الآن للاستلام عند المنصة. تشاو باي باي !"
+        notif_ready_body: "طلبك جاهز الآن للاستلام عند المنصة. تشاو باي باي !",
+        account_title: "حسابي والطلبات",
+        order_in_progress: "طلب جاري التحضير",
+        btn_track: "متابعة",
+        btn_link_account: "تسجيل الدخول / ربط الحساب",
+        btn_logout: "تسجيل الخروج",
+        drawer_active_order_title: "طلب قيد الإعداد في المطبخ",
+        btn_view_live_tracker: "عرض التتبع المباشر",
+        status_cooking_bar: "🔥 في المطبخ (طاولة {table}) - الدور #{queue}",
+        status_ready_bar: "🎉 طلبك جاهز للاستلام عند المنصة !"
     },
     es: {
         splash_title: "Bienvenido a Ciao Byebye",
@@ -155,9 +185,9 @@ const translations = {
         btn_confirm_payment: "Confirmar Pago",
         btn_processing: "Procesando...",
         security_badge: "Pago 100% seguro y directo para L'Atelier de Chris.",
-        success_title: "¡Pago Correcto!",
+        success_title: "Seguimiento en Directo",
         success_thanks: "Gracias",
-        success_validated: "su pedido ha sido validado.",
+        success_validated: "su pedido está en preparación en cocina.",
         order_prefix: "Pedido",
         queue_prefix: "Posición en Cola",
         pickup_toast: "¡Recibirá una notificación cuando esté listo en el mostrador!",
@@ -165,8 +195,18 @@ const translations = {
         step_kitchen: "En cocina",
         step_ready: "Listo",
         btn_back_menu: "Volver al Menú",
+        btn_minimize_tracker: "Minimizar y Seguir Navegando",
         notif_ready_title: "¡Ciao Byebye - Pedido Listo!",
-        notif_ready_body: "su pedido está listo en el mostrador. ¡Ciao byebye!"
+        notif_ready_body: "su pedido está listo en el mostrador. ¡Ciao byebye!",
+        account_title: "Mi Cuenta",
+        order_in_progress: "Pedido Activo",
+        btn_track: "Seguir",
+        btn_link_account: "Iniciar Sesión / Vincular",
+        btn_logout: "Cerrar Sesión / Reset",
+        drawer_active_order_title: "Pedido en Preparación",
+        btn_view_live_tracker: "Ver seguimiento en vivo",
+        status_cooking_bar: "🔥 En cocina (Mesa {table}) - Cola #{queue}",
+        status_ready_bar: "🎉 ¡Listo para recoger en mostrador!"
     }
 };
 
@@ -186,6 +226,7 @@ let currentCurrency = localStorage.getItem('ciao_currency') || 'EUR';
 const cart = [];
 let currentCategory = 'all';
 let products = [];
+let activeOrder = null;
 
 // Multilingual product content overrides
 const productTranslations = {
@@ -228,7 +269,7 @@ const paymentModal = document.getElementById('payment-modal');
 const paymentModalOverlay = document.getElementById('payment-modal-overlay');
 const paymentAmount = document.getElementById('payment-amount');
 
-// Success Modal DOM
+// Success / Tracker Modal DOM
 const successModal = document.getElementById('success-modal');
 const successModalOverlay = document.getElementById('success-modal-overlay');
 const successClientName = document.getElementById('success-client-name');
@@ -240,11 +281,7 @@ function formatPrice(euroAmount) {
     const curr = currencies[currentCurrency] || currencies.EUR;
     const converted = euroAmount * curr.rate;
     const formattedNum = converted.toFixed(2);
-    if (curr.position === 'before') {
-        return `${curr.symbol} ${formattedNum}`;
-    } else {
-        return `${formattedNum} ${curr.symbol}`;
-    }
+    return curr.position === 'before' ? `${curr.symbol} ${formattedNum}` : `${formattedNum} ${curr.symbol}`;
 }
 
 // Change Language
@@ -254,7 +291,6 @@ function changeLanguage(lang) {
     const langSelect = document.getElementById('lang-select');
     if (langSelect) langSelect.value = lang;
 
-    // Apply RTL if Arabic
     if (lang === 'ar') {
         document.documentElement.setAttribute('dir', 'rtl');
         document.documentElement.setAttribute('lang', 'ar');
@@ -266,6 +302,7 @@ function changeLanguage(lang) {
     applyTranslations();
     renderMenu();
     updateCartUI();
+    updateActiveOrderFloatingBar();
 }
 
 // Change Currency
@@ -290,7 +327,282 @@ function applyTranslations() {
     });
 }
 
-// Startup
+// ==========================================
+// CLIENT SESSION & 3-HOUR GUEST PERSISTENCE
+// ==========================================
+
+const GUEST_TTL_MS = 3 * 3600 * 1000; // 3 hours in milliseconds
+
+function initClientSession() {
+    const isAuth = sessionStorage.getItem('ciao_byebye_client_auth') === 'true';
+    const authName = sessionStorage.getItem('ciao_byebye_client_name');
+    
+    if (isAuth && authName) {
+        // Authenticated user session
+        setClientIdentity(authName, true);
+        dismissClientAuth();
+    } else {
+        // Guest user session with 3h TTL check
+        const guestExpiresAt = parseInt(localStorage.getItem('ciao_guest_expires_at'), 10);
+        const now = Date.now();
+
+        if (guestExpiresAt && now < guestExpiresAt) {
+            // Valid guest session exists
+            const savedGuestName = localStorage.getItem('ciao_guest_name') || 'Alex';
+            setClientIdentity(savedGuestName, false, guestExpiresAt);
+            dismissClientAuth();
+        } else {
+            // Expired or new guest session
+            if (guestExpiresAt && now >= guestExpiresAt) {
+                // Clear expired guest state
+                localStorage.removeItem('ciao_guest_id');
+                localStorage.removeItem('ciao_guest_name');
+                localStorage.removeItem('ciao_guest_expires_at');
+                localStorage.removeItem('ciao_active_order');
+            }
+            // Create fresh 3-hour provisional session
+            const newExpiry = now + GUEST_TTL_MS;
+            const guestId = 'guest_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('ciao_guest_id', guestId);
+            localStorage.setItem('ciao_guest_expires_at', newExpiry.toString());
+            setClientIdentity('Alex', false, newExpiry);
+        }
+    }
+
+    // Restore active order if available and not expired
+    restoreActiveOrder();
+}
+
+function setClientIdentity(name, isAuthenticated, expiresAt) {
+    if (clientNameInput) clientNameInput.value = name;
+    
+    const headerName = document.getElementById('header-user-name');
+    if (headerName) headerName.innerText = name;
+
+    const drawerName = document.getElementById('drawer-user-name');
+    if (drawerName) drawerName.innerText = name;
+
+    const statusBadge = document.getElementById('drawer-session-status');
+    const timerLabel = document.getElementById('drawer-session-timer');
+    const authBtn = document.getElementById('drawer-auth-btn');
+    const logoutBtn = document.getElementById('drawer-logout-btn');
+
+    if (isAuthenticated) {
+        if (statusBadge) {
+            statusBadge.innerText = 'Compte SSO Vérifié';
+            statusBadge.className = 'session-badge-auth';
+        }
+        if (timerLabel) timerLabel.innerText = 'Session Permanente';
+        if (authBtn) authBtn.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'block';
+    } else {
+        if (statusBadge) {
+            statusBadge.innerText = 'Session Invité (3h)';
+            statusBadge.className = 'session-badge-guest';
+        }
+        if (timerLabel && expiresAt) {
+            const remainingMin = Math.max(0, Math.floor((expiresAt - Date.now()) / 60000));
+            const hours = Math.floor(remainingMin / 60);
+            const mins = remainingMin % 60;
+            timerLabel.innerText = `Valide encore ${hours}h ${mins}min`;
+        }
+        if (authBtn) authBtn.style.display = 'block';
+        if (logoutBtn) logoutBtn.style.display = 'none';
+    }
+}
+
+// Drawer Toggle
+function toggleAccountDrawer() {
+    const drawer = document.getElementById('account-drawer');
+    const overlay = document.getElementById('account-drawer-overlay');
+    if (drawer && overlay) {
+        drawer.classList.toggle('active');
+        overlay.classList.toggle('active');
+    }
+}
+
+function openClientAuthModal() {
+    toggleAccountDrawer();
+    const modal = document.getElementById('client-auth-overlay');
+    if (modal) modal.classList.add('active');
+}
+
+function clearClientSession() {
+    sessionStorage.removeItem('ciao_byebye_client_auth');
+    sessionStorage.removeItem('ciao_byebye_client_name');
+    localStorage.removeItem('ciao_guest_id');
+    localStorage.removeItem('ciao_guest_name');
+    localStorage.removeItem('ciao_guest_expires_at');
+    localStorage.removeItem('ciao_active_order');
+    activeOrder = null;
+    updateActiveOrderFloatingBar();
+    location.reload();
+}
+
+// ==========================================
+// ACTIVE ORDER TRACKING & FLOATING WIDGET
+// ==========================================
+
+function saveActiveOrder(orderData) {
+    activeOrder = {
+        ...orderData,
+        expiresAt: Date.now() + GUEST_TTL_MS
+    };
+    localStorage.setItem('ciao_active_order', JSON.stringify(activeOrder));
+    updateActiveOrderFloatingBar();
+}
+
+function restoreActiveOrder() {
+    const saved = localStorage.getItem('ciao_active_order');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            if (parsed && Date.now() < (parsed.expiresAt || (Date.now() + 1000))) {
+                activeOrder = parsed;
+                updateActiveOrderFloatingBar();
+                updateTrackerSteps(activeOrder.status);
+            } else {
+                localStorage.removeItem('ciao_active_order');
+                activeOrder = null;
+            }
+        } catch (e) {
+            console.error('Error restoring active order:', e);
+        }
+    }
+}
+
+function updateActiveOrderFloatingBar() {
+    const bar = document.getElementById('active-order-floating-bar');
+    const drawerOrderSection = document.getElementById('drawer-active-order-section');
+    if (!bar) return;
+
+    const t = translations[currentLang] || translations.fr;
+
+    if (!activeOrder) {
+        bar.classList.remove('active');
+        if (drawerOrderSection) drawerOrderSection.style.display = 'none';
+        return;
+    }
+
+    bar.classList.add('active');
+    const orderIdShort = (activeOrder.orderId || '').substring(0, 8).toUpperCase();
+    
+    // Update floating bar text
+    const barId = document.getElementById('tracker-bar-order-id');
+    if (barId) barId.innerText = orderIdShort;
+
+    const statusTextEl = document.getElementById('tracker-bar-status-text');
+    const iconEl = document.getElementById('tracker-bar-icon');
+
+    if (activeOrder.status === 'prete') {
+        if (statusTextEl) statusTextEl.innerText = t.status_ready_bar;
+        if (iconEl) {
+            iconEl.innerHTML = '<i class="fa-solid fa-mug-hot"></i>';
+            iconEl.className = 'tracker-live-pulse ready';
+        }
+    } else {
+        const rawStatus = t.status_cooking_bar || "🔥 En cuisine (Table {table}) - File #{queue}";
+        const formatted = rawStatus
+            .replace('{table}', activeOrder.tableNumber || '05')
+            .replace('{queue}', activeOrder.queuePos || 1);
+        if (statusTextEl) statusTextEl.innerText = formatted;
+        if (iconEl) {
+            iconEl.innerHTML = '<i class="fa-solid fa-fire-burner"></i>';
+            iconEl.className = 'tracker-live-pulse';
+        }
+    }
+
+    // Update Drawer Active Order section
+    if (drawerOrderSection) {
+        drawerOrderSection.style.display = 'block';
+        const dOrderId = document.getElementById('drawer-order-id');
+        const dOrderTable = document.getElementById('drawer-order-table');
+        const dOrderQueue = document.getElementById('drawer-order-queue');
+        const dOrderStatus = document.getElementById('drawer-order-status');
+
+        if (dOrderId) dOrderId.innerText = '#' + orderIdShort;
+        if (dOrderTable) dOrderTable.innerText = activeOrder.tableNumber || '05';
+        if (dOrderQueue) dOrderQueue.innerText = `#Q-${activeOrder.queuePos || 1}`;
+        if (dOrderStatus) {
+            if (activeOrder.status === 'prete') {
+                dOrderStatus.innerText = t.step_ready;
+                dOrderStatus.className = 'status-pill-ready';
+            } else {
+                dOrderStatus.innerText = t.step_kitchen;
+                dOrderStatus.className = 'status-pill-cooking';
+            }
+        }
+    }
+}
+
+function openActiveOrderModal() {
+    if (!activeOrder) return;
+    
+    // Close account drawer if open
+    const drawer = document.getElementById('account-drawer');
+    const drawerOverlay = document.getElementById('account-drawer-overlay');
+    if (drawer) drawer.classList.remove('active');
+    if (drawerOverlay) drawerOverlay.classList.remove('active');
+
+    // Populate modal fields
+    successClientName.innerText = activeOrder.clientName || 'Alex';
+    successTableNum.innerText = activeOrder.tableNumber || '05';
+    successOrderId.innerText = (activeOrder.orderId || '').substring(0, 8).toUpperCase();
+    successOrderId.dataset.dbId = activeOrder.orderId;
+
+    const queuePosEl = document.getElementById('success-queue-pos');
+    if (queuePosEl) {
+        queuePosEl.innerText = `#Q-${activeOrder.queuePos || 1}`;
+    }
+
+    updateTrackerSteps(activeOrder.status);
+
+    successModal.classList.add('active');
+    successModalOverlay.classList.add('active');
+}
+
+function closeSuccessModal() {
+    successModal.classList.remove('active');
+    successModalOverlay.classList.remove('active');
+    updateActiveOrderFloatingBar();
+}
+
+function updateTrackerSteps(status) {
+    const stepPaid = document.getElementById('step-tracker-paid');
+    const stepCooking = document.getElementById('step-tracker-cooking');
+    const stepReady = document.getElementById('step-tracker-ready');
+
+    if (stepPaid) stepPaid.classList.add('active');
+
+    if (status === 'prete') {
+        if (stepCooking) {
+            stepCooking.classList.add('active');
+            const bullet = stepCooking.querySelector('.step-bullet');
+            if (bullet) bullet.classList.remove('progress-pulse');
+        }
+        if (stepReady) {
+            stepReady.classList.add('active');
+            const bullet = stepReady.querySelector('.step-bullet');
+            if (bullet) bullet.classList.add('progress-pulse');
+        }
+    } else {
+        if (stepCooking) {
+            stepCooking.classList.add('active');
+            const bullet = stepCooking.querySelector('.step-bullet');
+            if (bullet) bullet.classList.add('progress-pulse');
+        }
+        if (stepReady) {
+            stepReady.classList.remove('active');
+            const bullet = stepReady.querySelector('.step-bullet');
+            if (bullet) bullet.classList.remove('progress-pulse');
+        }
+    }
+}
+
+// ==========================================
+// APPLICATION LIFECYCLE & MENU LOGIC
+// ==========================================
+
 document.addEventListener('DOMContentLoaded', () => {
     // Sync selectors
     const langSelect = document.getElementById('lang-select');
@@ -301,13 +613,7 @@ document.addEventListener('DOMContentLoaded', () => {
     changeLanguage(currentLang);
     requestNotificationPermission();
     loadMenu();
-
-    // Auto-restore client auth if exists
-    const savedName = sessionStorage.getItem('ciao_byebye_client_name');
-    if (savedName) {
-        if (clientNameInput) clientNameInput.value = savedName;
-        dismissClientAuth();
-    }
+    initClientSession();
 });
 
 // Fetch menu dynamically from Backend database API
@@ -560,28 +866,18 @@ async function simulatePaymentSuccess() {
         
         closePayment();
         
-        // Populate success fields
-        successClientName.innerText = clientName;
-        successTableNum.innerText = tableNumber;
-        successOrderId.innerText = data.orderId.substring(0, 8).toUpperCase();
-        successOrderId.dataset.dbId = data.orderId;
+        // Save active order with 3-hour persistence
+        saveActiveOrder({
+            orderId: data.orderId,
+            tableNumber: tableNumber,
+            clientName: clientName,
+            queuePos: data.queuePos || 1,
+            status: 'en_cuisine',
+            createdAt: Date.now()
+        });
 
-        // Show queue position
-        const queuePosEl = document.getElementById('success-queue-pos');
-        if (queuePosEl) {
-            queuePosEl.innerText = `#Q-${data.queuePos || 1}`;
-        }
-
-        // Reset step trackers
-        const steps = document.querySelectorAll('.order-status-tracker .status-step');
-        steps[0].classList.add('active'); // Payé
-        steps[1].classList.add('active'); // En cuisine
-        steps[1].querySelector('.step-bullet').classList.add('progress-pulse');
-        steps[2].classList.remove('active'); // Prête
-        steps[2].querySelector('.step-bullet').classList.remove('progress-pulse');
-
-        successModal.classList.add('active');
-        successModalOverlay.classList.add('active');
+        // Open live tracker modal
+        openActiveOrderModal();
         
         cart.length = 0;
         updateCartUI();
@@ -596,29 +892,22 @@ async function simulatePaymentSuccess() {
     }
 }
 
-function resetApp() {
-    successModal.classList.remove('active');
-    successModalOverlay.classList.remove('active');
-}
-
 // WebSockets listener for real-time order status tracking
 const socket = typeof io !== 'undefined' ? io() : null;
 
 if (socket) {
     socket.on('order_status_updated', (data) => {
-        const dbId = successOrderId.dataset.dbId;
-        if (data.orderId === dbId) {
-            const steps = document.querySelectorAll('.order-status-tracker .status-step');
+        if (activeOrder && (data.orderId === activeOrder.orderId)) {
+            activeOrder.status = data.status;
+            saveActiveOrder(activeOrder);
+            updateTrackerSteps(data.status);
+            updateActiveOrderFloatingBar();
+
+            const t = translations[currentLang] || translations.fr;
             if (data.status === 'prete') {
-                steps[1].querySelector('.step-bullet').classList.remove('progress-pulse');
-                steps[2].classList.add('active');
-                
-                // Native desktop notification trigger
-                const clientName = successClientName.innerText;
-                const t = translations[currentLang] || translations.fr;
                 if ('Notification' in window && Notification.permission === 'granted') {
                     new Notification(t.notif_ready_title, {
-                        body: `${clientName}, ${t.notif_ready_body}`,
+                        body: `${activeOrder.clientName}, ${t.notif_ready_body}`,
                         icon: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=100'
                     });
                 }
@@ -636,10 +925,10 @@ function clientSSO(provider) {
     };
     const chosenName = mockNames[provider] || 'Alex';
     
-    clientNameInput.value = chosenName;
     sessionStorage.setItem('ciao_byebye_client_auth', 'true');
     sessionStorage.setItem('ciao_byebye_client_name', chosenName);
     
+    setClientIdentity(chosenName, true);
     dismissClientAuth();
 }
 

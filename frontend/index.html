@@ -61,12 +61,61 @@
                         <option value="AED">AED (د.إ)</option>
                     </select>
                 </div>
+                
                 <div class="table-badge">
                     <i class="fa-solid fa-chair"></i> <span data-i18n="table_prefix">Table</span> <span id="table-number">05</span>
                 </div>
+
+                <!-- Client Account / Session Button -->
+                <button class="client-account-btn glass" id="client-account-btn" onclick="toggleAccountDrawer()" aria-label="Espace Client">
+                    <i class="fa-solid fa-user-circle"></i> <span id="header-user-name">Invité</span>
+                </button>
             </div>
         </div>
     </header>
+
+    <!-- Client Account & Session Drawer -->
+    <div class="account-drawer-overlay" id="account-drawer-overlay" onclick="toggleAccountDrawer()"></div>
+    <div class="account-drawer glass" id="account-drawer">
+        <div class="account-header">
+            <h3><i class="fa-solid fa-user-shield"></i> <span data-i18n="account_title">Mon Espace Client</span></h3>
+            <button class="close-drawer-btn" onclick="toggleAccountDrawer()" aria-label="Fermer"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="account-body">
+            <div class="account-profile-card">
+                <div class="profile-avatar"><i class="fa-solid fa-user"></i></div>
+                <div class="profile-meta">
+                    <strong id="drawer-user-name">Alex</strong>
+                    <span id="drawer-session-status" class="session-badge-guest">Session Invité (3h)</span>
+                    <span id="drawer-session-timer" style="font-size:11px; color:var(--text-muted);">Valide 3h</span>
+                </div>
+            </div>
+
+            <div class="drawer-section" id="drawer-active-order-section" style="display:none;">
+                <h4 data-i18n="drawer_active_order_title"><i class="fa-solid fa-receipt"></i> Commande en cours</h4>
+                <div class="active-order-card-compact glass" onclick="openActiveOrderModal()">
+                    <div class="order-compact-header">
+                        <span id="drawer-order-id">#M-8492</span>
+                        <span id="drawer-order-status" class="status-pill-cooking">En cuisine</span>
+                    </div>
+                    <div class="order-compact-info">
+                        <span><span data-i18n="table_prefix">Table</span> <strong id="drawer-order-table">05</strong></span>
+                        <span><span data-i18n="queue_prefix">File</span> : <strong id="drawer-order-queue">#Q-1</strong></span>
+                    </div>
+                    <button class="drawer-view-order-btn" data-i18n="btn_view_live_tracker"><i class="fa-solid fa-clock"></i> Voir le suivi en direct</button>
+                </div>
+            </div>
+
+            <div class="drawer-actions">
+                <button class="drawer-action-btn" id="drawer-auth-btn" onclick="openClientAuthModal()">
+                    <i class="fa-solid fa-right-to-bracket"></i> <span data-i18n="btn_link_account">Se connecter / Lier un compte</span>
+                </button>
+                <button class="drawer-action-btn danger" id="drawer-logout-btn" onclick="clearClientSession()" style="display:none;">
+                    <i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="btn_logout">Se déconnecter</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Main Content Container -->
     <main class="app-main">
@@ -97,6 +146,22 @@
             </div>
         </section>
     </main>
+
+    <!-- Floating Live Active Order Tracker Bar -->
+    <div class="active-order-floating-bar" id="active-order-floating-bar" onclick="openActiveOrderModal()">
+        <div class="tracker-live-pulse" id="tracker-bar-icon"><i class="fa-solid fa-fire-burner"></i></div>
+        <div class="tracker-bar-text">
+            <div class="tracker-bar-title">
+                <span data-i18n="order_in_progress">Commande en cours</span> #<span id="tracker-bar-order-id">M-8492</span>
+            </div>
+            <div class="tracker-bar-subtitle" id="tracker-bar-status-text">
+                🔥 En cuisine (Table 05)
+            </div>
+        </div>
+        <button class="tracker-bar-open-btn" aria-label="Suivre">
+            <i class="fa-solid fa-chevron-up"></i> <span data-i18n="btn_track">Suivre</span>
+        </button>
+    </div>
 
     <!-- Floating Shopping Cart Button -->
     <div class="cart-floating-btn" id="cart-floating-btn" onclick="toggleCart()">
@@ -179,12 +244,13 @@
         </div>
     </div>
 
-    <!-- Success Modal Mockup -->
-    <div class="success-modal-overlay" id="success-modal-overlay"></div>
+    <!-- Success / Order Live Tracker Modal -->
+    <div class="success-modal-overlay" id="success-modal-overlay" onclick="closeSuccessModal()"></div>
     <div class="success-modal glass" id="success-modal">
+        <button class="close-success-btn" onclick="closeSuccessModal()" aria-label="Minimiser"><i class="fa-solid fa-chevron-down"></i></button>
         <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
-        <h2 data-i18n="success_title">Paiement Réussi !</h2>
-        <p><span data-i18n="success_thanks">Merci</span> <span id="success-client-name">Alex</span>, <span data-i18n="success_validated">votre commande a été validée.</span></p>
+        <h2 data-i18n="success_title">Suivi de Commande en Direct</h2>
+        <p><span data-i18n="success_thanks">Merci</span> <span id="success-client-name">Alex</span>, <span data-i18n="success_validated">votre commande est en cours de préparation.</span></p>
         <div class="success-details">
             <p><strong><span data-i18n="table_prefix">Table</span> :</strong> <span id="success-table-num">05</span></p>
             <p><strong><span data-i18n="order_prefix">Commande</span> :</strong> #<span id="success-order-id">M-8492</span></p>
@@ -194,21 +260,21 @@
         
         <!-- Live order status tracking -->
         <div class="order-status-tracker">
-            <div class="status-step active">
+            <div class="status-step active" id="step-tracker-paid">
                 <div class="step-bullet"><i class="fa-solid fa-receipt"></i></div>
                 <span data-i18n="step_paid">Payée</span>
             </div>
-            <div class="status-step active">
+            <div class="status-step active" id="step-tracker-cooking">
                 <div class="step-bullet progress-pulse"><i class="fa-solid fa-fire-burner"></i></div>
                 <span data-i18n="step_kitchen">En cuisine</span>
             </div>
-            <div class="status-step">
+            <div class="status-step" id="step-tracker-ready">
                 <div class="step-bullet"><i class="fa-solid fa-mug-hot"></i></div>
                 <span data-i18n="step_ready">Prête</span>
             </div>
         </div>
 
-        <button class="back-to-menu-btn" onclick="resetApp()" data-i18n="btn_back_menu">Retour au Menu</button>
+        <button class="back-to-menu-btn" onclick="closeSuccessModal()" data-i18n="btn_minimize_tracker">Réduire & Continuer à Parcourir</button>
     </div>
 
     <!-- Socket.io client -->
