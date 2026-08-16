@@ -21,12 +21,17 @@ const translations = {
         cart_subtotal: "Sous-total",
         cart_total: "Total",
         btn_proceed_pay: "Payer et Envoyer en Cuisine",
-        pay_modal_title: "Paiement Sécurisé Stripe",
+        pay_modal_title: "Paiement & Envoi en Cuisine",
         amount_to_pay: "Montant à régler :",
+        tab_card: "Carte / Apple Pay",
+        tab_cash: "Espèces en Caisse",
+        cash_info_title: "Règlement en Espèces en Caisse",
+        cash_info_desc: "Votre commande est transmise immédiatement en cuisine. Vous règlerez en espèces au comptoir ou auprès de votre serveur.",
         card_number: "Numéro de carte",
         card_exp: "Expiration",
         card_cvc: "CVC",
         btn_confirm_payment: "Confirmer le paiement",
+        btn_confirm_cash: "Valider la commande (Espèces en Caisse)",
         btn_processing: "Traitement...",
         security_badge: "Paiement 100% sécurisé et direct pour L'Atelier de Chris.",
         success_title: "Suivi de Commande en Direct",
@@ -34,6 +39,10 @@ const translations = {
         success_validated: "votre commande est en cours de préparation.",
         order_prefix: "Commande",
         queue_prefix: "Position File d'Attente",
+        payment_status_label: "Règlement",
+        payment_status_paid: "✅ Payé Stripe",
+        payment_status_cash_pending: "💵 À régler en espèces en caisse",
+        payment_status_cash_paid: "✅ Réglé en espèces",
         pickup_toast: "Vous recevrez une alerte sur votre écran dès qu'elle sera prête au comptoir de retrait !",
         step_paid: "Payée",
         step_kitchen: "En cuisine",
@@ -50,7 +59,9 @@ const translations = {
         drawer_active_order_title: "Commande en cours de préparation",
         btn_view_live_tracker: "Voir le suivi en direct",
         status_cooking_bar: "🔥 En cuisine (Table {table}) - File #{queue}",
-        status_ready_bar: "🎉 Prête au comptoir de retrait !"
+        status_ready_bar: "🎉 Prête au comptoir de retrait !",
+        notif_cash_paid_title: "Paiement Encaissé !",
+        notif_cash_paid_body: "Votre règlement en espèces a été validé en caisse. Bon appétit !"
     },
     en: {
         splash_title: "Welcome to Ciao Byebye",
@@ -73,12 +84,17 @@ const translations = {
         cart_subtotal: "Subtotal",
         cart_total: "Total",
         btn_proceed_pay: "Pay & Send to Kitchen",
-        pay_modal_title: "Stripe Secure Payment",
+        pay_modal_title: "Payment & Send to Kitchen",
         amount_to_pay: "Amount to pay:",
+        tab_card: "Card / Apple Pay",
+        tab_cash: "Cash at Register",
+        cash_info_title: "Pay with Cash at Counter",
+        cash_info_desc: "Your order is immediately sent to the kitchen. You can pay cash at the register or with your waiter.",
         card_number: "Card number",
         card_exp: "Expiration",
         card_cvc: "CVC",
         btn_confirm_payment: "Confirm Payment",
+        btn_confirm_cash: "Submit Order (Pay Cash at Register)",
         btn_processing: "Processing...",
         security_badge: "100% direct & secure payment for L'Atelier de Chris.",
         success_title: "Live Order Tracker",
@@ -86,6 +102,10 @@ const translations = {
         success_validated: "your order is being prepared in the kitchen.",
         order_prefix: "Order",
         queue_prefix: "Queue Position",
+        payment_status_label: "Payment",
+        payment_status_paid: "✅ Paid Stripe",
+        payment_status_cash_pending: "💵 Pending Cash at Register",
+        payment_status_cash_paid: "✅ Paid in Cash",
         pickup_toast: "You will receive an alert as soon as it's ready at the pickup counter!",
         step_paid: "Paid",
         step_kitchen: "Cooking",
@@ -102,7 +122,9 @@ const translations = {
         drawer_active_order_title: "Active Order Preparation",
         btn_view_live_tracker: "View live tracking",
         status_cooking_bar: "🔥 Cooking (Table {table}) - Queue #{queue}",
-        status_ready_bar: "🎉 Ready for pickup at the counter!"
+        status_ready_bar: "🎉 Ready for pickup at the counter!",
+        notif_cash_paid_title: "Payment Confirmed!",
+        notif_cash_paid_body: "Your cash payment has been verified at the cashier. Enjoy your meal!"
     },
     ar: {
         splash_title: "مرحباً بكم في تشاو باي باي",
@@ -125,12 +147,17 @@ const translations = {
         cart_subtotal: "المجموع الفرعي",
         cart_total: "الإجمالي",
         btn_proceed_pay: "الدفع وإرسال للطهي",
-        pay_modal_title: "دفع آمن ومباشر عبر Stripe",
+        pay_modal_title: "الدفع والإرسال إلى المطبخ",
         amount_to_pay: "المبلغ المطلوب :",
+        tab_card: "بطاقة / Apple Pay",
+        tab_cash: "نقداً عند الصندوق",
+        cash_info_title: "الدفع نقداً عند الصندوق",
+        cash_info_desc: "سيتم إرسال طلبك فوراً إلى المطبخ للتحضير. يمكنك الدفع نقداً عند الصندوق أو للنادل.",
         card_number: "رقم البطاقة",
         card_exp: "تاريخ الانتهاء",
         card_cvc: "رمز الأمان",
         btn_confirm_payment: "تأكيد الدفع",
+        btn_confirm_cash: "تأكيد الطلب (الدفع نقداً)",
         btn_processing: "جاري المعالجة...",
         security_badge: "دفع آمن ومباشر 100% لمطعم ورشة كريس.",
         success_title: "تتبع الطلب مباشرة",
@@ -138,6 +165,10 @@ const translations = {
         success_validated: "طلبك قيد التحضير في المطبخ حالياً.",
         order_prefix: "رقم الطلب",
         queue_prefix: "الترتيب في قائمة الانتظار",
+        payment_status_label: "حالة الدفع",
+        payment_status_paid: "✅ مدفوع إلكترونياً",
+        payment_status_cash_pending: "💵 مطلوب الدفع نقداً عند الصندوق",
+        payment_status_cash_paid: "✅ تم الدفع نقداً",
         pickup_toast: "ستتلقى إشعاراً فور أن يصبح طلبك جاهزاً للاستلام عند المنصة !",
         step_paid: "مدفوع",
         step_kitchen: "في المطبخ",
@@ -154,7 +185,9 @@ const translations = {
         drawer_active_order_title: "طلب قيد الإعداد في المطبخ",
         btn_view_live_tracker: "عرض التتبع المباشر",
         status_cooking_bar: "🔥 في المطبخ (طاولة {table}) - الدور #{queue}",
-        status_ready_bar: "🎉 طلبك جاهز للاستلام عند المنصة !"
+        status_ready_bar: "🎉 طلبك جاهز للاستلام عند المنصة !",
+        notif_cash_paid_title: "تم تأكيد الدفع !",
+        notif_cash_paid_body: "تم تسجيل استلام المبلغ نقداً في الصندوق بنجاح. شهية طيبة !"
     },
     es: {
         splash_title: "Bienvenido a Ciao Byebye",
@@ -177,12 +210,17 @@ const translations = {
         cart_subtotal: "Subtotal",
         cart_total: "Total",
         btn_proceed_pay: "Pagar y Enviar a Cocina",
-        pay_modal_title: "Pago Seguro Stripe",
+        pay_modal_title: "Pago y Envío a Cocina",
         amount_to_pay: "Importe a pagar:",
+        tab_card: "Tarjeta / Apple Pay",
+        tab_cash: "Efectivo en Caja",
+        cash_info_title: "Pago en Efectivo en Caja",
+        cash_info_desc: "Su pedido se envía directamente a cocina. Podrá abonar el importe en efectivo en caja o a su camarero.",
         card_number: "Número de tarjeta",
         card_exp: "Expiración",
         card_cvc: "CVC",
         btn_confirm_payment: "Confirmar Pago",
+        btn_confirm_cash: "Validar Pedido (Pagar en Caja)",
         btn_processing: "Procesando...",
         security_badge: "Pago 100% seguro y directo para L'Atelier de Chris.",
         success_title: "Seguimiento en Directo",
@@ -190,6 +228,10 @@ const translations = {
         success_validated: "su pedido está en preparación en cocina.",
         order_prefix: "Pedido",
         queue_prefix: "Posición en Cola",
+        payment_status_label: "Pago",
+        payment_status_paid: "✅ Pagado Stripe",
+        payment_status_cash_pending: "💵 Pendiente de pago en caja",
+        payment_status_cash_paid: "✅ Pagado en Efectivo",
         pickup_toast: "¡Recibirá una notificación cuando esté listo en el mostrador!",
         step_paid: "Pagado",
         step_kitchen: "En cocina",
@@ -206,7 +248,9 @@ const translations = {
         drawer_active_order_title: "Pedido en Preparación",
         btn_view_live_tracker: "Ver seguimiento en vivo",
         status_cooking_bar: "🔥 En cocina (Mesa {table}) - Cola #{queue}",
-        status_ready_bar: "🎉 ¡Listo para recoger en mostrador!"
+        status_ready_bar: "🎉 ¡Listo para recoger en mostrador!",
+        notif_cash_paid_title: "¡Pago Confirmado!",
+        notif_cash_paid_body: "Su pago en efectivo ha sido validado en caja. ¡Buen provecho!"
     }
 };
 
@@ -227,6 +271,7 @@ const cart = [];
 let currentCategory = 'all';
 let products = [];
 let activeOrder = null;
+let selectedPaymentMethod = 'carte'; // 'carte' | 'especes'
 
 // Multilingual product content overrides
 const productTranslations = {
@@ -284,6 +329,31 @@ function formatPrice(euroAmount) {
     return curr.position === 'before' ? `${curr.symbol} ${formattedNum}` : `${formattedNum} ${curr.symbol}`;
 }
 
+// Payment method switcher
+function setPaymentMethod(method) {
+    selectedPaymentMethod = method;
+    const tabCard = document.getElementById('tab-pay-card');
+    const tabCash = document.getElementById('tab-pay-cash');
+    const cardView = document.getElementById('card-payment-view');
+    const cashView = document.getElementById('cash-payment-view');
+    const btnText = document.getElementById('confirm-payment-btn-text');
+    const t = translations[currentLang] || translations.fr;
+
+    if (method === 'especes') {
+        if (tabCash) tabCash.classList.add('active');
+        if (tabCard) tabCard.classList.remove('active');
+        if (cashView) cashView.style.display = 'block';
+        if (cardView) cardView.style.display = 'none';
+        if (btnText) btnText.innerText = t.btn_confirm_cash;
+    } else {
+        if (tabCard) tabCard.classList.add('active');
+        if (tabCash) tabCash.classList.remove('active');
+        if (cardView) cardView.style.display = 'block';
+        if (cashView) cashView.style.display = 'none';
+        if (btnText) btnText.innerText = t.btn_confirm_payment;
+    }
+}
+
 // Change Language
 function changeLanguage(lang) {
     currentLang = lang;
@@ -303,6 +373,7 @@ function changeLanguage(lang) {
     renderMenu();
     updateCartUI();
     updateActiveOrderFloatingBar();
+    setPaymentMethod(selectedPaymentMethod);
 }
 
 // Change Currency
@@ -338,29 +409,23 @@ function initClientSession() {
     const authName = sessionStorage.getItem('ciao_byebye_client_name');
     
     if (isAuth && authName) {
-        // Authenticated user session
         setClientIdentity(authName, true);
         dismissClientAuth();
     } else {
-        // Guest user session with 3h TTL check
         const guestExpiresAt = parseInt(localStorage.getItem('ciao_guest_expires_at'), 10);
         const now = Date.now();
 
         if (guestExpiresAt && now < guestExpiresAt) {
-            // Valid guest session exists
             const savedGuestName = localStorage.getItem('ciao_guest_name') || 'Alex';
             setClientIdentity(savedGuestName, false, guestExpiresAt);
             dismissClientAuth();
         } else {
-            // Expired or new guest session
             if (guestExpiresAt && now >= guestExpiresAt) {
-                // Clear expired guest state
                 localStorage.removeItem('ciao_guest_id');
                 localStorage.removeItem('ciao_guest_name');
                 localStorage.removeItem('ciao_guest_expires_at');
                 localStorage.removeItem('ciao_active_order');
             }
-            // Create fresh 3-hour provisional session
             const newExpiry = now + GUEST_TTL_MS;
             const guestId = 'guest_' + Math.random().toString(36).substr(2, 9);
             localStorage.setItem('ciao_guest_id', guestId);
@@ -369,7 +434,6 @@ function initClientSession() {
         }
     }
 
-    // Restore active order if available and not expired
     restoreActiveOrder();
 }
 
@@ -487,7 +551,6 @@ function updateActiveOrderFloatingBar() {
     bar.classList.add('active');
     const orderIdShort = (activeOrder.orderId || '').substring(0, 8).toUpperCase();
     
-    // Update floating bar text
     const barId = document.getElementById('tracker-bar-order-id');
     if (barId) barId.innerText = orderIdShort;
 
@@ -537,8 +600,8 @@ function updateActiveOrderFloatingBar() {
 
 function openActiveOrderModal() {
     if (!activeOrder) return;
+    const t = translations[currentLang] || translations.fr;
     
-    // Close account drawer if open
     const drawer = document.getElementById('account-drawer');
     const drawerOverlay = document.getElementById('account-drawer-overlay');
     if (drawer) drawer.classList.remove('active');
@@ -553,6 +616,21 @@ function openActiveOrderModal() {
     const queuePosEl = document.getElementById('success-queue-pos');
     if (queuePosEl) {
         queuePosEl.innerText = `#Q-${activeOrder.queuePos || 1}`;
+    }
+
+    // Payment Status Badge
+    const payBadge = document.getElementById('success-payment-status-badge');
+    if (payBadge) {
+        if (activeOrder.paymentStatus === 'a_payer_en_caisse') {
+            payBadge.innerText = t.payment_status_cash_pending;
+            payBadge.className = 'cash-pending-tag';
+        } else if (activeOrder.paymentStatus === 'paye' && activeOrder.paymentMethod === 'especes') {
+            payBadge.innerText = t.payment_status_cash_paid;
+            payBadge.className = 'paid-tag';
+        } else {
+            payBadge.innerText = t.payment_status_paid;
+            payBadge.className = 'paid-tag';
+        }
     }
 
     updateTrackerSteps(activeOrder.status);
@@ -604,7 +682,6 @@ function updateTrackerSteps(status) {
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Sync selectors
     const langSelect = document.getElementById('lang-select');
     if (langSelect) langSelect.value = currentLang;
     const currSelect = document.getElementById('currency-select');
@@ -616,7 +693,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initClientSession();
 });
 
-// Fetch menu dynamically from Backend database API
 async function loadMenu() {
     try {
         const response = await fetch('/api/menu');
@@ -675,16 +751,11 @@ function getCategoryLabel(category) {
 function requestNotificationPermission() {
     if ('Notification' in window) {
         if (Notification.permission === 'default') {
-            Notification.requestPermission().then(permission => {
-                if (permission === 'granted') {
-                    console.log('Autorisation de notification accordée.');
-                }
-            });
+            Notification.requestPermission().catch(() => {});
         }
     }
 }
 
-// Render Menu Cards dynamically
 function renderMenu() {
     const t = translations[currentLang] || translations.fr;
     const filteredProducts = products.filter(product => {
@@ -727,7 +798,6 @@ function renderMenu() {
     }).join('');
 }
 
-// Category filter click event
 document.querySelectorAll('.category-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
@@ -738,7 +808,6 @@ document.querySelectorAll('.category-btn').forEach(btn => {
     });
 });
 
-// Cart Management
 function addToCart(productId) {
     const product = products.find(p => p.id === productId);
     if (!product) return;
@@ -853,6 +922,7 @@ async function simulatePaymentSuccess() {
             body: JSON.stringify({
                 tableNumber,
                 clientName,
+                paymentMethod: selectedPaymentMethod,
                 items: cart.map(item => ({
                     name: item.name,
                     price: item.price,
@@ -873,10 +943,11 @@ async function simulatePaymentSuccess() {
             clientName: clientName,
             queuePos: data.queuePos || 1,
             status: 'en_cuisine',
+            paymentStatus: data.paymentStatus || (selectedPaymentMethod === 'especes' ? 'a_payer_en_caisse' : 'complete'),
+            paymentMethod: selectedPaymentMethod,
             createdAt: Date.now()
         });
 
-        // Open live tracker modal
         openActiveOrderModal();
         
         cart.length = 0;
@@ -887,7 +958,7 @@ async function simulatePaymentSuccess() {
         console.error('Erreur lors de la création de la commande :', error);
         alert('Erreur lors de l\'envoi de la commande. Veuillez réessayer.');
     } finally {
-        confirmBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> <span>${t.btn_confirm_payment}</span>`;
+        confirmBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> <span id="confirm-payment-btn-text">${selectedPaymentMethod === 'especes' ? t.btn_confirm_cash : t.btn_confirm_payment}</span>`;
         confirmBtn.disabled = false;
     }
 }
@@ -899,6 +970,7 @@ if (socket) {
     socket.on('order_status_updated', (data) => {
         if (activeOrder && (data.orderId === activeOrder.orderId)) {
             activeOrder.status = data.status;
+            if (data.paymentStatus) activeOrder.paymentStatus = data.paymentStatus;
             saveActiveOrder(activeOrder);
             updateTrackerSteps(data.status);
             updateActiveOrderFloatingBar();
@@ -911,6 +983,25 @@ if (socket) {
                         icon: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=100'
                     });
                 }
+            }
+        }
+    });
+
+    socket.on('order_payment_confirmed', (data) => {
+        if (activeOrder && (data.orderId === activeOrder.orderId)) {
+            activeOrder.paymentStatus = 'paye';
+            saveActiveOrder(activeOrder);
+            const payBadge = document.getElementById('success-payment-status-badge');
+            const t = translations[currentLang] || translations.fr;
+            if (payBadge) {
+                payBadge.innerText = t.payment_status_cash_paid;
+                payBadge.className = 'paid-tag';
+            }
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(t.notif_cash_paid_title, {
+                    body: t.notif_cash_paid_body,
+                    icon: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=100'
+                });
             }
         }
     });

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ciao Byebye - Smartwatch Serveur</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg-watch: #000000;
+            --card-bg: #141419;
+            --border-watch: rgba(255, 255, 255, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-watch);
+            color: #ffffff;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px;
+            overflow-x: hidden;
+        }
+
+        /* Smartwatch Screen Container (Circular & Square adaptation) */
+        .watch-container {
+            width: 100%;
+            max-width: 360px;
+            min-height: 360px;
+            background: var(--bg-watch);
+            border: 2px solid rgba(245, 158, 11, 0.3);
+            border-radius: 44px;
+            padding: 14px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+            box-shadow: 0 0 25px rgba(0,0,0,0.9), inset 0 0 15px rgba(255,255,255,0.03);
+        }
+
+        /* Header with Waiter Profile & Clock */
+        .watch-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-watch);
+        }
+
+        .watch-time {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: 0.5px;
+        }
+
+        .watch-user-select {
+            background: #1e1e24;
+            color: #fff;
+            border: 1px solid var(--border-watch);
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        /* Status summary pills */
+        .watch-status-row {
+            display: flex;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .watch-pill {
+            flex: 1;
+            padding: 4px 6px;
+            border-radius: 8px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .watch-pill.ready {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .watch-pill.cash {
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        /* Notification Cards Feed */
+        .watch-feed {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            max-height: 250px;
+            padding-right: 2px;
+        }
+
+        .watch-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-watch);
+            border-radius: 18px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            animation: cardAppear 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes cardAppear {
+            from { transform: scale(0.92); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .watch-card.card-ready {
+            border-color: var(--success);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+        }
+
+        .watch-card.card-cash {
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+        }
+
+        .watch-card.card-call {
+            border-color: var(--danger);
+            animation: pulseCall 1.5s infinite;
+        }
+
+        @keyframes pulseCall {
+            0%, 100% { border-color: var(--danger); }
+            50% { border-color: #ffffff; }
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-table-badge {
+            font-size: 14px;
+            font-weight: 900;
+            background: #252530;
+            padding: 2px 8px;
+            border-radius: 8px;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .card-type-tag {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-type-tag.ready { color: var(--success); }
+        .card-type-tag.cash { color: var(--primary); }
+        .card-type-tag.call { color: var(--danger); }
+
+        .card-desc {
+            font-size: 12px;
+            font-weight: 600;
+            color: #d1d5db;
+            line-height: 1.25;
+        }
+
+        .card-action-btn {
+            width: 100%;
+            padding: 8px 10px;
+            border: none;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 800;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: transform 0.1s ease;
+        }
+
+        .card-action-btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-serve {
+            background: var(--success);
+            color: #000000;
+        }
+
+        .btn-cash {
+            background: var(--primary);
+            color: #000000;
+        }
+
+        .btn-ack {
+            background: #374151;
+            color: #ffffff;
+        }
+
+        .watch-empty {
+            text-align: center;
+            padding: 30px 10px;
+            color: #6b7280;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* Quick Vibrate Trigger Indicator */
+        .vibrate-indicator {
+            position: absolute;
+            top: 6px;
+            right: 12px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="watch-container">
+        <!-- Watch Header -->
+        <header class="watch-header">
+            <span class="watch-time" id="watch-clock">12:00</span>
+            <select class="watch-user-select" id="watch-user-select" onchange="changeWatchWaiter(this.value)">
+                <option value="david@atelier-chris.fr">🏃 David (T. 5, 8, 12)</option>
+                <option value="sophie@atelier-chris.fr">🏃 Sophie (T. 1, 2, 3)</option>
+                <option value="chef@atelier-chris.fr">👨‍🍳 Tout le restaurant</option>
+            </select>
+        </header>
+
+        <!-- Status Summary Count -->
+        <div class="watch-status-row">
+            <div class="watch-pill ready">
+                <i class="fa-solid fa-mug-hot"></i> <span id="count-ready-watch">0</span> Prêt
+            </div>
+            <div class="watch-pill cash">
+                <i class="fa-solid fa-money-bill-wave"></i> <span id="count-cash-watch">0</span> Espèces
+            </div>
+        </div>
+
+        <!-- Notification Feed for Server's Tables -->
+        <main class="watch-feed" id="watch-feed">
+            <div class="watch-empty">
+                <i class="fa-solid fa-check-circle" style="font-size:24px; margin-bottom:6px; opacity:0.4;"></i><br>
+                Toutes les tables sont à jour
+            </div>
+        </main>
+    </div>
+
+    <!-- Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let currentWaiterEmail = 'david@atelier-chris.fr';
+        let assignedTables = ['05', '08', '12'];
+        let waiterCalls = [];
+
+        // Clock display
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('watch-clock').innerText = `${hours}:${minutes}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Haptic Vibration helper
+        function triggerHaptic(pattern = [200, 100, 200]) {
+            if ('vibrate' in navigator) {
+                try {
+                    navigator.vibrate(pattern);
+                } catch(e) {}
+            }
+        }
+
+        function changeWatchWaiter(email) {
+            currentWaiterEmail = email;
+            if (email.startsWith('david')) assignedTables = ['05', '08', '12'];
+            else if (email.startsWith('sophie')) assignedTables = ['01', '02', '03'];
+            else assignedTables = []; // All tables for manager/kitchen
+            fetchWatchOrders();
+        }
+
+        async function fetchWatchOrders() {
+            try {
+                const res = await fetch(`/api/orders?email=${currentWaiterEmail}`);
+                if (!res.ok) return;
+                const orders = await res.json();
+                renderWatchFeed(orders);
+            } catch(e) {
+                console.error('Error watch fetch:', e);
+            }
+        }
+
+        function renderWatchFeed(orders) {
+            const feed = document.getElementById('watch-feed');
+            const readyOrders = orders.filter(o => o.order_status === 'prete');
+            const cashOrders = orders.filter(o => o.payment_status === 'a_payer_en_caisse');
+
+            document.getElementById('count-ready-watch').innerText = readyOrders.length;
+            document.getElementById('count-cash-watch').innerText = cashOrders.length;
+
+            const cards = [];
+
+            // 1. Waiter calls alerts
+            waiterCalls.forEach((call, index) => {
+                if (assignedTables.length === 0 || assignedTables.includes(call.tableNumber)) {
+                    cards.push(`
+                        <div class="watch-card card-call">
+                            <div class="card-top">
+                                <span class="card-table-badge">Table ${call.tableNumber}</span>
+                                <span class="card-type-tag call">🛎️ Appel Serveur</span>
+                            </div>
+                            <div class="card-desc">${call.reason || 'Assistance demandée'}</div>
+                            <button class="card-action-btn btn-ack" onclick="ackCall(${index})">
+                                <i class="fa-solid fa-check"></i> J'arrive
+                            </button>
+                        </div>
+                    `);
+                }
+            });
+
+            // 2. Ready orders to serve
+            readyOrders.forEach(o => {
+                const itemsSummary = o.items.map(i => `${i.quantity}x ${i.name}`).join(', ');
+                cards.push(`
+                    <div class="watch-card card-ready">
+                        <div class="card-top">
+                            <span class="card-table-badge">Table ${o.table_number}</span>
+                            <span class="card-type-tag ready">🎉 Plat Prêt</span>
+                        </div>
+                        <div class="card-desc">👤 ${o.client_name} : ${itemsSummary}</div>
+                        <button class="card-action-btn btn-serve" onclick="markServed('${o.id}')">
+                            <i class="fa-solid fa-check-double"></i> Marquer Servi
+                        </button>
+                    </div>
+                `);
+            });
+
+            // 3. Cash payment collection alerts
+            cashOrders.forEach(o => {
+                const total = o.items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+                cards.push(`
+                    <div class="watch-card card-cash">
+                        <div class="card-top">
+                            <span class="card-table-badge">Table ${o.table_number}</span>
+                            <span class="card-type-tag cash">💵 Espèces</span>
+                        </div>
+                        <div class="card-desc">👤 ${o.client_name} : Total ${total.toFixed(2)} €</div>
+                        <button class="card-action-btn btn-cash" onclick="collectCash('${o.id}')">
+                            <i class="fa-solid fa-hand-holding-dollar"></i> Encaisser (${total.toFixed(2)} €)
+                        </button>
+                    </div>
+                `);
+            });
+
+            if (cards.length === 0) {
+                feed.innerHTML = `
+                    <div class="watch-empty">
+                        <i class="fa-solid fa-check-circle" style="font-size:24px; margin-bottom:6px; opacity:0.4;"></i><br>
+                        Toutes vos tables sont servies & réglées
+                    </div>`;
+            } else {
+                feed.innerHTML = cards.join('');
+            }
+        }
+
+        async function markServed(orderId) {
+            try {
+                await fetch(`/api/orders/${orderId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'servie' })
+                });
+                triggerHaptic([50]);
+                fetchWatchOrders();
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        async function collectCash(orderId) {
+            try {
+                await fetch(`/api/orders/${orderId}/cash-payment`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                triggerHaptic([50, 50, 50]);
+                fetchWatchOrders();
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        function ackCall(index) {
+            waiterCalls.splice(index, 1);
+            triggerHaptic([50]);
+            fetchWatchOrders();
+        }
+
+        // WebSockets Real-time connection
+        const socket = typeof io !== 'undefined' ? io() : null;
+        if (socket) {
+            socket.on('new_order', () => {
+                triggerHaptic([100, 100]);
+                fetchWatchOrders();
+            });
+
+            socket.on('order_status_updated', (data) => {
+                if (data.status === 'prete') {
+                    triggerHaptic([300, 100, 300]); // Strong vibration when dish is ready!
+                }
+                fetchWatchOrders();
+            });
+
+            socket.on('order_payment_confirmed', () => {
+                fetchWatchOrders();
+            });
+
+            socket.on('waiter_call', (data) => {
+                waiterCalls.push(data);
+                triggerHaptic([400, 150, 400]);
+                fetchWatchOrders();
+            });
+        }
+
+        fetchWatchOrders();
+    </script>
+</body>
+</html>

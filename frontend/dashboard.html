@@ -1039,14 +1039,17 @@
             } else {
                 cookingList.innerHTML = cookingOrders.map((o, index) => {
                     const elapsedMin = Math.floor((new Date() - new Date(o.created_at)) / 60000);
+                    const isCashPending = o.payment_status === 'a_payer_en_caisse';
+                    const orderTotal = o.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                     return `
-                        <div class="order-card glass">
+                        <div class="order-card glass" ${isCashPending ? 'style="border-color: rgba(245, 158, 11, 0.4);"' : ''}>
                             <div class="card-header">
                                 <div class="client-info">
                                     <h3>${o.client_name}</h3>
-                                    <div style="display:flex; gap: 6px; margin-top:4px;">
+                                    <div style="display:flex; gap: 6px; margin-top:4px; flex-wrap: wrap;">
                                         <span class="queue-badge">#Q-${index+1}</span>
                                         <span class="elapsed-timer" data-time="${o.created_at}">⏱️ ${elapsedMin} ${t.timer_min}</span>
+                                        ${isCashPending ? '<span class="cash-badge-kds"><i class="fa-solid fa-money-bill-wave"></i> À Encaisser en Espèces</span>' : '<span style="font-size:10px; color:#10b981; font-weight:700;"><i class="fa-solid fa-check"></i> Payé Stripe</span>'}
                                     </div>
                                 </div>
                                 <span class="table-num">${t.table_prefix} ${o.table_number}</span>
@@ -1062,8 +1065,13 @@
                                     </li>
                                 `).join('')}
                             </ul>
-                            <div class="card-actions">
-                                <button class="action-btn" onclick="updateOrderStatus('${o.id}', 'prete')">
+                            <div class="card-actions" style="display:flex; gap: 8px; flex-wrap:wrap;">
+                                ${isCashPending ? `
+                                    <button class="btn-cash-collect" onclick="collectCashPayment('${o.id}')" title="Valider le paiement en espèces">
+                                        <i class="fa-solid fa-hand-holding-dollar"></i> Encaisser (${formatKdsPrice(orderTotal)})
+                                    </button>
+                                ` : ''}
+                                <button class="action-btn" onclick="updateOrderStatus('${o.id}', 'prete')" style="flex:1;">
                                     <i class="fa-solid fa-mug-hot"></i> ${t.btn_ready}
                                 </button>
                             </div>
@@ -1294,6 +1302,20 @@
                 fetchOrders();
             } catch (error) {
                 console.error('Error updating order status:', error);
+            }
+        }
+
+        async function collectCashPayment(orderId) {
+            try {
+                const res = await fetch(`/api/orders/${orderId}/cash-payment`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (!res.ok) throw new Error('Erreur encaissement');
+                fetchOrders();
+            } catch (e) {
+                console.error('Erreur encaissement espèces:', e);
+                alert('Erreur lors de la validation du paiement en espèces.');
             }
         }
 

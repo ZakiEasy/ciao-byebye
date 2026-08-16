@@ -198,5 +198,28 @@ Ce protocole définit les tests de recette requis pour valider le bon fonctionne
 * **Résultat Attendu** :
   - Lecture vidéo fluide et instantanée avec mise à jour du badge de démonstration.
 
+### TC-15 : Paiement en Espèces en Caisse & Cycle de Vie des Statuts
+* **Objectif** : Valider le parcours de commande avec règlement en espèces en caisse ou auprès du serveur.
+* **Étapes de test** :
+  1. Sur `index.html`, ajouter des articles au panier et ouvrir la modale de paiement.
+  2. Sélectionner l'onglet « 💵 Espèces en Caisse » puis cliquer sur « Valider la commande (Espèces en Caisse) ».
+  3. Vérifier que la commande part immédiatement en cuisine avec le statut de paiement `a_payer_en_caisse`.
+  4. Sur le KDS (`dashboard.html`), constater le badge d'alerte `💵 À Encaisser en Espèces` et le bouton `Encaisser (XX €)`.
+  5. Cliquer sur `Encaisser` : vérifier que le statut de paiement passe à `paye` et que le client reçoit la notification de règlement validé.
+* **Résultat Attendu** :
+  - La commande est préparée immédiatement en cuisine tout en garantissant le suivi comptable de l'encaissement physique.
+
+### TC-16 : Application Web pour Montres Connectées (Smartwatch Serveurs)
+* **Objectif** : Valider le fonctionnement de l'interface ultra-compacte pour montres connectées (Apple Watch, Wear OS).
+* **Étapes de test** :
+  1. Accéder à `watch.html` sur un écran de montre (ou viewport 360x360).
+  2. Sélectionner le profil « 🏃 David (Tables 5, 8, 12) ».
+  3. Placer une commande sur la table 05 et la marquer comme prête en cuisine.
+  4. Observer la vibration haptique (`navigator.vibrate`) et la notification instantanée « Table 05 - 🎉 Plat Prêt ».
+  5. Cliquer sur le bouton 1-touch « ✓ Marquer Servi ».
+* **Résultat Attendu** :
+  - Affichage noir pur AMOLED économe en batterie, notifications haptiques instantanées et acquittement rapide en un geste.
+
+
 
 

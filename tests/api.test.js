@@ -6,6 +6,7 @@ const BASE_URL = 'http://localhost:5000';
 describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
     let testOrderId = null;
     let testProductId = null;
+    let testCashOrderId = null;
 
     test('1. GET /api/menu - should return available products from database', async () => {
         const res = await fetch(`${BASE_URL}/api/menu`);
@@ -127,4 +128,48 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         assert.ok(html.includes("sessionStorage.setItem('ciao_byebye_auth', 'true')"));
         assert.ok(html.includes("chef@atelier-chris.fr"));
     });
+
+    test('12. POST /api/orders/mock-create (especes) - should create order with a_payer_en_caisse status', async () => {
+        const res = await fetch(`${BASE_URL}/api/orders/mock-create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: '05',
+                clientName: 'Client Espèces',
+                paymentMethod: 'especes',
+                items: [
+                    { name: 'Moscow Mule Premium', price: 12.50, quantity: 1 }
+                ]
+            })
+        });
+        assert.strictEqual(res.status, 200);
+        const data = await res.json();
+        assert.strictEqual(data.success, true);
+        assert.strictEqual(data.paymentStatus, 'a_payer_en_caisse');
+        assert.strictEqual(data.paymentMethod, 'especes');
+        testCashOrderId = data.orderId;
+    });
+
+    test('13. PATCH /api/orders/:id/cash-payment - should validate cash collection at register', async () => {
+        const res = await fetch(`${BASE_URL}/api/orders/${testCashOrderId}/cash-payment`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        assert.strictEqual(res.status, 200);
+        const data = await res.json();
+        assert.strictEqual(data.success, true);
+        assert.strictEqual(data.paymentStatus, 'paye');
+    });
+
+    test('14. POST /api/tables/:number/call-waiter - should emit waiter call alert', async () => {
+        const res = await fetch(`${BASE_URL}/api/tables/05/call-waiter`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: 'Addition / Espèces' })
+        });
+        assert.strictEqual(res.status, 200);
+        const data = await res.json();
+        assert.strictEqual(data.success, true);
+    });
 });
+

@@ -237,7 +237,9 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
 
 // 4. Créer une commande de test (Simulée) directe
 app.post('/api/orders/mock-create', async (req, res) => {
-  const { tableNumber, clientName, items } = req.body;
+  const { tableNumber, clientName, items, paymentMethod } = req.body;
+  const isCash = paymentMethod === 'especes';
+  const paymentStatus = isCash ? 'a_payer_en_caisse' : 'complete';
   
   try {
     const tableResult = await pool.query('SELECT id FROM tables WHERE number = $1', [tableNumber]);
@@ -262,7 +264,7 @@ app.post('/api/orders/mock-create', async (req, res) => {
     const orderResult = await pool.query(
       `INSERT INTO orders (session_id, total_amount_cents, payment_status, order_status, client_name)
        VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      [sessionId, priceSumCents, 'complete', 'en_cuisine', clientName]
+      [sessionId, priceSumCents, paymentStatus, 'en_cuisine', clientName]
     );
     const orderId = orderResult.rows[0].id;
     
@@ -287,14 +289,49 @@ app.post('/api/orders/mock-create', async (req, res) => {
       clientName,
       items,
       queuePos,
-      message: `Nouvelle commande de ${clientName} (Table ${tableNumber})`
+      paymentStatus,
+      paymentMethod: isCash ? 'especes' : 'carte',
+      message: `Nouvelle commande de ${clientName} (Table ${tableNumber}) ${isCash ? '[À ENCAISSER EN ESPÈCES]' : '[PAYÉ STRIPE]'}`
     });
     
-    res.json({ success: true, orderId, queuePos });
+    res.json({ success: true, orderId, queuePos, paymentStatus, paymentMethod: isCash ? 'especes' : 'carte' });
   } catch (error) {
     console.error('Erreur mock order create:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
+});
+
+// 4.1. Validation du règlement en espèces en caisse / par le serveur
+app.patch('/api/orders/:id/cash-payment', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      "UPDATE orders SET payment_status = 'paye', updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id, session_id, client_name, total_amount_cents, order_status",
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Commande non trouvée' });
+    }
+    const order = result.rows[0];
+    io.emit('order_payment_confirmed', { orderId: id, paymentStatus: 'paye', clientName: order.client_name });
+    io.emit('order_status_updated', { orderId: id, status: order.order_status, paymentStatus: 'paye' });
+    res.json({ success: true, orderId: id, paymentStatus: 'paye' });
+  } catch (error) {
+    console.error('Erreur encaissement espèces:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 4.2. Appel serveur depuis la table / montre connectée
+app.post('/api/tables/:number/call-waiter', async (req, res) => {
+  const { number } = req.params;
+  const { reason } = req.body || {};
+  io.emit('waiter_call', {
+    tableNumber: number,
+    reason: reason || 'Demande d\'assistance',
+    timestamp: Date.now()
+  });
+  res.json({ success: true, message: `Serveur appelé pour la table ${number}` });
 });
 
 // 5. Récupérer toutes les commandes actives filtrées par rôle

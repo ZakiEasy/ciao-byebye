@@ -209,38 +209,57 @@
             <button class="close-payment-btn" onclick="closePayment()" aria-label="Fermer"><i class="fa-solid fa-times"></i></button>
         </div>
         <div class="payment-body">
+            <!-- Payment Method Tabs -->
+            <div class="payment-method-tabs">
+                <button type="button" class="pay-tab-btn active" id="tab-pay-card" onclick="setPaymentMethod('carte')">
+                    <i class="fa-solid fa-credit-card"></i> <span data-i18n="tab_card">Carte / Apple Pay</span>
+                </button>
+                <button type="button" class="pay-tab-btn" id="tab-pay-cash" onclick="setPaymentMethod('especes')">
+                    <i class="fa-solid fa-money-bill-wave"></i> <span data-i18n="tab_cash">Espèces en Caisse</span>
+                </button>
+            </div>
+
             <div class="total-to-pay"><span data-i18n="amount_to_pay">Montant à régler :</span> <span id="payment-amount">0.00 €</span></div>
             
-            <!-- Simulated Credit Card Inputs -->
-            <div class="stripe-mock-input">
-                <label data-i18n="card_number">Numéro de carte</label>
-                <div class="card-number-wrapper">
-                    <i class="fa-solid fa-credit-card"></i>
-                    <input type="text" placeholder="4242 4242 4242 4242" value="4242 4242 4242 4242" readonly>
+            <!-- Simulated Credit Card & Digital Wallet Inputs (Card View) -->
+            <div id="card-payment-view">
+                <div class="stripe-mock-input">
+                    <label data-i18n="card_number">Numéro de carte</label>
+                    <div class="card-number-wrapper">
+                        <i class="fa-solid fa-credit-card"></i>
+                        <input type="text" placeholder="4242 4242 4242 4242" value="4242 4242 4242 4242" readonly>
+                    </div>
+                    <div class="card-details-row">
+                        <div class="card-detail-field">
+                            <label data-i18n="card_exp">Expiration</label>
+                            <input type="text" placeholder="12/28" value="12/28" readonly>
+                        </div>
+                        <div class="card-detail-field">
+                            <label data-i18n="card_cvc">CVC</label>
+                            <input type="text" placeholder="123" value="123" readonly>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-details-row">
-                    <div class="card-detail-field">
-                        <label data-i18n="card_exp">Expiration</label>
-                        <input type="text" placeholder="12/28" value="12/28" readonly>
-                    </div>
-                    <div class="card-detail-field">
-                        <label data-i18n="card_cvc">CVC</label>
-                        <input type="text" placeholder="123" value="123" readonly>
-                    </div>
+
+                <!-- Apple Pay / Google Pay Quick Buttons -->
+                <div class="quick-pay-btns">
+                    <button class="apple-pay-btn"><i class="fa-brands fa-apple-pay"></i> Apple Pay</button>
+                    <button class="google-pay-btn"><i class="fa-brands fa-google-pay"></i> Google Pay</button>
                 </div>
             </div>
 
-            <!-- Apple Pay / Google Pay Quick Buttons -->
-            <div class="quick-pay-btns">
-                <button class="apple-pay-btn"><i class="fa-brands fa-apple-pay"></i> Apple Pay</button>
-                <button class="google-pay-btn"><i class="fa-brands fa-google-pay"></i> Google Pay</button>
+            <!-- Cash Payment Info Box (Cash View) -->
+            <div id="cash-payment-view" class="cash-payment-info" style="display: none;">
+                <div class="cash-info-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                <h4 data-i18n="cash_info_title">Règlement en Espèces en Caisse</h4>
+                <p data-i18n="cash_info_desc">Votre commande est transmise immédiatement en cuisine pour être préparée. Vous pourrez régler en espèces au comptoir ou à votre serveur.</p>
             </div>
 
             <button class="confirm-payment-btn" id="confirm-payment-btn" onclick="simulatePaymentSuccess()">
-                <i class="fa-solid fa-shield-halved"></i> <span data-i18n="btn_confirm_payment">Confirmer le paiement</span>
+                <i class="fa-solid fa-shield-halved"></i> <span id="confirm-payment-btn-text" data-i18n="btn_confirm_payment">Confirmer le paiement</span>
             </button>
             
-            <p class="security-disclaimer"><i class="fa-solid fa-lock"></i> <span data-i18n="security_badge">Paiement 100% sécurisé et direct pour L'Atelier de Chris.</span></p>
+            <p class="security-disclaimer" id="payment-disclaimer"><i class="fa-solid fa-lock"></i> <span data-i18n="security_badge">Paiement 100% sécurisé et direct pour L'Atelier de Chris.</span></p>
         </div>
     </div>
 
@@ -255,6 +274,7 @@
             <p><strong><span data-i18n="table_prefix">Table</span> :</strong> <span id="success-table-num">05</span></p>
             <p><strong><span data-i18n="order_prefix">Commande</span> :</strong> #<span id="success-order-id">M-8492</span></p>
             <p><strong><span data-i18n="queue_prefix">Position File d'Attente</span> :</strong> <span id="success-queue-pos" style="color:var(--primary); font-weight:700;">#Q-1</span></p>
+            <p id="success-payment-status-row"><strong><span data-i18n="payment_status_label">Règlement</span> :</strong> <span id="success-payment-status-badge" class="paid-tag">✅ Payé Stripe</span></p>
             <p class="pickup-notif-toast"><i class="fa-solid fa-bell"></i> <span data-i18n="pickup_toast">Vous recevrez une alerte sur votre écran dès qu'elle sera prête au comptoir de retrait !</span></p>
         </div>
         
