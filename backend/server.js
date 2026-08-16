@@ -23,6 +23,27 @@ const pool = new Pool({
 
 app.use(express.json());
 
+// Middleware de gestion des autorisations d'exécution de scripts, CORS, autoplay et notifications pour les tests et la production
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Permissions-Policy', 'notifications=(self "*"), autoplay=(self "*"), fullscreen=(self "*")');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; " +
+    "script-src * 'unsafe-inline' 'unsafe-eval' data: blob:; " +
+    "style-src * 'unsafe-inline' https:; " +
+    "img-src * data: blob: https:; " +
+    "media-src * data: blob: https:; " +
+    "connect-src * ws: wss:;"
+  );
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Servir les fichiers statiques du dossier frontend
 app.use(express.static(path.join(__dirname, '../frontend')));
 
