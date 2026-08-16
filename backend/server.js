@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -14,8 +15,10 @@ const io = new Server(server, {
 });
 
 // Connexion à la base de données PostgreSQL
+const isLocalhost = (process.env.DATABASE_URL || '').includes('localhost') || (process.env.DATABASE_URL || '').includes('127.0.0.1');
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: isLocalhost ? false : { rejectUnauthorized: false }
 });
 
 app.use(express.json());

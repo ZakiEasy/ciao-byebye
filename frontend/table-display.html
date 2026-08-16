@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ciao Byebye - Affichage Table Connectée</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            background: radial-gradient(circle at 50% 20%, #1e1e28 0%, #0d0d12 100%);
+        }
+        .table-device-frame {
+            width: 100%;
+            max-width: 800px;
+            background: rgba(18, 18, 24, 0.95);
+            border: 2px solid var(--primary);
+            border-radius: 28px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(245, 158, 11, 0.2);
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 20px;
+        }
+        .device-table-badge {
+            background: linear-gradient(135deg, var(--primary), #d97706);
+            color: #000;
+            font-weight: 800;
+            font-size: 24px;
+            padding: 8px 24px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .device-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .qr-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 24px;
+        }
+        .qr-code-box {
+            width: 180px;
+            height: 180px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .qr-code-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .orders-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .orders-list {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .table-order-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .table-order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+        .paid-tag {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid #10b981;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .cooking-tag {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .table-order-items {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        .table-footer {
+            border-top: 1px solid var(--glass-border);
+            padding-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        @media (max-width: 650px) {
+            .device-body {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="table-device-frame">
+        <header class="device-header">
+            <div>
+                <div class="logo" style="font-size: 26px;">
+                    <span class="logo-accent">Ciao</span> Byebye
+                </div>
+                <div style="font-size: 13px; color: var(--text-muted);">L'Atelier de Chris</div>
+            </div>
+            <div class="device-table-badge">
+                <i class="fa-solid fa-chair"></i> Table <span id="display-table-num">05</span>
+            </div>
+        </header>
+
+        <main class="device-body">
+            <!-- QR Code Section -->
+            <section class="qr-section">
+                <div class="qr-code-box">
+                    <!-- Dynamic QR code using public api -->
+                    <img id="qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=http://localhost:5000/index.html?table=05" alt="QR Code de Commande">
+                </div>
+                <h3 style="font-size: 18px; margin-bottom: 6px;">Scannez pour Commander</h3>
+                <p style="font-size: 13px; color: var(--text-muted);">Accédez au menu, commandez et payez directement depuis votre smartphone sans attendre l'addition.</p>
+            </section>
+
+            <!-- Table Active Orders & Status -->
+            <section class="orders-section">
+                <h3 style="font-size: 16px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-receipt" style="color:var(--primary);"></i> Commandes en cours à cette table
+                </h3>
+                <div class="orders-list" id="table-orders-list">
+                    <div style="text-align:center; padding:30px; color:var(--text-muted); font-size:14px;">
+                        <i class="fa-solid fa-utensils" style="font-size:24px; margin-bottom:8px; opacity:0.5;"></i><br>
+                        Aucune commande en cours pour le moment.
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="table-footer">
+            <div><i class="fa-solid fa-wifi" style="color:#10b981;"></i> Connecté au serveur en direct</div>
+            <div>Total Réglé : <strong id="total-table-paid" style="color:#10b981; font-size:16px;">0.00 €</strong></div>
+        </footer>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const qrToken = urlParams.get('token') || 'token_table_05';
+
+        async function fetchTableDisplay() {
+            try {
+                const res = await fetch(`/api/tables/${qrToken}/display`);
+                if (!res.ok) return;
+                const data = await res.json();
+                
+                document.getElementById('display-table-num').innerText = data.tableNumber || '05';
+                const ordersList = document.getElementById('table-orders-list');
+                
+                if (!data.orders || data.orders.length === 0) {
+                    ordersList.innerHTML = `
+                        <div style="text-align:center; padding:30px; color:var(--text-muted); font-size:14px;">
+                            <i class="fa-solid fa-utensils" style="font-size:24px; margin-bottom:8px; opacity:0.5;"></i><br>
+                            Aucune commande en cours pour le moment.
+                        </div>`;
+                    document.getElementById('total-table-paid').innerText = '0.00 €';
+                    return;
+                }
+
+                let totalCents = 0;
+                ordersList.innerHTML = data.orders.map(order => {
+                    totalCents += order.totalAmountCents || 0;
+                    const itemsSummary = (order.items || []).map(i => `${i.quantity}x ${i.product_name}`).join(', ');
+                    const isReady = order.orderStatus === 'prete';
+                    return `
+                        <div class="table-order-card">
+                            <div class="table-order-header">
+                                <strong>👤 ${order.clientName}</strong>
+                                <span class="${isReady ? 'paid-tag' : 'cooking-tag'}">
+                                    ${isReady ? '🎉 Prête au comptoir' : '🔥 En cuisine'}
+                                </span>
+                            </div>
+                            <div class="table-order-items">${itemsSummary}</div>
+                            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
+                                <span class="paid-tag"><i class="fa-solid fa-check"></i> Réglé Stripe</span>
+                                <span style="color:#fff;">${(order.totalAmountCents / 100).toFixed(2)} €</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('total-table-paid').innerText = (totalCents / 100).toFixed(2) + ' €';
+
+            } catch (e) {
+                console.error('Erreur chargement table display:', e);
+            }
+        }
+
+        fetchTableDisplay();
+
+        const socket = typeof io !== 'undefined' ? io() : null;
+        if (socket) {
+            socket.on('new_order', () => fetchTableDisplay());
+            socket.on('order_status_updated', () => fetchTableDisplay());
+        }
+    </script>
+</body>
+</html>
