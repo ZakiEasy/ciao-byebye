@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ciao Byebye - Commande à table</title>
-    <!-- Google Fonts -->
+    <!-- Google Fonts (Outfit & Cairo for Arabic RTL) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Main Style -->
@@ -21,17 +21,17 @@
             <div class="logo" style="font-size: 28px; margin-bottom: 15px; text-align: center;">
                 <span class="logo-accent">Ciao</span> Byebye
             </div>
-            <h2>Bienvenue sur Ciao Byebye</h2>
-            <p>Pour lier votre commande et retrouver vos reçus, connectez-vous ou continuez en tant qu'invité.</p>
+            <h2 data-i18n="splash_title">Bienvenue sur Ciao Byebye</h2>
+            <p data-i18n="splash_desc">Pour lier votre commande et retrouver vos reçus, connectez-vous ou continuez en tant qu'invité.</p>
             <div class="auth-options">
                 <button class="auth-btn sso-google" onclick="clientSSO('Google')">
-                    <i class="fa-brands fa-google"></i> Se connecter avec Google
+                    <i class="fa-brands fa-google"></i> <span data-i18n="btn_login_google">Se connecter avec Google</span>
                 </button>
                 <button class="auth-btn sso-apple" onclick="clientSSO('Apple')">
-                    <i class="fa-brands fa-apple"></i> Se connecter avec Apple
+                    <i class="fa-brands fa-apple"></i> <span data-i18n="btn_login_apple">Se connecter avec Apple</span>
                 </button>
                 <button class="auth-btn guest-btn" onclick="dismissClientAuth()">
-                    <i class="fa-solid fa-user-clock"></i> Continuer en tant qu'invité
+                    <i class="fa-solid fa-user-clock"></i> <span data-i18n="btn_continue_guest">Continuer en tant qu'invité</span>
                 </button>
             </div>
         </div>
@@ -43,8 +43,27 @@
             <div class="logo">
                 <span class="logo-accent">Ciao</span> Byebye
             </div>
-            <div class="table-badge">
-                <i class="fa-solid fa-chair"></i> Table <span id="table-number">05</span>
+            <div class="header-controls">
+                <!-- Lang & Currency Selectors -->
+                <div class="i18n-selectors">
+                    <select id="lang-select" onchange="changeLanguage(this.value)" class="glass-select" aria-label="Langue">
+                        <option value="fr">🇫🇷 FR</option>
+                        <option value="en">🇬🇧 EN</option>
+                        <option value="ar">🇸🇦 العربية</option>
+                        <option value="es">🇪🇸 ES</option>
+                    </select>
+                    <select id="currency-select" onchange="changeCurrency(this.value)" class="glass-select" aria-label="Devise">
+                        <option value="EUR">EUR (€)</option>
+                        <option value="USD">USD ($)</option>
+                        <option value="GBP">GBP (£)</option>
+                        <option value="MAD">MAD (DH)</option>
+                        <option value="SAR">SAR (﷼)</option>
+                        <option value="AED">AED (د.إ)</option>
+                    </select>
+                </div>
+                <div class="table-badge">
+                    <i class="fa-solid fa-chair"></i> <span data-i18n="table_prefix">Table</span> <span id="table-number">05</span>
+                </div>
             </div>
         </div>
     </header>
@@ -53,22 +72,22 @@
     <main class="app-main">
         <!-- Welcoming & Client Identification -->
         <section class="welcome-section glass">
-            <h2>Bienvenue chez <span class="restaurant-name">L'Atelier de Chris</span></h2>
-            <p>Passez votre commande en direct et payez en toute liberté.</p>
+            <h2><span data-i18n="welcome_prefix">Bienvenue chez</span> <span class="restaurant-name">L'Atelier de Chris</span></h2>
+            <p data-i18n="welcome_subtitle">Passez votre commande en direct et payez en toute liberté.</p>
             
             <div class="client-ident-input">
-                <label for="client-name"><i class="fa-solid fa-user"></i> Votre Prénom pour la commande :</label>
+                <label for="client-name"><i class="fa-solid fa-user"></i> <span data-i18n="name_label">Votre Prénom pour la commande :</span></label>
                 <input type="text" id="client-name" placeholder="Ex. Thomas, Sarah..." value="Alex">
             </div>
         </section>
 
         <!-- Category Selector -->
         <nav class="category-nav">
-            <button class="category-btn active" data-category="all">Tout</button>
-            <button class="category-btn" data-category="boisson"><i class="fa-solid fa-glass-martini-alt"></i> Boissons</button>
-            <button class="category-btn" data-category="entree"><i class="fa-solid fa-utensils"></i> Entrées</button>
-            <button class="category-btn" data-category="plat"><i class="fa-solid fa-hamburger"></i> Plats</button>
-            <button class="category-btn" data-category="dessert"><i class="fa-solid fa-ice-cream"></i> Desserts</button>
+            <button class="category-btn active" data-category="all" data-i18n="cat_all">Tout</button>
+            <button class="category-btn" data-category="boisson"><i class="fa-solid fa-glass-martini-alt"></i> <span data-i18n="cat_boisson">Boissons</span></button>
+            <button class="category-btn" data-category="entree"><i class="fa-solid fa-utensils"></i> <span data-i18n="cat_entree">Entrées</span></button>
+            <button class="category-btn" data-category="plat"><i class="fa-solid fa-hamburger"></i> <span data-i18n="cat_plat">Plats</span></button>
+            <button class="category-btn" data-category="dessert"><i class="fa-solid fa-ice-cream"></i> <span data-i18n="cat_dessert">Desserts</span></button>
         </nav>
 
         <!-- Menu Grid -->
@@ -92,27 +111,27 @@
     <div class="cart-panel-overlay" id="cart-panel-overlay" onclick="toggleCart()"></div>
     <div class="cart-panel glass" id="cart-panel">
         <div class="cart-header">
-            <h3><i class="fa-solid fa-shopping-cart"></i> Votre Panier</h3>
-            <button class="close-cart-btn" onclick="toggleCart()"><i class="fa-solid fa-times"></i></button>
+            <h3><i class="fa-solid fa-shopping-cart"></i> <span data-i18n="cart_title">Votre Panier</span></h3>
+            <button class="close-cart-btn" onclick="toggleCart()" aria-label="Fermer"><i class="fa-solid fa-times"></i></button>
         </div>
         
         <div class="cart-items" id="cart-items-container">
             <!-- Dynamically populated -->
-            <div class="empty-cart-message">Votre panier est vide.</div>
+            <div class="empty-cart-message" data-i18n="cart_empty">Votre panier est vide.</div>
         </div>
 
         <div class="cart-summary">
             <div class="summary-line">
-                <span>Sous-total</span>
+                <span data-i18n="cart_subtotal">Sous-total</span>
                 <span id="summary-subtotal">0.00 €</span>
             </div>
             <div class="summary-line total">
-                <span>Total</span>
+                <span data-i18n="cart_total">Total</span>
                 <span id="summary-total">0.00 €</span>
             </div>
             
             <button class="pay-btn" onclick="proceedToPayment()">
-                <i class="fa-solid fa-lock"></i> Payer et Envoyer en Cuisine
+                <i class="fa-solid fa-lock"></i> <span data-i18n="btn_proceed_pay">Payer et Envoyer en Cuisine</span>
             </button>
         </div>
     </div>
@@ -121,26 +140,26 @@
     <div class="payment-modal-overlay" id="payment-modal-overlay"></div>
     <div class="payment-modal glass" id="payment-modal">
         <div class="payment-header">
-            <h3>Paiement Sécurisé Stripe</h3>
-            <button class="close-payment-btn" onclick="closePayment()"><i class="fa-solid fa-times"></i></button>
+            <h3 data-i18n="pay_modal_title">Paiement Sécurisé Stripe</h3>
+            <button class="close-payment-btn" onclick="closePayment()" aria-label="Fermer"><i class="fa-solid fa-times"></i></button>
         </div>
         <div class="payment-body">
-            <div class="total-to-pay">Montant à régler : <span id="payment-amount">0.00 €</span></div>
+            <div class="total-to-pay"><span data-i18n="amount_to_pay">Montant à régler :</span> <span id="payment-amount">0.00 €</span></div>
             
             <!-- Simulated Credit Card Inputs -->
             <div class="stripe-mock-input">
-                <label>Numéro de carte</label>
+                <label data-i18n="card_number">Numéro de carte</label>
                 <div class="card-number-wrapper">
                     <i class="fa-solid fa-credit-card"></i>
                     <input type="text" placeholder="4242 4242 4242 4242" value="4242 4242 4242 4242" readonly>
                 </div>
                 <div class="card-details-row">
                     <div class="card-detail-field">
-                        <label>Expiration</label>
+                        <label data-i18n="card_exp">Expiration</label>
                         <input type="text" placeholder="12/28" value="12/28" readonly>
                     </div>
                     <div class="card-detail-field">
-                        <label>CVC</label>
+                        <label data-i18n="card_cvc">CVC</label>
                         <input type="text" placeholder="123" value="123" readonly>
                     </div>
                 </div>
@@ -153,10 +172,10 @@
             </div>
 
             <button class="confirm-payment-btn" id="confirm-payment-btn" onclick="simulatePaymentSuccess()">
-                <i class="fa-solid fa-shield-halved"></i> Confirmer le paiement
+                <i class="fa-solid fa-shield-halved"></i> <span data-i18n="btn_confirm_payment">Confirmer le paiement</span>
             </button>
             
-            <p class="security-disclaimer"><i class="fa-solid fa-lock"></i> Paiement 100% sécurisé et direct pour L'Atelier de Chris.</p>
+            <p class="security-disclaimer"><i class="fa-solid fa-lock"></i> <span data-i18n="security_badge">Paiement 100% sécurisé et direct pour L'Atelier de Chris.</span></p>
         </div>
     </div>
 
@@ -164,32 +183,32 @@
     <div class="success-modal-overlay" id="success-modal-overlay"></div>
     <div class="success-modal glass" id="success-modal">
         <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
-        <h2>Paiement Réussi !</h2>
-        <p>Merci <span id="success-client-name">Alex</span>, votre commande a été validée.</p>
+        <h2 data-i18n="success_title">Paiement Réussi !</h2>
+        <p><span data-i18n="success_thanks">Merci</span> <span id="success-client-name">Alex</span>, <span data-i18n="success_validated">votre commande a été validée.</span></p>
         <div class="success-details">
-            <p><strong>Table :</strong> <span id="success-table-num">05</span></p>
-            <p><strong>Commande :</strong> #<span id="success-order-id">M-8492</span></p>
-            <p><strong>Position File d'Attente :</strong> <span id="success-queue-pos" style="color:var(--primary); font-weight:700;">#Q-1</span></p>
-            <p class="pickup-notif-toast"><i class="fa-solid fa-bell"></i> Vous recevrez une alerte sur votre écran dès qu'elle sera prête au comptoir de retrait !</p>
+            <p><strong><span data-i18n="table_prefix">Table</span> :</strong> <span id="success-table-num">05</span></p>
+            <p><strong><span data-i18n="order_prefix">Commande</span> :</strong> #<span id="success-order-id">M-8492</span></p>
+            <p><strong><span data-i18n="queue_prefix">Position File d'Attente</span> :</strong> <span id="success-queue-pos" style="color:var(--primary); font-weight:700;">#Q-1</span></p>
+            <p class="pickup-notif-toast"><i class="fa-solid fa-bell"></i> <span data-i18n="pickup_toast">Vous recevrez une alerte sur votre écran dès qu'elle sera prête au comptoir de retrait !</span></p>
         </div>
         
         <!-- Live order status tracking -->
         <div class="order-status-tracker">
             <div class="status-step active">
                 <div class="step-bullet"><i class="fa-solid fa-receipt"></i></div>
-                <span>Payée</span>
+                <span data-i18n="step_paid">Payée</span>
             </div>
             <div class="status-step active">
                 <div class="step-bullet progress-pulse"><i class="fa-solid fa-fire-burner"></i></div>
-                <span>En cuisine</span>
+                <span data-i18n="step_kitchen">En cuisine</span>
             </div>
             <div class="status-step">
                 <div class="step-bullet"><i class="fa-solid fa-mug-hot"></i></div>
-                <span>Prête</span>
+                <span data-i18n="step_ready">Prête</span>
             </div>
         </div>
 
-        <button class="back-to-menu-btn" onclick="resetApp()">Retour au Menu</button>
+        <button class="back-to-menu-btn" onclick="resetApp()" data-i18n="btn_back_menu">Retour au Menu</button>
     </div>
 
     <!-- Socket.io client -->

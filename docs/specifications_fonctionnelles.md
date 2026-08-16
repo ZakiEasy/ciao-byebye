@@ -138,3 +138,33 @@ Ce protocole définit les tests de recette requis pour valider le bon fonctionne
 * **Résultat Attendu** :
   - Le prénom de Thomas apparaît dans la colonne *« En Préparation »* puis glisse dans la colonne *« Prêt au comptoir »* en clignotant.
 
+### TC-09 : Internationalisation (Multi-langue & Support RTL Arabe)
+* **Objectif** : Valider le basculement instantané de la langue et de l'orientation droite-à-gauche.
+* **Étapes de test** :
+  1. Sur la PWA Client (`index.html`) ou sur le KDS (`dashboard.html`), cliquer sur le sélecteur de langue dans le header.
+  2. Sélectionner « 🇸🇦 العربية ».
+  3. Vérifier que l'ensemble des textes est traduit en arabe, que la typographie *Cairo* est appliquée et que la mise en page bascule en mode `dir="rtl"` (inversion des colonnes, alignement des textes à droite, position du panier).
+  4. Sélectionner ensuite « 🇬🇧 EN » puis « 🇪🇸 ES ».
+* **Résultat Attendu** :
+  - Traduction immédiate de l'interface sans rechargement de page et disposition RTL fluide.
+
+### TC-10 : Multi-devises Dynamiques
+* **Objectif** : Valider la conversion et l'affichage des prix dans différentes devises internationales.
+* **Étapes de test** :
+  1. Sur l'écran client, ouvrir le sélecteur de devises (EUR, USD, GBP, MAD, SAR, AED).
+  2. Sélectionner « USD ($) » : vérifier que les prix s'affichent au format `$ 13.50`.
+  3. Sélectionner « MAD (DH) » : vérifier que les prix s'affichent au format `135.00 DH`.
+  4. Ajouter un produit au panier et vérifier que le sous-total, le total et la modale de paiement Stripe reflètent la devise sélectionnée.
+* **Résultat Attendu** :
+  - Mise à jour instantanée de tous les prix dans le catalogue et le panier.
+
+### TC-11 : Mode Plein Écran TV (KDS & Comptoir Kiosque)
+* **Objectif** : Valider l'adaptation grand écran et l'activation du plein écran pour les affichages en cuisine et au bar.
+* **Étapes de test** :
+  1. Sur `dashboard.html`, cliquer sur le bouton d'agrandissement (icône d'expansion) dans le header.
+  2. Vérifier que le navigateur bascule en mode plein écran natif (Full Screen).
+  3. Afficher le mode Comptoir Public (`pickup@atelier-chris.fr`) sur un écran haute résolution (1080p / 4K).
+* **Résultat Attendu** :
+  - Les cartes de commande et les prénoms des clients s'affichent avec une typographie géante et un contraste élevé lisible à plus de 10 mètres.
+
+

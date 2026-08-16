@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ciao Byebye - KDS Cuisine</title>
-    <!-- Google Fonts -->
+    <!-- Google Fonts (Outfit & Cairo for Arabic RTL) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style variables -->
@@ -21,32 +21,37 @@
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
+            background: #08080a;
         }
 
         .dashboard-header {
-            padding: 20px 40px;
+            padding: 16px 30px;
             border-bottom: 1px solid var(--glass-border);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: rgba(10, 10, 12, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
         }
 
         .dashboard-header h1 {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
         }
 
         .stats-container {
             display: flex;
-            gap: 20px;
+            align-items: center;
+            gap: 12px;
         }
 
         .stat-badge {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--glass-border);
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: var(--radius-sm);
-            font-size: 14px;
+            font-size: 13px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -61,9 +66,9 @@
             flex: 1;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            padding: 30px 40px;
-            height: calc(100vh - 80px);
+            gap: 24px;
+            padding: 24px 30px;
+            height: calc(100vh - 75px);
             overflow: hidden;
         }
 
@@ -77,7 +82,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             padding-bottom: 10px;
             border-bottom: 2px solid rgba(255, 255, 255, 0.05);
         }
@@ -104,14 +109,16 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            padding-right: 10px;
+            gap: 16px;
+            padding-right: 8px;
         }
 
         .order-card {
-            padding: 20px;
+            padding: 18px;
             border-radius: var(--radius-md);
             transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
         }
 
         .order-card:hover {
@@ -123,7 +130,7 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .client-info h3 {
@@ -149,24 +156,26 @@
 
         .card-items {
             list-style: none;
-            border-top: 1px dashed var(--glass-border);
-            border-bottom: 1px dashed var(--glass-border);
-            padding: 12px 0;
-            margin-bottom: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            margin: 12px 0;
+            padding: 10px 0;
+            border-top: 1px dashed rgba(255, 255, 255, 0.1);
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
         }
 
         .card-items li {
             display: flex;
             justify-content: space-between;
             font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .card-items li:last-child {
+            margin-bottom: 0;
         }
 
         .item-qty-name {
             display: flex;
-            gap: 8px;
+            gap: 10px;
         }
 
         .item-qty {
@@ -176,128 +185,74 @@
 
         .card-actions {
             display: flex;
-            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 12px;
         }
 
         .action-btn {
-            background: var(--primary);
-            border: 1px solid var(--primary);
-            color: #000;
-            font-family: var(--font-main);
-            font-size: 13px;
-            font-weight: 600;
-            padding: 8px 16px;
+            flex: 1;
+            padding: 10px;
             border-radius: var(--radius-sm);
+            border: none;
+            background: var(--primary);
+            color: #000;
+            font-weight: 600;
+            font-size: 13px;
             cursor: pointer;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
             transition: all 0.2s ease;
+            font-family: inherit;
         }
 
         .action-btn:hover {
-            background: var(--primary-hover);
-            border-color: var(--primary-hover);
+            filter: brightness(1.1);
         }
 
         .action-btn.secondary {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: var(--glass-border);
+            background: rgba(255, 255, 255, 0.08);
             color: var(--text-primary);
+            border: 1px solid var(--glass-border);
         }
 
         .action-btn.secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
         }
-        
+
         .empty-column-msg {
             color: var(--text-muted);
             text-align: center;
-            font-size: 14px;
-            padding: 40px 0;
+            padding: 40px;
             font-style: italic;
-        }
-
-        /* Role Switcher Toolbar (Gestionnaire) */
-        .role-switcher-bar {
-            background: rgba(245, 158, 11, 0.1);
-            border-bottom: 1px solid rgba(245, 158, 11, 0.3);
-            padding: 10px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 13px;
-        }
-
-        .role-switcher-bar select {
-            background: #111827;
-            border: 1px solid var(--primary);
-            color: var(--text-primary);
-            padding: 5px 12px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            outline: none;
-        }
-
-        /* Order Metadata (Queue & Timers) */
-        .elapsed-timer {
-            font-size: 11px;
-            color: #f59e0b;
-            background: rgba(245, 158, 11, 0.1);
-            padding: 2px 8px;
-            border-radius: 10px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            font-weight: 500;
+            font-size: 14px;
         }
 
         .queue-badge {
+            background: #ef4444;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
             font-size: 11px;
-            color: #3b82f6;
-            background: rgba(59, 130, 246, 0.1);
-            padding: 2px 8px;
-            border-radius: 10px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
+            font-weight: 700;
+        }
+
+        .elapsed-timer {
+            font-size: 11px;
+            color: #f59e0b;
             font-weight: 600;
+            background: rgba(245, 158, 11, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(245, 158, 11, 0.2);
         }
 
-        /* Waiter Table Assignments Grid */
-        .assignment-view {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 40px;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        .assignment-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        .assignment-table th, .assignment-table td {
-            text-align: left;
-            padding: 12px;
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .assignment-table th {
-            color: var(--text-muted);
-            font-size: 12px;
-            text-transform: uppercase;
-        }
-
-        /* Kiosk Pickup Screen (Technique) */
+        /* PUBLIC PICKUP SCREEN STYLING (Starbucks Model & 4K Large Display) */
         .pickup-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 40px;
-            width: 100%;
             height: 100%;
             padding: 20px 0;
         }
@@ -309,136 +264,172 @@
             padding: 30px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            overflow-y: auto;
         }
 
         .pickup-title {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 30px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--glass-border);
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 15px;
         }
 
         .pickup-list {
+            flex: 1;
             display: flex;
-            flex-direction: column;
-            gap: 20px;
-            width: 100%;
-            align-items: center;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 15px;
+            overflow-y: auto;
         }
 
         .pickup-name-card {
-            font-size: 32px;
+            font-size: 26px;
             font-weight: 700;
-            color: var(--text-primary);
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px 40px;
+            padding: 16px 24px;
             border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--glass-border);
-            width: 80%;
-            text-align: center;
-            box-shadow: var(--shadow-sm);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            animation: scaleIn 0.3s ease;
         }
 
         .pickup-name-card.ready {
-            color: #10b981;
+            background: rgba(16, 185, 129, 0.15);
             border-color: #10b981;
-            background: rgba(16, 185, 129, 0.08);
-            animation: pulseGlow 2s infinite ease-in-out;
+            color: #10b981;
+            animation: pulseReady 1.5s infinite;
         }
 
-        /* Menu Management Panel */
+        @keyframes pulseReady {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            50% { transform: scale(1.03); box-shadow: 0 0 20px 4px rgba(16, 185, 129, 0.3); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* 4K TV & Huge Display Screen Adaptation */
+        @media (min-width: 1800px) {
+            .dashboard-header h1 { font-size: 28px; }
+            .pickup-title { font-size: 38px; }
+            .pickup-name-card { font-size: 36px; padding: 22px 32px; }
+            .column-header h2 { font-size: 24px; }
+            .client-info h3 { font-size: 24px; }
+            .card-items li { font-size: 18px; }
+            .order-card { padding: 26px; }
+            .dashboard-content { gap: 40px; padding: 40px; }
+        }
+
+        /* Responsive Mobile / Small Displays */
+        @media (max-width: 900px) {
+            body { height: auto; overflow: auto; }
+            .dashboard-header { flex-direction: column; gap: 12px; align-items: stretch; }
+            .stats-container { justify-content: space-between; flex-wrap: wrap; }
+            .dashboard-content { grid-template-columns: 1fr; height: auto; padding: 20px 16px; overflow: visible; }
+            .pickup-container { grid-template-columns: 1fr; }
+        }
+
+        /* RTL Overrides for KDS */
+        html[dir="rtl"] {
+            font-family: 'Cairo', 'Outfit', sans-serif;
+        }
+        html[dir="rtl"] .dashboard-header,
+        html[dir="rtl"] .stats-container,
+        html[dir="rtl"] .card-header,
+        html[dir="rtl"] .item-qty-name,
+        html[dir="rtl"] .pickup-title {
+            flex-direction: row-reverse;
+        }
+        html[dir="rtl"] .client-info,
+        html[dir="rtl"] .column-header h2,
+        html[dir="rtl"] .menu-mgmt-panel h2,
+        html[dir="rtl"] .menu-mgmt-panel p {
+            text-align: right;
+        }
+
+        /* Menu management overlay */
         .menu-mgmt-panel {
-            background: #111827;
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--glass-border);
             border-radius: var(--radius-lg);
-            padding: 30px;
-            overflow-y: auto;
+            padding: 24px;
             height: 100%;
+            overflow-y: auto;
         }
 
         .menu-mgmt-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            margin-top: 20px;
+            margin-top: 15px;
         }
 
         .menu-mgmt-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 20px;
-            background: rgba(255, 255, 255, 0.03);
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--glass-border);
             border-radius: var(--radius-md);
         }
 
-        /* Toggle Switch */
+        /* Switch toggles */
         .switch {
             position: relative;
             display: inline-block;
-            width: 48px;
+            width: 46px;
             height: 24px;
         }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
+        .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
             background-color: rgba(255, 255, 255, 0.1);
-            transition: .3s;
-            border-radius: 24px;
-            border: 1px solid var(--glass-border);
+            transition: .3s; border-radius: 24px; border: 1px solid var(--glass-border);
         }
-
         .slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .3s;
-            border-radius: 50%;
+            position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+            background-color: white; transition: .3s; border-radius: 50%;
         }
+        input:checked + .slider { background-color: #10b981; }
+        input:checked + .slider:before { transform: translateX(22px); }
 
-        input:checked + .slider {
-            background-color: #10b981;
+        /* Waiter assignment table */
+        .assignment-view {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 24px;
+            height: 100%;
         }
-
-        input:checked + .slider:before {
-            transform: translateX(24px);
+        .assignment-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .assignment-table th, .assignment-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--glass-border);
+            text-align: left;
+            font-size: 14px;
+        }
+        html[dir="rtl"] .assignment-table th, html[dir="rtl"] .assignment-table td {
+            text-align: right;
         }
     </style>
 </head>
 <body>
 
-    <!-- Role Switcher for Managers -->
-    <div id="manager-switcher-container" style="display: none;">
-        <div class="role-switcher-bar">
-            <div>
-                <i class="fa-solid fa-user-shield" style="color: #f59e0b; margin-right: 6px;"></i>
-                <strong>Mode Gestionnaire Actif</strong> : Vous supervisez toutes les fonctionnalités.
-            </div>
+    <!-- Top Manager Role Switcher (For Demo & Multi-tenant simulation) -->
+    <div id="manager-switcher-container" style="display:none; background: #f59e0b; color: #000; padding: 6px 20px; font-size: 13px; font-weight: 600; text-align: center; border-bottom: 1px solid #d97706;">
+        <div style="max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
+            <span><i class="fa-solid fa-crown"></i> Mode Administration Multi-Rôles Ciao Byebye</span>
             <div>
                 Simuler le profil :
-                <select id="active-profile-select" onchange="changeSimulatedProfile(this.value)">
+                <select id="active-profile-select" onchange="changeSimulatedProfile(this.value)" style="padding: 3px 8px; font-size:12px; font-weight:600; border-radius:4px; border:none; outline:none; background:#fff; color:#000;">
                     <option value="boss@atelier-chris.fr">📈 Gestionnaire (Toutes les fonctions)</option>
                     <option value="chef@atelier-chris.fr">👨‍🍳 Cuisine / Chef (chef@atelier-chris.fr)</option>
                     <option value="maitre@atelier-chris.fr">🤵 Chef de Salle (maitre@atelier-chris.fr)</option>
@@ -457,53 +448,230 @@
             <span class="logo-accent">Ciao</span> Byebye 
             <span id="dashboard-role-title" style="font-size: 14px; font-weight:400; color:var(--text-muted); margin-left: 10px;">Tableau de Bord</span>
         </div>
-        <div class="stats-container" style="display: flex; align-items: center; gap: 15px;">
-            <div id="header-btn-container" style="margin-right: 10px;">
+        <div class="stats-container">
+            <!-- Lang, Currency & Fullscreen Selectors -->
+            <div class="i18n-selectors" style="display:flex; align-items:center; gap:6px;">
+                <select id="kds-lang-select" onchange="changeKdsLanguage(this.value)" class="glass-select" aria-label="Langue">
+                    <option value="fr">🇫🇷 FR</option>
+                    <option value="en">🇬🇧 EN</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                    <option value="es">🇪🇸 ES</option>
+                </select>
+                <select id="kds-currency-select" onchange="changeKdsCurrency(this.value)" class="glass-select" aria-label="Devise">
+                    <option value="EUR">EUR (€)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="MAD">MAD (DH)</option>
+                    <option value="SAR">SAR (﷼)</option>
+                    <option value="AED">AED (د.إ)</option>
+                </select>
+                <button onclick="toggleFullscreen()" class="glass-select" title="Plein Écran TV" style="display:flex; align-items:center; justify-content:center; padding:6px 10px;">
+                    <i class="fa-solid fa-expand"></i>
+                </button>
+            </div>
+
+            <div id="header-btn-container">
                 <!-- Buttons like 'Gérer le Menu' load here -->
             </div>
+            
             <div class="stat-badge">
-                <i class="fa-solid fa-fire-burner"></i> En Cuisine : <span id="stat-cooking">0</span>
+                <i class="fa-solid fa-fire-burner"></i> <span id="stat-cooking-label">En Cuisine :</span> <span id="stat-cooking">0</span>
             </div>
             <div class="stat-badge">
-                <i class="fa-solid fa-mug-hot"></i> Prêtes : <span id="stat-ready">0</span>
+                <i class="fa-solid fa-mug-hot"></i> <span id="stat-ready-label">Prêtes :</span> <span id="stat-ready">0</span>
             </div>
-            <div class="user-profile" style="display: flex; align-items: center; gap: 12px; margin-left: 5px; border-left: 1px solid var(--glass-border); padding-left: 15px;">
+            
+            <div class="user-profile" style="display: flex; align-items: center; gap: 12px; border-left: 1px solid var(--glass-border); padding-left: 15px;">
                 <span id="user-email" style="font-size: 13px; color: var(--text-muted);">chef@atelier-chris.fr</span>
-                <button onclick="logout()" title="Déconnexion" style="background: none; border: none; color: #ef4444; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-family: var(--font-main);"><i class="fa-solid fa-right-from-bracket"></i></button>
+                <button onclick="logout()" title="Déconnexion" style="background: none; border: none; color: #ef4444; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-family: inherit;"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </div>
     </header>
 
     <!-- Main Columns Grid -->
     <main class="dashboard-content" id="dashboard-main-content">
-        
-        <!-- Column 1: Cooking -->
-        <section class="kds-column">
-            <div class="column-header">
-                <h2><i class="fa-solid fa-fire-burner" style="color: #ef4444;"></i> En Préparation</h2>
-                <span class="count" id="count-cooking" style="background:#ef4444; color:#fff;">0</span>
-            </div>
-            <div class="cards-list" id="list-cooking">
-                <!-- Loaded dynamically -->
-            </div>
-        </section>
-
-        <!-- Column 2: Ready -->
-        <section class="kds-column">
-            <div class="column-header">
-                <h2><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Prêtes / À Retirer</h2>
-                <span class="count" id="count-ready" style="background:#10b981; color:#fff;">0</span>
-            </div>
-            <div class="cards-list" id="list-ready">
-                <!-- Loaded dynamically -->
-            </div>
-        </section>
-
+        <!-- Dynamic content rendered via JS -->
     </main>
 
     <!-- WebSockets & Logic -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        // Translations dictionary for KDS
+        const kdsTranslations = {
+            fr: {
+                title_kds: "Tableau de Bord",
+                stat_cooking: "En Cuisine :",
+                stat_ready: "Prêtes :",
+                col_cooking: "En Préparation",
+                col_ready: "Prêtes / À Retirer",
+                btn_ready: "Prête à servir !",
+                btn_served: "Commande Livrée",
+                btn_manage_menu: "Gérer dispo Menu",
+                btn_view_orders: "Voir Commandes",
+                pickup_cooking: "En Préparation",
+                pickup_ready: "Prêt au comptoir",
+                pickup_no_cooking: "Aucune commande en cours",
+                pickup_no_ready: "Aucune commande prête",
+                table_prefix: "Table",
+                queue_prefix: "Queue",
+                timer_min: "min",
+                empty_cooking: "Aucune commande en préparation.",
+                empty_ready: "Aucune commande en attente de retrait.",
+                menu_mgmt_title: "Disponibilité du Menu",
+                menu_mgmt_desc: "Désactivez les produits temporairement en rupture de stock pour bloquer leur commande.",
+                category_label: "Catégorie :",
+                assignment_title: "Affectation des Serveurs",
+                assignment_desc: "Attribuez chaque table physique à un serveur de l'équipe.",
+                th_table: "Table",
+                th_server: "Serveur Responsable",
+                unassigned: "Non assignée",
+                active_orders_service: "Commandes en cours de service"
+            },
+            en: {
+                title_kds: "Dashboard",
+                stat_cooking: "In Kitchen:",
+                stat_ready: "Ready:",
+                col_cooking: "In Preparation",
+                col_ready: "Ready / To Pickup",
+                btn_ready: "Ready to serve!",
+                btn_served: "Order Delivered",
+                btn_manage_menu: "Manage Menu Stock",
+                btn_view_orders: "View Orders",
+                pickup_cooking: "In Preparation",
+                pickup_ready: "Ready for Pickup",
+                pickup_no_cooking: "No active orders",
+                pickup_no_ready: "No orders ready",
+                table_prefix: "Table",
+                queue_prefix: "Queue",
+                timer_min: "min",
+                empty_cooking: "No orders currently cooking.",
+                empty_ready: "No orders waiting for pickup.",
+                menu_mgmt_title: "Menu Availability",
+                menu_mgmt_desc: "Disable items temporarily out of stock to prevent customer orders.",
+                category_label: "Category:",
+                assignment_title: "Server Table Assignments",
+                assignment_desc: "Assign physical tables to waitstaff members in real-time.",
+                th_table: "Table",
+                th_server: "Assigned Server",
+                unassigned: "Unassigned",
+                active_orders_service: "Active Table Orders"
+            },
+            ar: {
+                title_kds: "لوحة التحكم",
+                stat_cooking: "قيد التحضير :",
+                stat_ready: "جاهزة :",
+                col_cooking: "قيد التحضير في المطبخ",
+                col_ready: "جاهزة للاستلام والتقديم",
+                btn_ready: "جاهزة للتقديم !",
+                btn_served: "تم تسليم الطلب",
+                btn_manage_menu: "إدارة المنتجات",
+                btn_view_orders: "عرض الطلبات",
+                pickup_cooking: "قيد التحضير",
+                pickup_ready: "جاهز للاستلام عند المنصة",
+                pickup_no_cooking: "لا توجد طلبات جارية",
+                pickup_no_ready: "لا توجد طلبات جاهزة حالياً",
+                table_prefix: "طاولة",
+                queue_prefix: "الدور",
+                timer_min: "دقيقة",
+                empty_cooking: "لا توجد طلبات قيد التحضير حالياً.",
+                empty_ready: "لا توجد طلبات تنتظر الاستلام.",
+                menu_mgmt_title: "إدارة توفر قائمة الطعام",
+                menu_mgmt_desc: "عطّل المنتجات غير المتوفرة لمنع الزبائن من طلبها مؤقتاً.",
+                category_label: "الفئة :",
+                assignment_title: "توزيع الطاولات على طاقم الخدمة",
+                assignment_desc: "حدد النادل المسؤول عن كل طاولة مع المزامنة الفورية.",
+                th_table: "الطاولة",
+                th_server: "النادل المسؤول",
+                unassigned: "غير معينة",
+                active_orders_service: "الطلبات الجارية في الصالة"
+            },
+            es: {
+                title_kds: "Panel de Control",
+                stat_cooking: "En Cocina:",
+                stat_ready: "Listos:",
+                col_cooking: "En Preparación",
+                col_ready: "Listos / Para Servir",
+                btn_ready: "¡Listo para servir!",
+                btn_served: "Pedido Entregado",
+                btn_manage_menu: "Gestión de Menú",
+                btn_view_orders: "Ver Pedidos",
+                pickup_cooking: "En Preparación",
+                pickup_ready: "Listo en mostrador",
+                pickup_no_cooking: "Sin pedidos en curso",
+                pickup_no_ready: "Sin pedidos listos",
+                table_prefix: "Mesa",
+                queue_prefix: "Cola",
+                timer_min: "min",
+                empty_cooking: "No hay pedidos en preparación.",
+                empty_ready: "No hay pedidos pendientes de entrega.",
+                menu_mgmt_title: "Disponibilidad del Menú",
+                menu_mgmt_desc: "Desactive platos temporalmente agotados para bloquear pedidos.",
+                category_label: "Categoría:",
+                assignment_title: "Asignación de Mesas",
+                assignment_desc: "Asigne cada mesa física a un camarero en tiempo real.",
+                th_table: "Mesa",
+                th_server: "Camarero Asignado",
+                unassigned: "Sin asignar",
+                active_orders_service: "Pedidos Activos en Sala"
+            }
+        };
+
+        const kdsCurrencies = {
+            EUR: { symbol: '€', rate: 1.0, position: 'after' },
+            USD: { symbol: '$', rate: 1.08, position: 'before' },
+            GBP: { symbol: '£', rate: 0.85, position: 'before' },
+            MAD: { symbol: 'DH', rate: 10.80, position: 'after' },
+            SAR: { symbol: '﷼', rate: 4.05, position: 'after' },
+            AED: { symbol: 'د.إ', rate: 3.97, position: 'after' }
+        };
+
+        let kdsLang = localStorage.getItem('ciao_kds_lang') || 'fr';
+        let kdsCurrency = localStorage.getItem('ciao_kds_currency') || 'EUR';
+
+        function formatKdsPrice(euroAmount) {
+            const curr = kdsCurrencies[kdsCurrency] || kdsCurrencies.EUR;
+            const converted = euroAmount * curr.rate;
+            const formatted = converted.toFixed(2);
+            return curr.position === 'before' ? `${curr.symbol} ${formatted}` : `${formatted} ${curr.symbol}`;
+        }
+
+        function changeKdsLanguage(lang) {
+            kdsLang = lang;
+            localStorage.setItem('ciao_kds_lang', lang);
+            const select = document.getElementById('kds-lang-select');
+            if (select) select.value = lang;
+
+            if (lang === 'ar') {
+                document.documentElement.setAttribute('dir', 'rtl');
+                document.documentElement.setAttribute('lang', 'ar');
+            } else {
+                document.documentElement.setAttribute('dir', 'ltr');
+                document.documentElement.setAttribute('lang', lang);
+            }
+
+            updateRoleTitle();
+            renderDashboard();
+        }
+
+        function changeKdsCurrency(curr) {
+            kdsCurrency = curr;
+            localStorage.setItem('ciao_kds_currency', curr);
+            const select = document.getElementById('kds-currency-select');
+            if (select) select.value = curr;
+
+            renderDashboard();
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.log(err));
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
         // SSO / Session Authentication guard
         if (sessionStorage.getItem('ciao_byebye_auth') !== 'true') {
             window.location.href = 'login.html';
@@ -513,7 +681,6 @@
         const loggedUserEmail = sessionStorage.getItem('ciao_byebye_user') || 'chef@atelier-chris.fr';
         const loggedUserRole = sessionStorage.getItem('ciao_byebye_role') || 'cuisine';
         
-        // Active role context (can be changed on the fly by manager)
         let activeEmail = loggedUserEmail;
         let activeRole = loggedUserRole;
         let showMenuManagement = false;
@@ -521,6 +688,14 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('user-email').innerText = loggedUserEmail;
             
+            // Sync selectors
+            const langSelect = document.getElementById('kds-lang-select');
+            if (langSelect) langSelect.value = kdsLang;
+            const currSelect = document.getElementById('kds-currency-select');
+            if (currSelect) currSelect.value = kdsCurrency;
+
+            changeKdsLanguage(kdsLang);
+
             // Show Manager Switcher if role is 'gestionnaire'
             if (loggedUserRole === 'gestionnaire') {
                 document.getElementById('manager-switcher-container').style.display = 'block';
@@ -529,14 +704,11 @@
             
             updateRoleTitle();
             fetchOrders();
-            
-            // Periodically refresh timers (every 10s)
             setInterval(updateTimersDisplay, 10000);
         });
 
         function changeSimulatedProfile(email) {
             activeEmail = email;
-            // Map email to role
             if (email === 'chef@atelier-chris.fr') activeRole = 'cuisine';
             else if (email === 'maitre@atelier-chris.fr') activeRole = 'chef_de_salle';
             else if (email.startsWith('david') || email.startsWith('sophie')) activeRole = 'serveur';
@@ -550,22 +722,27 @@
         }
 
         function updateRoleTitle() {
+            const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
             const roleLabels = {
-                'cuisine': 'Tableau de Bord Cuisine',
-                'chef_de_salle': 'Supervision Chef de Salle',
-                'serveur': 'KDS Serveur affecté',
-                'bar': 'KDS Boissons / Bar',
-                'technique': 'Comptoir Public Starbucks',
-                'gestionnaire': 'Administration Ciao Byebye'
+                'cuisine': '👨‍🍳 ' + t.title_kds + ' - Cuisine',
+                'chef_de_salle': '🤵 ' + t.title_kds + ' - Chef de Salle',
+                'serveur': '🏃 ' + t.title_kds + ' - Serveur',
+                'bar': '🍹 ' + t.title_kds + ' - Bar',
+                'technique': '📺 ' + t.pickup_ready + ' (Starbucks)',
+                'gestionnaire': '📈 ' + t.title_kds + ' - Direction'
             };
-            document.getElementById('dashboard-role-title').innerText = roleLabels[activeRole] || 'Tableau de Bord';
+            document.getElementById('dashboard-role-title').innerText = roleLabels[activeRole] || t.title_kds;
 
-            // Show or hide 'Gérer le Menu' button in header if cuisine/gestionnaire
+            const statCook = document.getElementById('stat-cooking-label');
+            if (statCook) statCook.innerText = t.stat_cooking;
+            const statRdy = document.getElementById('stat-ready-label');
+            if (statRdy) statRdy.innerText = t.stat_ready;
+
             const headerBtnContainer = document.getElementById('header-btn-container');
             if (activeRole === 'cuisine' || activeRole === 'gestionnaire') {
                 headerBtnContainer.innerHTML = `
                     <button class="action-btn secondary" onclick="toggleMenuManagement()">
-                        <i class="fa-solid fa-utensils"></i> ${showMenuManagement ? 'Voir Commandes' : 'Gérer dispo Menu'}
+                        <i class="fa-solid fa-utensils"></i> ${showMenuManagement ? t.btn_view_orders : t.btn_manage_menu}
                     </button>
                 `;
             } else {
@@ -591,7 +768,6 @@
         const socket = typeof io !== 'undefined' ? io() : null;
         let orders = [];
 
-        // Fetch active orders from REST API (including email filters)
         async function fetchOrders() {
             if (showMenuManagement) return;
             try {
@@ -604,8 +780,8 @@
             }
         }
 
-        // Render Cards inside correct columns
         function renderDashboard() {
+            const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
             const mainContent = document.getElementById('dashboard-main-content');
             
             // 1. PUBLIC PICKUP SCREEN VIEW (Starbucks Model)
@@ -616,9 +792,9 @@
                 mainContent.innerHTML = `
                     <div class="pickup-container">
                         <div class="pickup-column">
-                            <div class="pickup-title"><i class="fa-solid fa-spinner fa-spin" style="color:#ef4444;"></i> En Préparation</div>
+                            <div class="pickup-title"><i class="fa-solid fa-spinner fa-spin" style="color:#ef4444;"></i> ${t.pickup_cooking}</div>
                             <div class="pickup-list">
-                                ${cookingOrders.length === 0 ? '<div style="color:var(--text-muted); font-style:italic;">Aucune commande</div>' : 
+                                ${cookingOrders.length === 0 ? `<div style="color:var(--text-muted); font-style:italic;">${t.pickup_no_cooking}</div>` : 
                                   cookingOrders.map((o, index) => `
                                     <div class="pickup-name-card">
                                         ${o.client_name} <span style="font-size:16px; color:var(--text-muted); margin-left:10px;">#Q-${index+1}</span>
@@ -627,12 +803,12 @@
                             </div>
                         </div>
                         <div class="pickup-column">
-                            <div class="pickup-title" style="color:#10b981;"><i class="fa-solid fa-bell"></i> Prêt au comptoir</div>
+                            <div class="pickup-title" style="color:#10b981;"><i class="fa-solid fa-bell"></i> ${t.pickup_ready}</div>
                             <div class="pickup-list">
-                                ${readyOrders.length === 0 ? '<div style="color:var(--text-muted); font-style:italic;">Aucune commande prête</div>' : 
+                                ${readyOrders.length === 0 ? `<div style="color:var(--text-muted); font-style:italic;">${t.pickup_no_ready}</div>` : 
                                   readyOrders.map((o) => `
                                     <div class="pickup-name-card ready">
-                                        🎉 ${o.client_name} <span style="font-size:16px; color:#10b981; margin-left:10px;">(Table ${o.table_number})</span>
+                                        🎉 ${o.client_name} <span style="font-size:16px; color:#10b981; margin-left:10px;">(${t.table_prefix} ${o.table_number})</span>
                                     </div>
                                 `).join('')}
                             </div>
@@ -642,18 +818,18 @@
                 return;
             }
 
-            // 2. CHEF DE SALLE VIEW (Room Manager - Table Assignments)
+            // 2. CHEF DE SALLE VIEW
             if (activeRole === 'chef_de_salle') {
                 renderChefDeSalleView();
                 return;
             }
 
-            // 3. STANDARD KDS VIEW (Cuisine, Waiter, Bar, Gestionnaire)
+            // 3. STANDARD KDS VIEW
             mainContent.innerHTML = `
                 <!-- Column 1: Cooking -->
                 <section class="kds-column">
                     <div class="column-header">
-                        <h2><i class="fa-solid fa-fire-burner" style="color: #ef4444;"></i> En Préparation</h2>
+                        <h2><i class="fa-solid fa-fire-burner" style="color: #ef4444;"></i> ${t.col_cooking}</h2>
                         <span class="count" id="count-cooking" style="background:#ef4444; color:#fff;">0</span>
                     </div>
                     <div class="cards-list" id="list-cooking"></div>
@@ -662,7 +838,7 @@
                 <!-- Column 2: Ready -->
                 <section class="kds-column">
                     <div class="column-header">
-                        <h2><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Prêtes / À Retirer</h2>
+                        <h2><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> ${t.col_ready}</h2>
                         <span class="count" id="count-ready" style="background:#10b981; color:#fff;">0</span>
                     </div>
                     <div class="cards-list" id="list-ready"></div>
@@ -683,7 +859,7 @@
 
             // Render Cooking Orders
             if (cookingOrders.length === 0) {
-                cookingList.innerHTML = '<div class="empty-column-msg">Aucune commande en préparation.</div>';
+                cookingList.innerHTML = `<div class="empty-column-msg">${t.empty_cooking}</div>`;
             } else {
                 cookingList.innerHTML = cookingOrders.map((o, index) => {
                     const elapsedMin = Math.floor((new Date() - new Date(o.created_at)) / 60000);
@@ -694,10 +870,10 @@
                                     <h3>${o.client_name}</h3>
                                     <div style="display:flex; gap: 6px; margin-top:4px;">
                                         <span class="queue-badge">#Q-${index+1}</span>
-                                        <span class="elapsed-timer" data-time="${o.created_at}">⏱️ ${elapsedMin} min</span>
+                                        <span class="elapsed-timer" data-time="${o.created_at}">⏱️ ${elapsedMin} ${t.timer_min}</span>
                                     </div>
                                 </div>
-                                <span class="table-num">Table ${o.table_number}</span>
+                                <span class="table-num">${t.table_prefix} ${o.table_number}</span>
                             </div>
                             <ul class="card-items" style="max-height: 220px; overflow-y: auto; padding-right: 5px;">
                                 ${o.items.map(item => `
@@ -706,13 +882,13 @@
                                             <span class="item-qty">${item.quantity}x</span>
                                             <span>${item.name}</span>
                                         </div>
-                                        <span>${(item.price * item.quantity).toFixed(2)} €</span>
+                                        <span>${formatKdsPrice(item.price * item.quantity)}</span>
                                     </li>
                                 `).join('')}
                             </ul>
                             <div class="card-actions">
                                 <button class="action-btn" onclick="updateOrderStatus('${o.id}', 'prete')">
-                                    <i class="fa-solid fa-mug-hot"></i> Prête à servir !
+                                    <i class="fa-solid fa-mug-hot"></i> ${t.btn_ready}
                                 </button>
                             </div>
                         </div>
@@ -722,16 +898,16 @@
 
             // Render Ready Orders
             if (readyOrders.length === 0) {
-                readyList.innerHTML = '<div class="empty-column-msg">Aucune commande en attente de retrait.</div>';
+                readyList.innerHTML = `<div class="empty-column-msg">${t.empty_ready}</div>`;
             } else {
                 readyList.innerHTML = readyOrders.map(o => `
                     <div class="order-card glass" style="border-color: rgba(16, 185, 129, 0.2);">
                         <div class="card-header">
                             <div class="client-info">
                                 <h3>${o.client_name}</h3>
-                                <span>Prêt au comptoir</span>
+                                <span>${t.pickup_ready}</span>
                             </div>
-                            <span class="table-num" style="background: rgba(16, 185, 129, 0.15); border-color:#10b981; color:#10b981;">Table ${o.table_number}</span>
+                            <span class="table-num" style="background: rgba(16, 185, 129, 0.15); border-color:#10b981; color:#10b981;">${t.table_prefix} ${o.table_number}</span>
                         </div>
                         <ul class="card-items" style="max-height: 220px; overflow-y: auto; padding-right: 5px;">
                             ${o.items.map(item => `
@@ -740,13 +916,13 @@
                                         <span class="item-qty" style="color:#10b981;">${item.quantity}x</span>
                                         <span>${item.name}</span>
                                     </div>
-                                    <span>${(item.price * item.quantity).toFixed(2)} €</span>
+                                    <span>${formatKdsPrice(item.price * item.quantity)}</span>
                                 </li>
                             `).join('')}
                         </ul>
                         <div class="card-actions">
                             <button class="action-btn secondary" onclick="updateOrderStatus('${o.id}', 'servie')">
-                                <i class="fa-solid fa-circle-check"></i> Livrée
+                                <i class="fa-solid fa-circle-check"></i> ${t.btn_served}
                             </button>
                         </div>
                     </div>
@@ -754,12 +930,12 @@
             }
         }
 
-        // 4. RENDERING FOR CHEF DE SALLE (ROOM MANAGER)
+        // 4. RENDERING FOR CHEF DE SALLE
         let staffList = [];
         async function renderChefDeSalleView() {
+            const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
             const mainContent = document.getElementById('dashboard-main-content');
             
-            // Fetch waitstaff assignments
             try {
                 const response = await fetch('/api/staff');
                 staffList = await response.json();
@@ -773,27 +949,26 @@
                 <div class="assignment-view">
                     <!-- Left column: Table assignments -->
                     <div class="menu-mgmt-panel">
-                        <h2><i class="fa-solid fa-chair" style="color:var(--primary);"></i> Affectation des Serveurs</h2>
-                        <p style="font-size:12px; color:var(--text-muted); margin-bottom: 20px;">Attribuez chaque table physique à un serveur de l'équipe.</p>
+                        <h2><i class="fa-solid fa-chair" style="color:var(--primary);"></i> ${t.assignment_title}</h2>
+                        <p style="font-size:12px; color:var(--text-muted); margin-bottom: 20px;">${t.assignment_desc}</p>
                         
                         <table class="assignment-table">
                             <thead>
                                 <tr>
-                                    <th>Table</th>
-                                    <th>Serveur Responsable</th>
+                                    <th>${t.th_table}</th>
+                                    <th>${t.th_server}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${tables.map(tableNum => {
-                                    // Find waiter assigned to this table
                                     const assignedWaiter = staffList.find(s => s.assigned_tables && s.assigned_tables.includes(tableNum));
                                     const assignedEmail = assignedWaiter ? assignedWaiter.email : '';
                                     return `
                                         <tr>
-                                            <td><strong>Table ${tableNum}</strong></td>
+                                            <td><strong>${t.table_prefix} ${tableNum}</strong></td>
                                             <td>
                                                 <select onchange="assignTableToStaff('${tableNum}', this.value)" style="width:100%; padding:8px; background:#000; border:1px solid var(--glass-border); color:#fff; border-radius:4px; outline:none; cursor:pointer;">
-                                                    <option value="">Non assignée</option>
+                                                    <option value="">${t.unassigned}</option>
                                                     <option value="david@atelier-chris.fr" ${assignedEmail === 'david@atelier-chris.fr' ? 'selected' : ''}>David (david@)</option>
                                                     <option value="sophie@atelier-chris.fr" ${assignedEmail === 'sophie@atelier-chris.fr' ? 'selected' : ''}>Sophie (sophie@)</option>
                                                 </select>
@@ -805,27 +980,27 @@
                         </table>
                     </div>
 
-                    <!-- Right column: All active orders with assigned tags -->
+                    <!-- Right column: All active orders -->
                     <div class="kds-column">
                         <div class="column-header">
-                            <h2><i class="fa-solid fa-receipt"></i> Commandes en cours de service</h2>
+                            <h2><i class="fa-solid fa-receipt"></i> ${t.active_orders_service}</h2>
                             <span class="count" style="background:var(--primary); color:#000;">${orders.length}</span>
                         </div>
                         <div class="cards-list" style="overflow-y:auto; height: 100%;">
-                            ${orders.length === 0 ? '<div class="empty-column-msg">Aucune commande active</div>' : 
+                            ${orders.length === 0 ? `<div class="empty-column-msg">${t.empty_cooking}</div>` : 
                               orders.map(o => {
                                 const server = staffList.find(s => s.assigned_tables && s.assigned_tables.includes(o.table_number));
-                                const serverName = server ? (server.email.startsWith('david') ? 'David' : 'Sophie') : 'Non assigné';
+                                const serverName = server ? (server.email.startsWith('david') ? 'David' : 'Sophie') : t.unassigned;
                                 const serverColor = server ? (server.email.startsWith('david') ? '#3b82f6' : '#ec4899') : '#9ca3af';
                                 return `
                                     <div class="order-card glass">
                                         <div class="card-header">
                                             <div class="client-info">
                                                 <h3>${o.client_name}</h3>
-                                                <span>Statut: <strong>${o.order_status === 'en_cuisine' ? 'En préparation' : 'Prête / À retirer'}</strong></span>
+                                                <span>${o.order_status === 'en_cuisine' ? t.col_cooking : t.col_ready}</span>
                                             </div>
                                             <div>
-                                                <span class="table-num" style="margin-right:8px;">Table ${o.table_number}</span>
+                                                <span class="table-num" style="margin-right:8px;">${t.table_prefix} ${o.table_number}</span>
                                                 <span style="font-size:11px; background:${serverColor}; color:#000; font-weight:700; padding:4px 8px; border-radius:4px;">
                                                     👤 ${serverName}
                                                 </span>
@@ -844,7 +1019,6 @@
         }
 
         async function assignTableToStaff(tableNum, email) {
-            // First, remove table from any waiter currently holding it
             for (const waiter of staffList) {
                 if (waiter.assigned_tables.includes(tableNum)) {
                     waiter.assigned_tables = waiter.assigned_tables.filter(t => t !== tableNum);
@@ -852,7 +1026,6 @@
                 }
             }
 
-            // Next, add table to newly selected waiter if specified
             if (email) {
                 const targetWaiter = staffList.find(s => s.email === email);
                 if (targetWaiter) {
@@ -861,7 +1034,6 @@
                 }
             }
 
-            // Refresh UI
             fetchOrders();
         }
 
@@ -877,8 +1049,9 @@
             }
         }
 
-        // 5. RENDERING FOR MENU MANAGEMENT (Kitchen Toggles)
+        // 5. RENDERING FOR MENU MANAGEMENT
         async function renderMenuManagement() {
+            const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
             const mainContent = document.getElementById('dashboard-main-content');
             try {
                 const response = await fetch('/api/menu/all');
@@ -886,14 +1059,14 @@
 
                 mainContent.innerHTML = `
                     <div class="menu-mgmt-panel">
-                        <h2><i class="fa-solid fa-utensils" style="color:var(--primary);"></i> Disponibilité du Menu</h2>
-                        <p style="font-size:12px; color:var(--text-muted); margin-bottom: 20px;">Désactivez les produits temporairement en rupture de stock pour bloquer leur commande.</p>
+                        <h2><i class="fa-solid fa-utensils" style="color:var(--primary);"></i> ${t.menu_mgmt_title}</h2>
+                        <p style="font-size:12px; color:var(--text-muted); margin-bottom: 20px;">${t.menu_mgmt_desc}</p>
                         <div class="menu-mgmt-list">
                             ${menuItems.map(item => `
                                 <div class="menu-mgmt-item">
                                     <div>
                                         <strong style="font-size:15px; color:#fff;">${item.name}</strong>
-                                        <span style="display:block; font-size:11px; color:var(--text-muted); text-transform:uppercase;">Catégorie: ${item.category}</span>
+                                        <span style="display:block; font-size:11px; color:var(--text-muted); text-transform:uppercase;">${t.category_label} ${item.category}</span>
                                     </div>
                                     <label class="switch">
                                         <input type="checkbox" ${item.is_available ? 'checked' : ''} onchange="toggleProductAvailability('${item.id}', this.checked)">
@@ -921,19 +1094,18 @@
             }
         }
 
-        // Helper to recalculate and update visual timers on KDS cards
         function updateTimersDisplay() {
+            const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
             const badges = document.querySelectorAll('.elapsed-timer');
             badges.forEach(badge => {
                 const createdAt = badge.dataset.time;
                 if (createdAt) {
                     const elapsedMin = Math.floor((new Date() - new Date(createdAt)) / 60000);
-                    badge.innerText = `⏱️ ${elapsedMin} min`;
+                    badge.innerText = `⏱️ ${elapsedMin} ${t.timer_min}`;
                 }
             });
         }
 
-        // Update Order prep status via API
         async function updateOrderStatus(orderId, status) {
             try {
                 const response = await fetch(`/api/orders/${orderId}/status`, {
@@ -949,11 +1121,9 @@
             }
         }
 
-        // Setup WebSockets
         if (socket) {
             socket.on('new_order', () => {
                 fetchOrders();
-                // Play notification alert sound
                 try {
                     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     const oscillator = audioCtx.createOscillator();
@@ -961,7 +1131,7 @@
                     oscillator.connect(gainNode);
                     gainNode.connect(audioCtx.destination);
                     oscillator.type = 'sine';
-                    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+                    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
                     gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
                     oscillator.start();
                     oscillator.stop(audioCtx.currentTime + 0.15);
