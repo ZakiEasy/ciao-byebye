@@ -763,6 +763,41 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         const dailyData = await dailyResetRes.json();
         assert.strictEqual(dailyData.success, true);
     });
+
+    test('33. POST /api/tables/layout (move table) & POST /api/inventory/waste with staff notes', async () => {
+        // 1. Déplacer une table existante sur la grille (pos_x, pos_y)
+        const moveRes = await fetch(`${BASE_URL}/api/tables/layout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ number: '01', pos_x: 240, pos_y: 180 })
+        });
+        assert.strictEqual(moveRes.status, 200);
+        const moveData = await moveRes.json();
+        assert.strictEqual(moveData.success, true);
+        assert.strictEqual(moveData.table.pos_x, 240);
+        assert.strictEqual(moveData.table.pos_y, 180);
+
+        // 2. Déclarer une perte avec notes et email
+        const ingsRes = await fetch(`${BASE_URL}/api/inventory/ingredients`);
+        const ings = await ingsRes.json();
+        assert.ok(ings.length > 0);
+
+        const wasteRes = await fetch(`${BASE_URL}/api/inventory/waste`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ingredient_id: ings[0].id,
+                quantity: 1.5,
+                reason: 'Erreur de cuisson',
+                notes: 'Test perte automatisé',
+                staff_email: 'chef@atelier-chris.fr'
+            })
+        });
+        assert.strictEqual(wasteRes.status, 200);
+        const wasteData = await wasteRes.json();
+        assert.strictEqual(wasteData.success, true);
+        assert.strictEqual(wasteData.log.notes, 'Test perte automatisé');
+    });
 });
 
 

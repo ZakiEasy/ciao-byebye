@@ -897,12 +897,22 @@ app.get('/api/tables/layout', async (req, res) => {
   }
 });
 
-// 6.05. Créer ou modifier une table sur le plan (coordonnées, dimensions, capacités, forme, zone)
+// 6.05. Créer ou modifier une table sur le plan (coordonnées, dimensions, capacités, forme, zone, déplacement temps réel)
 app.post('/api/tables/layout', async (req, res) => {
   const { id, number, name, zone, shape, min_covers, max_covers, nominal_covers, pos_x, pos_y, width, height } = req.body;
   try {
     let result;
-    if (id) {
+    // 1. Chercher si la table existe déjà par id ou par numéro (avec ou sans zéro initial)
+    const numStr = number !== undefined && number !== null ? String(number).trim() : null;
+    const numPadded = numStr && numStr.length === 1 ? '0' + numStr : numStr;
+
+    const existing = await pool.query(
+      'SELECT id, number FROM tables WHERE (id::text = $1 OR number = $2 OR number = $3) LIMIT 1',
+      [id || null, numStr, numPadded]
+    );
+
+    if (existing.rows.length > 0) {
+      const tableId = existing.rows[0].id;
       result = await pool.query(
         `UPDATE tables SET
            number = COALESCE($1, number),
@@ -917,19 +927,48 @@ app.post('/api/tables/layout', async (req, res) => {
            width = COALESCE($10, width),
            height = COALESCE($11, height),
            updated_at = CURRENT_TIMESTAMP
-         WHERE (id::text = $12 OR number = $12) RETURNING *`,
-        [number, name, zone, shape, min_covers, max_covers, nominal_covers, pos_x, pos_y, width, height, id]
+         WHERE id = $12 RETURNING *`,
+        [
+          numStr || null,
+          name || null,
+          zone || null,
+          shape || null,
+          min_covers ? parseInt(min_covers, 10) : null,
+          max_covers ? parseInt(max_covers, 10) : null,
+          nominal_covers ? parseInt(nominal_covers, 10) : null,
+          pos_x !== undefined && pos_x !== null ? Math.round(Number(pos_x)) : null,
+          pos_y !== undefined && pos_y !== null ? Math.round(Number(pos_y)) : null,
+          width !== undefined && width !== null ? Math.round(Number(width)) : null,
+          height !== undefined && height !== null ? Math.round(Number(height)) : null,
+          tableId
+        ]
       );
     } else {
-      const qrToken = `token_table_${number}_${Date.now()}`;
+      const finalNumber = numStr || '01';
+      const qrToken = `token_table_${finalNumber}_${Date.now()}`;
       result = await pool.query(
         `INSERT INTO tables (number, name, qr_code_token, zone, shape, min_covers, max_covers, nominal_covers, pos_x, pos_y, width, height)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
-        [number, name || `Table ${number}`, qrToken, zone || 'salle', shape || 'square', min_covers || 2, max_covers || 4, nominal_covers || 4, pos_x || 100, pos_y || 100, width || 100, height || 100]
+        [
+          finalNumber,
+          name || `Table ${finalNumber}`,
+          qrToken,
+          zone || 'salle',
+          shape || 'square',
+          min_covers ? parseInt(min_covers, 10) : 2,
+          max_covers ? parseInt(max_covers, 10) : 4,
+          nominal_covers ? parseInt(nominal_covers, 10) : 4,
+          pos_x !== undefined && pos_x !== null ? Math.round(Number(pos_x)) : 100,
+          pos_y !== undefined && pos_y !== null ? Math.round(Number(pos_y)) : 100,
+          width !== undefined && width !== null ? Math.round(Number(width)) : 100,
+          height !== undefined && height !== null ? Math.round(Number(height)) : 100
+        ]
       );
     }
-    io.emit('table_layout_updated', { table: result.rows[0] });
-    res.json({ success: true, table: result.rows[0] });
+
+    const savedTable = result.rows[0];
+    io.emit('table_layout_updated', { table: savedTable });
+    res.json({ success: true, table: savedTable });
   } catch (err) {
     console.error('Erreur sauvegarde table layout:', err);
     res.status(500).json({ error: 'Erreur serveur' });
@@ -939,12 +978,13 @@ app.post('/api/tables/layout', async (req, res) => {
 // 6.05bis. Supprimer une table du plan
 app.delete('/api/tables/:id', async (req, res) => {
   const { id } = req.params;
+  const numPadded = id.length === 1 ? '0' + id : id;
   try {
     // 1. Dissocier les tables potentiellement fusionnées avec celle-ci
-    await pool.query('UPDATE tables SET merged_parent_id = NULL WHERE merged_parent_id::text = $1 OR merged_parent_id = (SELECT id FROM tables WHERE id::text = $1 OR number = $1 LIMIT 1)', [id]);
+    await pool.query('UPDATE tables SET merged_parent_id = NULL WHERE merged_parent_id::text = $1 OR merged_parent_id = (SELECT id FROM tables WHERE id::text = $1 OR number = $1 OR number = $2 LIMIT 1)', [id, numPadded]);
     
     // 2. Supprimer la table
-    const result = await pool.query('DELETE FROM tables WHERE (id::text = $1 OR number = $1) RETURNING id, number', [id]);
+    const result = await pool.query('DELETE FROM tables WHERE (id::text = $1 OR number = $1 OR number = $2) RETURNING id, number', [id, numPadded]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Table non trouvée' });
     }
@@ -961,6 +1001,8 @@ app.delete('/api/tables/:id', async (req, res) => {
 app.patch('/api/tables/:id/service', async (req, res) => {
   const { id } = req.params;
   const { service_status, cleaning_status, actual_covers } = req.body;
+  const numPadded = id.length === 1 ? '0' + id : id;
+
   try {
     let query = 'UPDATE tables SET last_activity_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP';
     const params = [];
@@ -968,7 +1010,7 @@ app.patch('/api/tables/:id/service', async (req, res) => {
     if (service_status !== undefined) {
       params.push(service_status);
       query += `, service_status = $${params.length}`;
-      if (service_status === 'commande_prise' || service_status === 'en_preparation' || service_status === 'occupee' || service_status === 'occupée') {
+      if (['commande_prise', 'en_preparation', 'occupee', 'occupée'].includes(service_status)) {
         query += `, service_started_at = COALESCE(service_started_at, CURRENT_TIMESTAMP)`;
       } else if (service_status === 'libre') {
         query += `, service_started_at = NULL, actual_covers = 0`;
@@ -979,12 +1021,16 @@ app.patch('/api/tables/:id/service', async (req, res) => {
       query += `, cleaning_status = $${params.length}`;
     }
     if (actual_covers !== undefined) {
-      params.push(actual_covers);
+      params.push(parseInt(actual_covers, 10) || 0);
       query += `, actual_covers = $${params.length}`;
     }
 
     params.push(id);
-    query += ` WHERE (id::text = $${params.length} OR number = $${params.length}) RETURNING *`;
+    const p1 = params.length;
+    params.push(numPadded);
+    const p2 = params.length;
+
+    query += ` WHERE (id::text = $${p1} OR number = $${p1} OR number = $${p2}) RETURNING *`;
 
     const result = await pool.query(query, params);
     if (result.rows.length === 0) {

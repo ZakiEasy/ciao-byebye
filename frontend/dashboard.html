@@ -966,6 +966,9 @@
         let kdsActiveStation = 'all'; // 'all' | 'chaud' | 'froid' | 'bar' | 'passe'
         let floorPlanActiveZone = 'all'; // 'all' | 'salle' | 'terrasse' | 'mezzanine' | 'bar'
         let floorPlanTables = [];
+        let staffList = [];
+        let floorPlanZoom = 1;
+        let isMoveMode = true;
         let selectedTableModalData = null;
         let inventoryIngredients = [];
         let inventoryRecipes = [];
@@ -1415,6 +1418,47 @@
             }
         }
 
+        // ==========================================
+        // 4.6. PLAN DE TABLES 2D INTERACTIF AVEC GRILLE, ZOOM & DRAG-AND-DROP
+        // ==========================================
+        let isDraggingTable = false;
+        let activeDragTable = null;
+        let dragOffset = { x: 0, y: 0 };
+        let dragStartPos = { x: 0, y: 0 };
+        let hasMovedSignificantly = false;
+
+        function changeFloorPlanZoom(delta) {
+            floorPlanZoom = Math.min(2.0, Math.max(0.5, Math.round((floorPlanZoom + delta) * 10) / 10));
+            applyFloorPlanZoom();
+        }
+
+        function resetFloorPlanZoom() {
+            floorPlanZoom = 1.0;
+            applyFloorPlanZoom();
+        }
+
+        function applyFloorPlanZoom() {
+            const canvas = document.getElementById('floorplan-grid-canvas');
+            const zoomBadge = document.getElementById('floorplan-zoom-value');
+            if (canvas) {
+                canvas.style.transform = `scale(${floorPlanZoom})`;
+            }
+            if (zoomBadge) {
+                zoomBadge.innerText = `${Math.round(floorPlanZoom * 100)}%`;
+            }
+        }
+
+        function toggleMoveMode() {
+            isMoveMode = !isMoveMode;
+            const btn = document.getElementById('btn-toggle-move-mode');
+            if (btn) {
+                btn.style.background = isMoveMode ? 'rgba(245,158,11,0.25)' : 'rgba(255,255,255,0.06)';
+                btn.style.borderColor = isMoveMode ? 'var(--primary)' : 'rgba(255,255,255,0.1)';
+                btn.style.color = isMoveMode ? 'var(--primary)' : '#fff';
+            }
+            showKdsToast(isMoveMode ? '📐 Mode Déplacement activé (glissez-déposez les tables)' : '🔒 Mode Verrouillé');
+        }
+
         async function renderFloorPlanView() {
             const mainContent = document.getElementById('dashboard-main-content');
             try {
@@ -1449,11 +1493,22 @@
                             <button class="zone-chip ${floorPlanActiveZone === 'bar' ? 'active' : ''}" onclick="setFloorPlanZone('bar')">🍸 Bar</button>
                         </div>
 
+                        <!-- Outils de Zoom & Actions rapides -->
                         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                            <button class="action-btn secondary" onclick="openMergeTableModal()" style="font-size:12px; padding:6px 12px; color:var(--primary); border-color:rgba(245,158,11,0.4);">
-                                <i class="fa-solid fa-link"></i> Fusionner Tables
+                            <div class="floorplan-zoom-toolbar">
+                                <button class="floorplan-zoom-btn" onclick="changeFloorPlanZoom(-0.1)" title="Dézoomer"><i class="fa-solid fa-minus"></i></button>
+                                <span id="floorplan-zoom-value" style="font-size:11px; font-weight:800; min-width:40px; text-align:center; color:var(--primary);">${Math.round(floorPlanZoom * 100)}%</span>
+                                <button class="floorplan-zoom-btn" onclick="changeFloorPlanZoom(0.1)" title="Zoomer"><i class="fa-solid fa-plus"></i></button>
+                                <button class="floorplan-zoom-btn" onclick="resetFloorPlanZoom()" title="Réinitialiser 100%"><i class="fa-solid fa-arrows-rotate"></i></button>
+                            </div>
+
+                            <button id="btn-toggle-move-mode" class="action-btn secondary" onclick="toggleMoveMode()" style="font-size:12px; padding:6px 12px; ${isMoveMode ? 'background:rgba(245,158,11,0.25); border-color:var(--primary); color:var(--primary);' : ''}">
+                                <i class="fa-solid fa-up-down-left-right"></i> Déplacer
                             </button>
-                            <button class="action-btn secondary" onclick="unmergeAllDaily()" style="font-size:12px; padding:6px 12px; color:#a855f7; border-color:rgba(168,85,247,0.4);" title="Clôturer le service du jour et dissocier toutes les tables">
+                            <button class="action-btn secondary" onclick="openMergeTableModal()" style="font-size:12px; padding:6px 12px; color:var(--primary); border-color:rgba(245,158,11,0.4);">
+                                <i class="fa-solid fa-link"></i> Fusionner
+                            </button>
+                            <button class="action-btn secondary" onclick="unmergeAllDaily()" style="font-size:12px; padding:6px 12px; color:#a855f7; border-color:rgba(168,85,247,0.4);" title="Clôturer le service et dissocier toutes les tables">
                                 <i class="fa-solid fa-moon"></i> Clôture Journée
                             </button>
                             <button class="action-btn secondary" onclick="openAddTableModal()" style="font-size:12px; padding:6px 12px;">
@@ -1465,27 +1520,34 @@
                         </div>
                     </div>
 
-                    <div class="floorplan-viewport" id="floorplan-canvas">
-                        ${filteredTables.map(t => {
-                            const isLongWait = t.wait_minutes && t.wait_minutes >= 20;
-                            const statusClass = `status-${t.service_status || 'libre'}`;
-                            const shapeClass = `shape-${t.shape || 'square'}`;
-                            const isMerged = !!t.merged_parent_id;
+                    <!-- Blueprint Viewport & Grid Canvas -->
+                    <div class="floorplan-viewport" id="floorplan-viewport" onmousemove="handleFloorPlanMouseMove(event)" onmouseup="handleFloorPlanMouseUp(event)" onmouseleave="handleFloorPlanMouseUp(event)">
+                        <div class="floorplan-grid-canvas" id="floorplan-grid-canvas" style="transform: scale(${floorPlanZoom});">
+                            ${filteredTables.map(t => {
+                                const isLongWait = t.wait_minutes && t.wait_minutes >= 20;
+                                const statusClass = `status-${t.service_status || 'libre'}`;
+                                const shapeClass = `shape-${t.shape || 'square'}`;
+                                const isMerged = !!t.merged_parent_id;
 
-                            return `
-                                <div class="table-node ${shapeClass} ${statusClass} ${isLongWait ? 'wait-alert-pulse' : ''}" 
-                                     style="left:${t.pos_x}px; top:${t.pos_y}px; width:${t.width || 100}px; height:${t.height || 100}px;"
-                                     onclick="openTableActionModal('${t.id}')">
-                                    <div class="table-node-number">${t.number}</div>
-                                    <div class="table-node-capacity">${t.min_covers}-${t.max_covers}p (${t.actual_covers || 0} cvts)</div>
-                                    ${t.assigned_waiter_email ? `<div class="table-node-server">👤 ${t.assigned_waiter_email.split('@')[0]}</div>` : ''}
-                                    ${isLongWait ? `<div class="table-node-wait-timer">⚠️ >20min</div>` : ''}
-                                    ${isMerged ? `<span style="font-size:9px; color:var(--primary); font-weight:700;"><i class="fa-solid fa-link"></i> ${t.unmerge_policy === 'at_day_end' ? 'Fusion Journée' : 'Fusion Service'}</span>` : ''}
-                                </div>
-                            `;
-                        }).join('')}
+                                return `
+                                    <div class="table-node ${shapeClass} ${statusClass} ${isLongWait ? 'wait-alert-pulse' : ''}" 
+                                         id="table-node-${t.id}"
+                                         data-table-id="${t.id}"
+                                         data-table-num="${t.number}"
+                                         style="left:${t.pos_x || 100}px; top:${t.pos_y || 100}px; width:${t.width || 100}px; height:${t.height || 100}px;"
+                                         onmousedown="handleTableMouseDown(event, '${t.id}')">
+                                        <div class="table-node-number">${t.number}</div>
+                                        <div class="table-node-capacity">${t.min_covers}-${t.max_covers}p (${t.actual_covers || 0} cvts)</div>
+                                        ${t.assigned_waiter_email ? `<div class="table-node-server">👤 ${t.assigned_waiter_email.split('@')[0]}</div>` : ''}
+                                        ${isLongWait ? `<div class="table-node-wait-timer">⚠️ >20min</div>` : ''}
+                                        ${isMerged ? `<span style="font-size:9px; color:var(--primary); font-weight:700;"><i class="fa-solid fa-link"></i> ${t.unmerge_policy === 'at_day_end' ? 'Journée' : 'Service'}</span>` : ''}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
                     </div>
 
+                    <!-- Légende du statut de table -->
                     <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:12px; font-size:11px; color:var(--text-muted); justify-content:center;">
                         <span><strong style="color:#10b981;">●</strong> Libre</span>
                         <span><strong style="color:#3b82f6;">●</strong> Réservée</span>
@@ -1506,6 +1568,87 @@
             renderFloorPlanView();
         }
 
+        // --- GESTION DU GLISSER-DÉPOSER (DRAG & DROP) TEMPS RÉEL SUR GRILLE ---
+        function handleTableMouseDown(e, tableId) {
+            if (e.button !== 0) return; // Uniquement clic gauche
+            const node = document.getElementById(`table-node-${tableId}`);
+            if (!node) return;
+
+            isDraggingTable = true;
+            activeDragTable = {
+                id: tableId,
+                element: node,
+                startX: e.clientX,
+                startY: e.clientY,
+                initialLeft: parseFloat(node.style.left) || 100,
+                initialTop: parseFloat(node.style.top) || 100
+            };
+            dragStartPos = { x: e.clientX, y: e.clientY };
+            hasMovedSignificantly = false;
+
+            node.classList.add('is-dragging');
+            e.preventDefault();
+        }
+
+        function handleFloorPlanMouseMove(e) {
+            if (!isDraggingTable || !activeDragTable) return;
+            const dx = (e.clientX - activeDragTable.startX) / floorPlanZoom;
+            const dy = (e.clientY - activeDragTable.startY) / floorPlanZoom;
+
+            if (Math.abs(e.clientX - dragStartPos.x) > 6 || Math.abs(e.clientY - dragStartPos.y) > 6) {
+                hasMovedSignificantly = true;
+            }
+
+            if (isMoveMode && hasMovedSignificantly) {
+                let newX = Math.max(0, Math.round((activeDragTable.initialLeft + dx) / 20) * 20);
+                let newY = Math.max(0, Math.round((activeDragTable.initialTop + dy) / 20) * 20);
+                activeDragTable.element.style.left = `${newX}px`;
+                activeDragTable.element.style.top = `${newY}px`;
+            }
+        }
+
+        async function handleFloorPlanMouseUp(e) {
+            if (!isDraggingTable || !activeDragTable) return;
+            const targetTableId = activeDragTable.id;
+            const node = activeDragTable.element;
+            node.classList.remove('is-dragging');
+
+            if (hasMovedSignificantly && isMoveMode) {
+                // Sauvegarder la nouvelle position sur la grille
+                const finalX = Math.max(0, Math.round(parseFloat(node.style.left) / 20) * 20);
+                const finalY = Math.max(0, Math.round(parseFloat(node.style.top) / 20) * 20);
+                
+                const tableObj = (floorPlanTables || []).find(t => t.id === targetTableId || t.number === targetTableId);
+                if (tableObj) {
+                    tableObj.pos_x = finalX;
+                    tableObj.pos_y = finalY;
+                }
+
+                try {
+                    await fetch('/api/tables/layout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: targetTableId,
+                            number: tableObj ? tableObj.number : undefined,
+                            pos_x: finalX,
+                            pos_y: finalY
+                        })
+                    });
+                } catch (err) {
+                    console.error('Erreur sauvegarde déplacement table:', err);
+                }
+            } else {
+                // Simple clic sans déplacement -> Ouvrir la modale d'action de table
+                openTableActionModal(targetTableId);
+            }
+
+            isDraggingTable = false;
+            activeDragTable = null;
+            hasMovedSignificantly = false;
+        }
+
+        // --- ACTIONS SUR UNE TABLE (MODALE COMPLÈTE) ---
         function openTableActionModal(tableId) {
             const table = (floorPlanTables || []).find(t => (t.id === tableId || t.number === tableId));
             if (!table) return;
@@ -1576,7 +1719,7 @@
                                 <i class="fa-solid fa-link"></i> Fusionner
                             </button>
                             ${table.merged_parent_id ? `
-                                <button class="action-btn secondary" onclick="splitTable('${table.id}'); closeTableModal();" style="color:#ef4444; border-color:rgba(239,68,68,0.4);">
+                                <button class="action-btn secondary" onclick="splitTable('${table.id}')" style="color:#ef4444; border-color:rgba(239,68,68,0.4);">
                                     <i class="fa-solid fa-scissors"></i> Dissocier
                                 </button>
                             ` : ''}
@@ -1604,7 +1747,7 @@
                 });
                 renderFloorPlanView();
             } catch (e) {
-                console.error(e);
+                console.error('Erreur mise à jour statut table:', e);
             }
         }
 
@@ -1617,7 +1760,7 @@
                 });
                 renderFloorPlanView();
             } catch (e) {
-                console.error(e);
+                console.error('Erreur mise à jour couverts table:', e);
             }
         }
 
@@ -1630,7 +1773,157 @@
                 });
                 renderFloorPlanView();
             } catch (e) {
-                console.error(e);
+                console.error('Erreur mise à jour hygiène table:', e);
+            }
+        }
+
+        // --- SUPPRESSION, FUSION & SCISSION DE TABLES ---
+        async function deleteTable(tableId, tableNum) {
+            if (!confirm(`Êtes-vous sûr de vouloir supprimer définitivement la Table ${tableNum} ?`)) {
+                return;
+            }
+            try {
+                const res = await fetch(`/api/tables/${tableId}`, { method: 'DELETE' });
+                if (res.ok) {
+                    showKdsToast(`Table ${tableNum} supprimée avec succès`);
+                    closeTableModal();
+                    renderFloorPlanView();
+                } else {
+                    alert('Erreur lors de la suppression de la table');
+                }
+            } catch (e) {
+                console.error('Erreur suppression table:', e);
+            }
+        }
+
+        function openMergeTableModal(primaryId, primaryNum) {
+            const container = document.getElementById('table-modal-container');
+            if (!container) return;
+
+            const tables = Array.isArray(floorPlanTables) ? floorPlanTables : [];
+            const defaultPrimary = primaryId ? tables.find(t => t.id === primaryId || t.number === primaryId) : tables[0];
+            const primaryIdVal = defaultPrimary ? defaultPrimary.id : '';
+
+            container.innerHTML = `
+                <div class="table-mgmt-modal-overlay" onclick="closeTableModal(event)">
+                    <div class="table-mgmt-modal" onclick="event.stopPropagation()" style="max-width:480px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                            <h3 style="font-size:18px; font-weight:800;">
+                                <i class="fa-solid fa-link" style="color:var(--primary);"></i> Fusionner des Tables
+                            </h3>
+                            <button onclick="closeTableModal()" style="background:none; border:none; color:#9ca3af; font-size:18px; cursor:pointer;">✕</button>
+                        </div>
+
+                        <form onsubmit="submitMergeTables(event)">
+                            <div style="margin-bottom:14px;">
+                                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Table Principale (Maître)</label>
+                                <select id="merge-primary-id" class="glass-select" style="width:100%;" required>
+                                    ${tables.map(t => `<option value="${t.id}" ${t.id === primaryIdVal ? 'selected' : ''}>Table ${t.number} (${t.zone} - ${t.max_covers}p)</option>`).join('')}
+                                </select>
+                            </div>
+
+                            <div style="margin-bottom:14px;">
+                                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:6px;">Tables Secondaires à rattacher</label>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; max-height:160px; overflow-y:auto; padding:8px; background:rgba(0,0,0,0.3); border-radius:6px; border:1px solid var(--glass-border);">
+                                    ${tables.map(t => `
+                                        <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#fff; cursor:pointer;">
+                                            <input type="checkbox" name="secondary_tables" value="${t.id}">
+                                            <span>Table ${t.number} (${t.max_covers}p)</span>
+                                        </label>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom:16px;">
+                                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:6px;">Durée & Politique de dissociation</label>
+                                <div style="display:flex; flex-direction:column; gap:8px;">
+                                    <label style="display:flex; align-items:center; gap:10px; font-size:12px; color:#fff; cursor:pointer; padding:8px; background:rgba(255,255,255,0.03); border-radius:6px; border:1px solid var(--glass-border);">
+                                        <input type="radio" name="unmerge_policy" value="at_service_end" checked>
+                                        <div>
+                                            <strong style="color:var(--primary);">⚡ Fin du service en cours (Automatique)</strong>
+                                            <div style="font-size:10px; color:var(--text-muted);">La fusion se défait dès que la table est libérée (statut libre).</div>
+                                        </div>
+                                    </label>
+                                    <label style="display:flex; align-items:center; gap:10px; font-size:12px; color:#fff; cursor:pointer; padding:8px; background:rgba(255,255,255,0.03); border-radius:6px; border:1px solid var(--glass-border);">
+                                        <input type="radio" name="unmerge_policy" value="at_day_end">
+                                        <div>
+                                            <strong style="color:#a855f7;">🌙 Fin de journée</strong>
+                                            <div style="font-size:10px; color:var(--text-muted);">Les tables restent jointes toute la soirée jusqu'à la clôture journalière.</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div style="display:flex; gap:8px; margin-top:20px;">
+                                <button type="submit" class="action-btn" style="flex:1;">Valider la Fusion</button>
+                                <button type="button" class="action-btn secondary" onclick="closeTableModal()">Annuler</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function submitMergeTables(e) {
+            e.preventDefault();
+            const primaryTableId = document.getElementById('merge-primary-id').value;
+            const checkboxes = document.querySelectorAll('input[name="secondary_tables"]:checked');
+            const secondaryTableIds = Array.from(checkboxes).map(cb => cb.value).filter(id => id !== primaryTableId);
+            const policyRadio = document.querySelector('input[name="unmerge_policy"]:checked');
+            const unmerge_policy = policyRadio ? policyRadio.value : 'at_service_end';
+
+            if (secondaryTableIds.length === 0) {
+                alert('Veuillez cocher au moins une table secondaire à fusionner.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/tables/merge', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ primaryTableId, secondaryTableIds, unmerge_policy })
+                });
+                if (res.ok) {
+                    showKdsToast('Tables fusionnées avec succès');
+                    closeTableModal();
+                    renderFloorPlanView();
+                } else {
+                    alert('Erreur lors de la fusion des tables');
+                }
+            } catch (err) {
+                console.error('Erreur fusion:', err);
+            }
+        }
+
+        async function splitTable(parentTableId) {
+            try {
+                const res = await fetch('/api/tables/split', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ parentTableId })
+                });
+                if (res.ok) {
+                    showKdsToast('Tables dissociées');
+                    closeTableModal();
+                    renderFloorPlanView();
+                }
+            } catch (e) {
+                console.error('Erreur scission table:', e);
+            }
+        }
+
+        async function unmergeAllDaily() {
+            if (!confirm('Voulez-vous clôturer le service et dissocier toutes les tables fusionnées du restaurant ?')) {
+                return;
+            }
+            try {
+                const res = await fetch('/api/tables/unmerge-all-daily', { method: 'POST' });
+                if (res.ok) {
+                    showKdsToast('Toutes les tables ont été dissociées pour la nouvelle journée');
+                    renderFloorPlanView();
+                }
+            } catch (e) {
+                console.error('Erreur clôture journée tables:', e);
             }
         }
 
@@ -1704,6 +1997,9 @@
             }
         }
 
+        // ==========================================
+        // 4.7. INVENTAIRE, FICHES RECETTES (BOM) & PERTES CUISINE
+        // ==========================================
         async function renderInventoryView() {
             const mainContent = document.getElementById('dashboard-main-content');
             try {
@@ -1736,7 +2032,7 @@
                         </div>
                         <div class="menu-nav-tabs">
                             <button class="menu-tab-btn ${inventoryActiveSubTab === 'ingredients' ? 'active' : ''}" onclick="setInventorySubTab('ingredients')">📦 Ingrédients (${inventoryIngredients.length})</button>
-                            <button class="menu-tab-btn ${inventoryActiveSubTab === 'recipes' ? 'active' : ''}" onclick="setInventorySubTab('recipes')">🧾 Fiches Recettes</button>
+                            <button class="menu-tab-btn ${inventoryActiveSubTab === 'recipes' ? 'active' : ''}" onclick="setInventorySubTab('recipes')">🧾 Fiches Recettes (${inventoryRecipes.filter(r => r.bom && r.bom.length > 0).length})</button>
                             <button class="menu-tab-btn ${inventoryActiveSubTab === 'waste' ? 'active' : ''}" onclick="setInventorySubTab('waste')">🗑️ Pertes Cuisine (${inventoryLogs.length})</button>
                         </div>
                     </div>
@@ -1799,9 +2095,9 @@
                                     <div style="font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:6px;">Composition fiche technique (BOM) :</div>
                                     <div style="display:flex; flex-direction:column; gap:4px;">
                                         ${rec.bom && rec.bom.length > 0 ? rec.bom.map(b => `
-                                            <div style="display:flex; justify-content:space-between; font-size:11px; padding:3px 6px; background:rgba(255,255,255,0.03); border-radius:4px;">
-                                                <span>${b.ingredient_name}</span>
-                                                <strong style="color:var(--text-main);">${b.quantity} ${b.unit}</strong>
+                                            <div style="display:flex; justify-content:space-between; font-size:11px; padding:4px 8px; background:rgba(255,255,255,0.04); border-radius:4px; align-items:center;">
+                                                <span style="color:#fff;">${b.ingredient_name}</span>
+                                                <strong style="color:var(--primary);">${b.quantity} ${b.unit}</strong>
                                             </div>
                                         `).join('') : '<div style="font-size:11px; color:var(--text-muted); font-style:italic;">Aucun ingrédient renseigné.</div>'}
                                     </div>
@@ -1812,12 +2108,12 @@
                         <div>
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                                 <span style="font-size:14px; font-weight:700; color:#fff;">Historique des Déclarations de Pertes</span>
-                                <button class="action-btn" onclick="openWasteModal()" style="font-size:12px; padding:6px 12px;">
+                                <button class="action-btn" onclick="openWasteModal()" style="font-size:12px; padding:6px 14px; background:#ef4444; color:#fff;">
                                     <i class="fa-solid fa-plus"></i> Déclarer une Perte
                                 </button>
                             </div>
                             <div style="display:flex; flex-direction:column; gap:8px;">
-                                ${inventoryLogs.map(log => `
+                                ${inventoryLogs.length === 0 ? '<div class="empty-column-msg">Aucune perte enregistrée.</div>' : inventoryLogs.map(log => `
                                     <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:8px;">
                                         <div>
                                             <strong style="font-size:13px; color:#f87171;">${log.quantity_change} ${log.unit || ''} ${log.ingredient_name || ''}</strong>
@@ -1869,34 +2165,44 @@
             }
         }
 
-        function openWasteModal() {
+        function openWasteModal(preselectedIngId) {
             const container = document.getElementById('table-modal-container');
             if (!container) return;
+
+            const ings = Array.isArray(inventoryIngredients) ? inventoryIngredients : [];
+
             container.innerHTML = `
                 <div class="table-mgmt-modal-overlay" onclick="closeTableModal(event)">
                     <div class="table-mgmt-modal" onclick="event.stopPropagation()">
-                        <h3 style="font-size:18px; font-weight:800; margin-bottom:16px;">
-                            <i class="fa-solid fa-trash-can" style="color:#ef4444;"></i> Déclarer une Perte Cuisine
-                        </h3>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                            <h3 style="font-size:18px; font-weight:800;">
+                                <i class="fa-solid fa-trash-can" style="color:#ef4444;"></i> Déclarer une Perte Cuisine
+                            </h3>
+                            <button onclick="closeTableModal()" style="background:none; border:none; color:#9ca3af; font-size:18px; cursor:pointer;">✕</button>
+                        </div>
                         <form onsubmit="submitWasteForm(event)">
                             <div style="margin-bottom:12px;">
-                                <label style="font-size:11px; color:var(--text-muted);">Ingrédient</label>
+                                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Ingrédient concerné</label>
                                 <select id="waste-ing-id" class="glass-select" style="width:100%;" required>
-                                    ${inventoryIngredients.map(i => `<option value="${i.id}">${i.name} (${i.unit})</option>`).join('')}
+                                    ${ings.length > 0 ? ings.map(i => `<option value="${i.id}" ${i.id === preselectedIngId ? 'selected' : ''}>${i.name} (Unité: ${i.unit})</option>`).join('') : '<option value="">Aucun ingrédient</option>'}
                                 </select>
                             </div>
                             <div style="margin-bottom:12px;">
-                                <label style="font-size:11px; color:var(--text-muted);">Quantité Perdue</label>
-                                <input type="number" step="0.1" id="waste-qty" required placeholder="Ex: 2" style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px;">
+                                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Quantité Perdue</label>
+                                <input type="number" step="0.1" min="0.1" id="waste-qty" required placeholder="Ex: 2" style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px; font-family:inherit;">
                             </div>
                             <div style="margin-bottom:12px;">
-                                <label style="font-size:11px; color:var(--text-muted);">Motif</label>
+                                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Motif de la perte</label>
                                 <select id="waste-reason" class="glass-select" style="width:100%;">
                                     <option value="Erreur de cuisson">Erreur de cuisson</option>
                                     <option value="Casse / Assiette tombée">Casse / Assiette tombée</option>
-                                    <option value="Avarie / DLC">Avarie / DLC</option>
-                                    <option value="Erreur allergie">Erreur allergie</option>
+                                    <option value="Avarie / DLC dépassée">Avarie / DLC dépassée</option>
+                                    <option value="Erreur allergie / retour salle">Erreur allergie / retour salle</option>
                                 </select>
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Note ou commentaire (Optionnel)</label>
+                                <input type="text" id="waste-notes" placeholder="Ex: Brûlé sur le poste grill" style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px; font-family:inherit;">
                             </div>
                             <div style="display:flex; gap:8px; margin-top:16px;">
                                 <button type="submit" class="action-btn" style="flex:1; background:#ef4444; color:#fff;">Enregistrer la Perte</button>
@@ -1913,36 +2219,55 @@
             const ingredient_id = document.getElementById('waste-ing-id').value;
             const quantity = parseFloat(document.getElementById('waste-qty').value);
             const reason = document.getElementById('waste-reason').value;
+            const notes = document.getElementById('waste-notes') ? document.getElementById('waste-notes').value : '';
+            const staff_email = activeEmail || 'chef@atelier-chris.fr';
+
             try {
-                await fetch('/api/inventory/waste', {
+                const res = await fetch('/api/inventory/waste', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ingredient_id, quantity, reason, staff_email: currentUserEmail })
+                    body: JSON.stringify({ ingredient_id, quantity, reason, notes, staff_email })
                 });
-                closeTableModal();
-                renderInventoryView();
+                if (res.ok) {
+                    showKdsToast('Perte déclarée avec succès');
+                    closeTableModal();
+                    renderInventoryView();
+                } else {
+                    alert('Erreur lors de la déclaration de la perte');
+                }
             } catch (err) {
-                console.error(err);
+                console.error('Erreur submit perte:', err);
             }
         }
 
         async function assignTableToStaff(tableNum, email) {
-            for (const waiter of staffList) {
-                if (waiter.assigned_tables.includes(tableNum)) {
-                    waiter.assigned_tables = waiter.assigned_tables.filter(t => t !== tableNum);
-                    await saveWaiterAssignment(waiter.email, waiter.assigned_tables);
-                }
-            }
+            try {
+                const res = await fetch('/api/staff');
+                const list = res.ok ? await res.json() : [];
+                staffList = Array.isArray(list) ? list : [];
 
-            if (email) {
-                const targetWaiter = staffList.find(s => s.email === email);
-                if (targetWaiter) {
-                    targetWaiter.assigned_tables.push(tableNum);
-                    await saveWaiterAssignment(email, targetWaiter.assigned_tables);
+                for (const waiter of staffList) {
+                    let assigned = Array.isArray(waiter.assigned_tables) ? waiter.assigned_tables : [];
+                    if (assigned.includes(tableNum)) {
+                        assigned = assigned.filter(t => t !== tableNum);
+                        await saveWaiterAssignment(waiter.email, assigned);
+                    }
                 }
-            }
 
-            fetchOrders();
+                if (email) {
+                    const targetWaiter = staffList.find(s => s.email === email);
+                    let targetAssigned = targetWaiter && Array.isArray(targetWaiter.assigned_tables) ? targetWaiter.assigned_tables : [];
+                    if (!targetAssigned.includes(tableNum)) {
+                        targetAssigned.push(tableNum);
+                    }
+                    await saveWaiterAssignment(email, targetAssigned);
+                }
+
+                showKdsToast(`Table ${tableNum} assignée à ${email ? email.split('@')[0] : 'personne'}`);
+                renderFloorPlanView();
+            } catch (e) {
+                console.error('Erreur assignTableToStaff:', e);
+            }
         }
 
         async function saveWaiterAssignment(email, tables) {

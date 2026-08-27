@@ -2242,14 +2242,60 @@ html[dir="rtl"] .detected-items-table th, html[dir="rtl"] .detected-items-table 
 .floorplan-viewport {
     position: relative;
     width: 100%;
-    height: 600px;
-    background: radial-gradient(circle at 50% 50%, rgba(30, 30, 40, 0.4) 0%, rgba(10, 10, 14, 0.95) 100%),
-                repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px),
-                repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.03) 39px, rgba(255,255,255,0.03) 40px);
+    height: 640px;
+    background: #0d0f17;
     border-radius: var(--radius-md);
     border: 1px solid var(--glass-border);
     overflow: hidden;
     user-select: none;
+}
+
+.floorplan-grid-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2500px;
+    height: 1800px;
+    transform-origin: 0 0;
+    transition: transform 0.1s ease-out;
+    background-image: 
+        radial-gradient(circle at center, rgba(245, 158, 11, 0.2) 1.5px, transparent 1.5px),
+        linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 20px 20px, 100px 100px, 100px 100px;
+}
+
+.floorplan-zoom-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(15, 15, 20, 0.85);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    padding: 3px 8px;
+}
+
+.floorplan-zoom-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.floorplan-zoom-btn:hover {
+    background: rgba(245, 158, 11, 0.2);
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
 .table-node {
@@ -2259,16 +2305,25 @@ html[dir="rtl"] .detected-items-table th, html[dir="rtl"] .detected-items-table 
     align-items: center;
     justify-content: center;
     padding: 8px;
-    cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    cursor: grab;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
     font-family: inherit;
     text-align: center;
+    user-select: none;
 }
 
-.table-node:hover {
-    transform: scale(1.04);
-    z-index: 10;
+.table-node:active {
+    cursor: grabbing;
+}
+
+.table-node.is-dragging {
+    cursor: grabbing !important;
+    z-index: 1000 !important;
+    opacity: 0.9;
+    box-shadow: 0 16px 36px rgba(245, 158, 11, 0.5) !important;
+    border-color: #f59e0b !important;
+    transform: scale(1.06);
 }
 
 .table-node.shape-square {
