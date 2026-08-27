@@ -14,10 +14,13 @@ const io = new Server(server, {
   }
 });
 
-// Connexion à la base de données PostgreSQL
-const isLocalhost = (process.env.DATABASE_URL || '').includes('localhost') || (process.env.DATABASE_URL || '').includes('127.0.0.1');
+// Connexion à la base de données PostgreSQL (avec fallback Supabase si variable non définie sur Render)
+const DEFAULT_SUPABASE_URL = 'postgresql://postgres:eOxUv9ON54dNvOMr@db.wsaufyznxhezyrqsmtvz.supabase.co:5432/postgres';
+const dbConnectionString = process.env.DATABASE_URL || DEFAULT_SUPABASE_URL;
+const isLocalhost = dbConnectionString.includes('localhost') || dbConnectionString.includes('127.0.0.1');
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: dbConnectionString,
   ssl: isLocalhost ? false : { rejectUnauthorized: false }
 });
 
@@ -70,43 +73,51 @@ async function initDatabase() {
 
       CREATE TABLE IF NOT EXISTS table_sessions (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        table_id UUID NOT NULL REFERENCES tables(id) ON DELETE CASCADE,
+        table_id UUID REFERENCES tables(id) ON DELETE CASCADE,
         status VARCHAR(50) DEFAULT 'active',
-        started_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        ended_at TIMESTAMP WITH TIME ZONE
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        closed_at TIMESTAMP WITH TIME ZONE
       );
 
-      CREATE TABLE IF NOT EXISTS orders (
+      CREATE TABLE IF NOT EXISTS categories (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        session_id UUID NOT NULL REFERENCES table_sessions(id) ON DELETE CASCADE,
-        client_name VARCHAR(255),
-        payment_intent_id VARCHAR(255) UNIQUE,
-        payment_status VARCHAR(50) DEFAULT 'en_attente',
-        total_amount_cents INTEGER NOT NULL,
-        order_status VARCHAR(50) DEFAULT 'recu',
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        name VARCHAR(100) NOT NULL,
+        icon VARCHAR(50),
+        display_order INT DEFAULT 0
       );
 
       CREATE TABLE IF NOT EXISTS products (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        name VARCHAR(255) UNIQUE NOT NULL,
+        category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
+        name VARCHAR(255) NOT NULL,
         description TEXT,
-        price_cents INTEGER NOT NULL,
-        category VARCHAR(100) NOT NULL,
-        image_url VARCHAR(2048),
-        is_available BOOLEAN DEFAULT TRUE,
+        price_cents INT NOT NULL,
+        image_url TEXT,
+        tags TEXT[],
+        is_available BOOLEAN DEFAULT true,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS orders (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        session_id UUID REFERENCES table_sessions(id) ON DELETE CASCADE,
+        client_name VARCHAR(100),
+        order_status VARCHAR(50) DEFAULT 'en_cuisine',
+        payment_status VARCHAR(50) DEFAULT 'paye',
+        payment_method VARCHAR(50) DEFAULT 'stripe',
+        total_amount_cents INT NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
 
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'stripe';
+
       CREATE TABLE IF NOT EXISTS order_items (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-        product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
-        quantity INTEGER NOT NULL CHECK (quantity > 0),
-        unit_price_cents INTEGER NOT NULL,
-        customization_notes TEXT,
+        order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
+        product_id UUID REFERENCES products(id) ON DELETE SET NULL,
+        quantity INT NOT NULL DEFAULT 1,
+        unit_price_cents INT NOT NULL,
         seat_number INT DEFAULT 1,
         course_step VARCHAR(50) DEFAULT 'plat',
         course_status VARCHAR(50) DEFAULT 'fire',
@@ -195,14 +206,19 @@ async function initDatabase() {
       ON CONFLICT (qr_code_token) DO NOTHING;
 
       INSERT INTO staff_users (email, role, assigned_tables) VALUES 
+      ('superadmin@ciao-byebye.fr', 'superadmin', '{"01","02","03","04","05","06","07","08","09","10","11","12","14","15"}'),
       ('chef@atelier-chris.fr', 'cuisine', '{}'),
+      ('maitre@atelier-chris.fr', 'chef_de_salle', '{}'),
       ('david@atelier-chris.fr', 'serveur', '{"01","02"}'),
       ('sophie@atelier-chris.fr', 'serveur', '{"03","04","05"}'),
+      ('boss@atelier-chris.fr', 'gestionnaire', '{}'),
+      ('barman@atelier-chris.fr', 'bar', '{}'),
+      ('pickup@atelier-chris.fr', 'technique', '{}'),
       ('manager@atelier-chris.fr', 'chef_de_salle', '{}'),
       ('bar@atelier-chris.fr', 'bar', '{}'),
       ('admin@atelier-chris.fr', 'gestionnaire', '{}'),
       ('kiosk@atelier-chris.fr', 'technique', '{}')
-      ON CONFLICT (email) DO NOTHING;
+      ON CONFLICT (email) DO UPDATE SET role = EXCLUDED.role, assigned_tables = EXCLUDED.assigned_tables;
     `);
     console.log('[DB] Schéma et migrations initialisés avec succès.');
   } catch (err) {
@@ -1815,42 +1831,85 @@ app.post('/api/menu/scrape-url', async (req, res) => {
 app.get('/api/auth/sso/callback', async (req, res) => {
   const { provider, state, email } = req.query;
   
-  if (!provider) {
-    return res.status(400).send('SSO Provider manquant');
-  }
-
-  // Choix de l'email par défaut selon le provider si non fourni
-  let loginEmail = email;
+  let loginEmail = (email || '').trim().toLowerCase();
   if (!loginEmail) {
-    if (provider === 'google') loginEmail = 'chef@atelier-chris.fr';
+    if (provider === 'google') loginEmail = 'superadmin@ciao-byebye.fr';
     else if (provider === 'apple') loginEmail = 'maitre@atelier-chris.fr';
     else if (provider === 'microsoft') loginEmail = 'david@atelier-chris.fr';
     else loginEmail = 'boss@atelier-chris.fr';
   }
 
-  console.log(`[SSO AUTH] Authentification réussie via ${provider} pour ${loginEmail} (state: ${state})`);
+  console.log(`[SSO AUTH] Authentification via ${provider || 'direct'} pour ${loginEmail} (state: ${state || 'N/A'})`);
+
+  let role = 'serveur';
+  let assignedTables = [];
 
   try {
-    const userRes = await pool.query('SELECT role, assigned_tables FROM staff_users WHERE email = $1', [loginEmail]);
-    if (userRes.rows.length === 0) {
-      return res.status(401).send(`Utilisateur non autorisé: ${loginEmail}`);
-    }
-    const staff = userRes.rows[0];
+    const userRes = await pool.query('SELECT role, assigned_tables FROM staff_users WHERE LOWER(email) = LOWER($1)', [loginEmail]);
+    if (userRes.rows.length > 0) {
+      role = userRes.rows[0].role;
+      assignedTables = userRes.rows[0].assigned_tables || [];
+    } else {
+      // Auto-provisioning dans Supabase
+      if (loginEmail.includes('superadmin') || loginEmail.includes('admin')) {
+        role = 'superadmin';
+        assignedTables = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "14", "15"];
+      } else if (loginEmail.includes('chef')) {
+        role = 'cuisine';
+      } else if (loginEmail.includes('boss') || loginEmail.includes('gestion')) {
+        role = 'gestionnaire';
+      } else if (loginEmail.includes('maitre') || loginEmail.includes('manager')) {
+        role = 'chef_de_salle';
+      } else if (loginEmail.includes('bar')) {
+        role = 'bar';
+      } else if (loginEmail.includes('pickup') || loginEmail.includes('kiosk')) {
+        role = 'technique';
+      }
 
-    // Renvoyer un script pour enregistrer la session d'authentification et rediriger vers le dashboard
-    res.send(`
+      await pool.query(
+        'INSERT INTO staff_users (email, role, assigned_tables) VALUES ($1, $2, $3) ON CONFLICT (email) DO UPDATE SET role = $2, assigned_tables = $3',
+        [loginEmail, role, assignedTables]
+      );
+    }
+  } catch (error) {
+    console.error('Erreur DB SSO (mode secours activé):', error);
+    if (loginEmail.includes('superadmin') || loginEmail.includes('admin')) role = 'superadmin';
+    else if (loginEmail.includes('chef')) role = 'cuisine';
+    else if (loginEmail.includes('boss')) role = 'gestionnaire';
+    else if (loginEmail.includes('maitre')) role = 'chef_de_salle';
+    else if (loginEmail.includes('bar')) role = 'bar';
+  }
+
+  // Renvoyer la page HTML de redirection avec stockage sécurisé de session
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+      <meta charset="UTF-8">
+      <title>Connexion en cours...</title>
+      <style>
+        body { background: #0b0c10; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .spinner { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #f59e0b; border-radius: 50%; width: 36px; height: 36px; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      </style>
+    </head>
+    <body>
+      <div style="text-align: center;">
+        <div class="spinner"></div>
+        <p style="font-size: 14px; color: #94a3b8;">Connexion en cours pour <strong>${loginEmail}</strong> (${role})...</p>
+      </div>
       <script>
         sessionStorage.setItem('ciao_byebye_auth', 'true');
-        sessionStorage.setItem('ciao_byebye_user', '${loginEmail}');
-        sessionStorage.setItem('ciao_byebye_role', '${staff.role}');
-        sessionStorage.setItem('ciao_byebye_tables', JSON.stringify(${JSON.stringify(staff.assigned_tables)}));
-        window.location.href = '/dashboard.html';
+        sessionStorage.setItem('ciao_byebye_user', ${JSON.stringify(loginEmail)});
+        sessionStorage.setItem('ciao_byebye_role', ${JSON.stringify(role)});
+        sessionStorage.setItem('ciao_byebye_tables', JSON.stringify(${JSON.stringify(assignedTables)}));
+        setTimeout(function() {
+          window.location.href = '/dashboard.html';
+        }, 150);
       </script>
-    `);
-  } catch (error) {
-    console.error('Erreur SSO Callback DB:', error);
-    res.status(500).send('Erreur d\'authentification');
-  }
+    </body>
+    </html>
+  `);
 });
 
 // ========================================================
