@@ -358,8 +358,13 @@ function setPaymentMethod(method) {
 function changeLanguage(lang) {
     currentLang = lang;
     localStorage.setItem('ciao_lang', lang);
+    localStorage.setItem('ciao_kds_lang', lang);
+    
     const langSelect = document.getElementById('lang-select');
     if (langSelect) langSelect.value = lang;
+
+    const modalLangSelect = document.getElementById('modal-lang-select');
+    if (modalLangSelect) modalLangSelect.value = lang;
 
     if (lang === 'ar') {
         document.documentElement.setAttribute('dir', 'rtl');
@@ -652,7 +657,22 @@ function updateTrackerSteps(status) {
 
     if (stepPaid) stepPaid.classList.add('active');
 
-    if (status === 'prete') {
+    if (status === 'servie') {
+        if (stepCooking) {
+            stepCooking.classList.add('active');
+            const bullet = stepCooking.querySelector('.step-bullet');
+            if (bullet) bullet.classList.remove('progress-pulse');
+        }
+        if (stepReady) {
+            stepReady.classList.add('active');
+            const bullet = stepReady.querySelector('.step-bullet');
+            if (bullet) bullet.classList.remove('progress-pulse');
+            const titleEl = stepReady.querySelector('.step-title');
+            if (titleEl) titleEl.innerText = "✅ Commande Livrée";
+            const subEl = stepReady.querySelector('.step-subtitle');
+            if (subEl) subEl.innerText = "Bon appétit ! 🎉";
+        }
+    } else if (status === 'prete') {
         if (stepCooking) {
             stepCooking.classList.add('active');
             const bullet = stepCooking.querySelector('.step-bullet');
@@ -678,6 +698,49 @@ function updateTrackerSteps(status) {
 }
 
 // ==========================================
+// DYNAMIC THEME SYSTEM (DESIGN SYSTEM ENGINE)
+// ==========================================
+function applyActiveTheme(theme) {
+    if (!theme) return;
+    const root = document.documentElement;
+    if (theme.primary_color) {
+        root.style.setProperty('--primary', theme.primary_color);
+        root.style.setProperty('--primary-color', theme.primary_color);
+    }
+    if (theme.primary_glow) {
+        root.style.setProperty('--primary-glow', theme.primary_glow);
+    }
+    if (theme.accent_color) {
+        root.style.setProperty('--accent', theme.accent_color);
+    }
+    if (theme.bg_dark) {
+        root.style.setProperty('--bg-dark', theme.bg_dark);
+    }
+    if (theme.card_bg) {
+        root.style.setProperty('--card-bg', theme.card_bg);
+    }
+    if (theme.font_family) {
+        root.style.setProperty('--font-main', theme.font_family);
+    }
+    if (theme.brand_name) {
+        const brandHeaders = document.querySelectorAll('.hero-title, .restaurant-info h1, #header-brand-title');
+        brandHeaders.forEach(el => {
+            if (el) el.innerText = theme.brand_name;
+        });
+    }
+}
+
+async function loadActiveTheme() {
+    try {
+        const res = await fetch('/api/theme/active');
+        if (res.ok) {
+            const data = await res.json();
+            if (data.theme) applyActiveTheme(data.theme);
+        }
+    } catch (e) {}
+}
+
+// ==========================================
 // APPLICATION LIFECYCLE & MENU LOGIC
 // ==========================================
 
@@ -688,6 +751,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currSelect) currSelect.value = currentCurrency;
 
     changeLanguage(currentLang);
+    loadActiveTheme();
     requestNotificationPermission();
     loadMenu();
     initClientSession();
@@ -766,12 +830,14 @@ function renderMenu() {
         const cartItem = cart.find(item => item.id === product.id);
         const quantity = cartItem ? cartItem.quantity : 0;
         const localized = getLocalizedProduct(product);
+        const isAvailable = product.is_available !== false;
 
         return `
-            <div class="product-card glass" data-category="${product.category}">
+            <div class="product-card glass ${!isAvailable ? 'out-of-stock' : ''}" data-category="${product.category}">
                 <div class="product-img-wrapper">
                     <img src="${product.image}" alt="${localized.name}" loading="lazy">
                     <span class="product-badge">${getCategoryLabel(product.category)}</span>
+                    ${!isAvailable ? '<span style="position:absolute; top:10px; right:10px; background:#ef4444; color:#fff; font-size:10px; font-weight:800; padding:3px 8px; border-radius:4px;">ÉPUISÉ (86)</span>' : ''}
                 </div>
                 <div class="product-info">
                     <div class="product-title-row">
@@ -780,7 +846,11 @@ function renderMenu() {
                     </div>
                     <p class="product-description">${localized.description}</p>
                     <div class="product-footer">
-                        ${quantity === 0 ? `
+                        ${!isAvailable ? `
+                            <button class="add-to-cart-btn" disabled style="background:rgba(255,255,255,0.1); color:var(--text-muted); cursor:not-allowed;">
+                                <i class="fa-solid fa-ban"></i> Indisponible
+                            </button>
+                        ` : (quantity === 0 ? `
                             <button class="add-to-cart-btn" onclick="addToCart('${product.id}')">
                                 <i class="fa-solid fa-plus"></i> ${t.btn_add}
                             </button>
@@ -790,7 +860,7 @@ function renderMenu() {
                                 <span class="stepper-val">${quantity}</span>
                                 <button class="stepper-btn" onclick="updateItemQuantity('${product.id}', 1)"><i class="fa-solid fa-plus"></i></button>
                             </div>
-                        `}
+                        `)}
                     </div>
                 </div>
             </div>
@@ -810,7 +880,7 @@ document.querySelectorAll('.category-btn').forEach(btn => {
 
 function addToCart(productId) {
     const product = products.find(p => p.id === productId);
-    if (!product) return;
+    if (!product || product.is_available === false) return;
 
     const existingItem = cart.find(item => item.id === productId);
     if (existingItem) {
@@ -820,6 +890,8 @@ function addToCart(productId) {
             id: product.id,
             name: product.rawName || product.name,
             price: product.price,
+            category: product.category,
+            seat_number: 1,
             quantity: 1
         });
     }
@@ -924,9 +996,15 @@ async function simulatePaymentSuccess() {
                 clientName,
                 paymentMethod: selectedPaymentMethod,
                 items: cart.map(item => ({
+                    id: item.id,
                     name: item.name,
                     price: item.price,
-                    quantity: item.quantity
+                    quantity: item.quantity,
+                    category: item.category,
+                    seat_number: item.seat_number || 1,
+                    modifiers: item.modifiers || [],
+                    allergies: item.allergies || [],
+                    cooking_pref: item.cooking_pref || null
                 }))
             })
         });
@@ -1004,6 +1082,14 @@ if (socket) {
                 });
             }
         }
+    });
+
+    socket.on('theme_updated', (theme) => {
+        applyActiveTheme(theme);
+    });
+
+    socket.on('menu_updated', () => {
+        loadMenu();
     });
 }
 

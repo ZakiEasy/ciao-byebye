@@ -1,12 +1,45 @@
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert');
+const { spawn } = require('child_process');
+const path = require('path');
 
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'http://127.0.0.1:5000';
 
 describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
+    let serverProcess = null;
     let testOrderId = null;
     let testProductId = null;
     let testCashOrderId = null;
+
+    before(async () => {
+        // Check if server is already running
+        try {
+            const check = await fetch(`${BASE_URL}/api/menu`);
+            if (check.ok) return;
+        } catch (e) {
+            // Start server
+        }
+
+        serverProcess = spawn('node', [path.join(__dirname, '../backend/server.js')], {
+            env: { ...process.env, PORT: '5000' },
+            stdio: 'pipe'
+        });
+
+        // Wait for server to be ready
+        for (let i = 0; i < 30; i++) {
+            await new Promise(r => setTimeout(r, 400));
+            try {
+                const res = await fetch(`${BASE_URL}/api/menu`);
+                if (res.ok) break;
+            } catch (err) {}
+        }
+    });
+
+    after(async () => {
+        if (serverProcess) {
+            serverProcess.kill('SIGTERM');
+        }
+    });
 
     test('1. GET /api/menu - should return available products from database', async () => {
         const res = await fetch(`${BASE_URL}/api/menu`);
@@ -171,5 +204,435 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         const data = await res.json();
         assert.strictEqual(data.success, true);
     });
+
+    let testCreatedDishId = null;
+    test('15. POST /api/menu - should manually create a new dish (Naga design style)', async () => {
+        const res = await fetch(`${BASE_URL}/api/menu`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: 'Test Lok-Lak Spécial Bœuf Wok',
+                category: 'plat',
+                price: 15.50,
+                description: 'Bœuf tendre mariné et sauté au wok à feu vif avec riz jasmin.',
+                image_url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600',
+                is_available: true
+            })
+        });
+        assert.strictEqual(res.status, 201);
+        const data = await res.json();
+        assert.strictEqual(data.success, true);
+        assert.strictEqual(data.product.name, 'Test Lok-Lak Spécial Bœuf Wok');
+        assert.strictEqual(data.product.price_cents, 1550);
+        assert.strictEqual(data.product.category, 'plat');
+        testCreatedDishId = data.product.id;
+    });
+
+    test('16. POST /api/menu/scan-photo - should extract and structure menu items from image/preset', async () => {
+        const res = await fetch(`${BASE_URL}/api/menu/scan-photo`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                custom_text: "Entrées\nNems Maison - 7.50€ - Porc et crevettes\nPlats\nLok-Lak Poulet Crispy - 13.50€ - Poulet croustillant mariné"
+            })
+        });
+        assert.strictEqual(res.status, 200);
+        const data = await res.json();
+        assert.strictEqual(data.success, true);
+        assert.ok(Array.isArray(data.detected_items));
+        assert.strictEqual(data.detected_items.length, 2);
+        assert.strictEqual(data.detected_items[0].name, 'Nems Maison');
+        assert.strictEqual(data.detected_items[0].category, 'entree');
+        assert.strictEqual(data.detected_items[0].price_cents, 750);
+    });
+
+    test('17. POST /api/menu/bulk - should bulk insert scanned items into database', async () => {
+        const res = await fetch(`${BASE_URL}/api/menu/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                products: [
+                    {
+                        name: 'Naga Lot-Tcha Nouilles Test',
+                        description: 'Nouilles cambodgiennes artisanales',
+                        price_cents: 1400,
+                        category: 'plat',
+                        image_url: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&q=80&w=600'
+                    },
+                    {
+                        name: 'Naga Teuk-a-Lok Mangue Test',
+                        description: 'Dessert à boire à la mangue et lait de coco',
+                        price_cents: 590,
+                        category: 'dessert',
+                        image_url: 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?auto=format&fit=crop&q=80&w=600'
+                    }
+                ]
+            })
+        });
+        assert.strictEqual(res.status, 200);
+        const data = await res.json();
+        assert.strictEqual(data.success, true);
+        assert.strictEqual(data.count, 2);
+    });
+
+    test('18. PUT /api/menu/:id & DELETE /api/menu/:id - should update and delete created dish', async () => {
+        assert.ok(testCreatedDishId, 'Dish ID should be present from test 15');
+
+        // Update
+        const putRes = await fetch(`${BASE_URL}/api/menu/${testCreatedDishId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                price: 16.00,
+                description: 'Description mise à jour.'
+            })
+        });
+        assert.strictEqual(putRes.status, 200);
+        const putData = await putRes.json();
+        assert.strictEqual(putData.product.price_cents, 1600);
+
+        // Delete
+        const delRes = await fetch(`${BASE_URL}/api/menu/${testCreatedDishId}`, { method: 'DELETE' });
+        assert.strictEqual(delRes.status, 200);
+        const delData = await delRes.json();
+        assert.strictEqual(delData.success, true);
+    });
+
+    test('19. POST /api/menu/scrape-url - should scrape and extract both Menu items and Design System from URL', async () => {
+        const res = await fetch(`${BASE_URL}/api/menu/scrape-url`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                url: 'https://naga-streetfood.dishop.co/'
+            })
+        });
+        assert.strictEqual(res.status, 200);
+        const data = await res.json();
+        assert.strictEqual(data.success, true);
+        assert.ok(data.design_system, 'Extracted response should contain design_system object');
+        assert.strictEqual(data.design_system.brand_name, 'Nâga Street Food');
+        assert.strictEqual(data.design_system.primary_color, '#ff5e14');
+        assert.ok(data.design_system.font_family);
+        assert.ok(data.design_system.card_bg);
+        assert.ok(Array.isArray(data.menu_items));
+        assert.ok(data.menu_items.length >= 8);
+        assert.ok(data.menu_items.some(item => item.name.includes('Lok-Lak')));
+        assert.ok(data.menu_items.some(item => item.name.includes('Lot-Tcha')));
+    });
+
+    test('20. POST /api/theme/apply & GET /api/theme/active - should apply and retrieve active restaurant theme', async () => {
+        const applyRes = await fetch(`${BASE_URL}/api/theme/apply`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                theme: {
+                    brand_name: 'Nâga Street Food',
+                    primary_color: '#ff5e14',
+                    accent_color: '#f59e0b'
+                }
+            })
+        });
+        assert.strictEqual(applyRes.status, 200);
+        const applyData = await applyRes.json();
+        assert.strictEqual(applyData.success, true);
+        assert.strictEqual(applyData.theme.brand_name, 'Nâga Street Food');
+        assert.strictEqual(applyData.theme.primary_color, '#ff5e14');
+
+        const activeRes = await fetch(`${BASE_URL}/api/theme/active`);
+        assert.strictEqual(activeRes.status, 200);
+        const activeData = await activeRes.json();
+        assert.strictEqual(activeData.theme.brand_name, 'Nâga Street Food');
+        assert.strictEqual(activeData.theme.primary_color, '#ff5e14');
+    });
+
+    test('21. GET /api/tables/layout & POST /api/tables/layout - should manage 2D Floor Plan tables', async () => {
+        const layoutRes = await fetch(`${BASE_URL}/api/tables/layout`);
+        assert.strictEqual(layoutRes.status, 200);
+        const tables = await layoutRes.json();
+        assert.ok(Array.isArray(tables));
+        assert.ok(tables.length >= 5);
+        assert.ok(tables.some(t => t.zone === 'salle'));
+
+        // Créer une nouvelle table
+        const createRes = await fetch(`${BASE_URL}/api/tables/layout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                number: '99',
+                name: 'Table VIP Test',
+                zone: 'terrasse',
+                shape: 'round',
+                min_covers: 2,
+                max_covers: 6,
+                nominal_covers: 4,
+                pos_x: 250,
+                pos_y: 250
+            })
+        });
+        assert.strictEqual(createRes.status, 200);
+        const created = await createRes.json();
+        assert.strictEqual(created.success, true);
+        assert.strictEqual(created.table.number, '99');
+        assert.strictEqual(created.table.shape, 'round');
+    });
+
+    test('22. PATCH /api/tables/:id/service - should update table service, covers and cleaning status', async () => {
+        const layoutRes = await fetch(`${BASE_URL}/api/tables/layout`);
+        const tables = await layoutRes.json();
+        const targetTable = tables.find(t => t.number === '01') || tables[0];
+
+        const patchRes = await fetch(`${BASE_URL}/api/tables/${targetTable.id}/service`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                service_status: 'en_preparation',
+                actual_covers: 3,
+                cleaning_status: 'propre'
+            })
+        });
+        assert.strictEqual(patchRes.status, 200);
+        const patchData = await patchRes.json();
+        assert.strictEqual(patchData.success, true);
+        assert.strictEqual(patchData.table.service_status, 'en_preparation');
+        assert.strictEqual(patchData.table.actual_covers, 3);
+    });
+
+    test('23. POST /api/tables/merge & POST /api/tables/split - should join and split tables', async () => {
+        const layoutRes = await fetch(`${BASE_URL}/api/tables/layout`);
+        const tables = await layoutRes.json();
+        const t1 = tables[0];
+        const t2 = tables[1];
+
+        // Fusionner t1 et t2
+        const mergeRes = await fetch(`${BASE_URL}/api/tables/merge`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                parentTableId: t1.id,
+                childTableIds: [t2.id]
+            })
+        });
+        assert.strictEqual(mergeRes.status, 200);
+        const mergeData = await mergeRes.json();
+        assert.strictEqual(mergeData.success, true);
+
+        // Dissocier
+        const splitRes = await fetch(`${BASE_URL}/api/tables/split`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                parentTableId: t1.id
+            })
+        });
+        assert.strictEqual(splitRes.status, 200);
+        const splitData = await splitRes.json();
+        assert.strictEqual(splitData.success, true);
+    });
+
+    test('24. GET /api/inventory/ingredients & PATCH /api/inventory/ingredients/:id/stock - should manage ingredient stocks & 86 mode', async () => {
+        const ingRes = await fetch(`${BASE_URL}/api/inventory/ingredients`);
+        assert.strictEqual(ingRes.status, 200);
+        const ingredients = await ingRes.json();
+        assert.ok(Array.isArray(ingredients));
+        assert.ok(ingredients.length >= 10);
+
+        const targetIng = ingredients[0];
+        const patchRes = await fetch(`${BASE_URL}/api/inventory/ingredients/${targetIng.id}/stock`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                current_stock: 45.5,
+                is_86: false
+            })
+        });
+        assert.strictEqual(patchRes.status, 200);
+        const patchData = await patchRes.json();
+        assert.strictEqual(patchData.success, true);
+        assert.strictEqual(parseFloat(patchData.ingredient.current_stock), 45.5);
+    });
+
+    test('25. GET /api/inventory/recipes - should return Bill of Materials (BOM) for products', async () => {
+        const recRes = await fetch(`${BASE_URL}/api/inventory/recipes`);
+        assert.strictEqual(recRes.status, 200);
+        const recipes = await recRes.json();
+        assert.ok(Array.isArray(recipes));
+        assert.ok(recipes.length > 0);
+        const burgerRecipe = recipes.find(r => r.product_name.includes('Burger') || r.bom.length > 0);
+        assert.ok(burgerRecipe);
+        assert.ok(Array.isArray(burgerRecipe.bom));
+    });
+
+    test('26. POST /api/inventory/waste & GET /api/inventory/logs - should track kitchen waste and consumption logs', async () => {
+        const ingRes = await fetch(`${BASE_URL}/api/inventory/ingredients`);
+        const ingredients = await ingRes.json();
+        const targetIng = ingredients[0];
+
+        const wasteRes = await fetch(`${BASE_URL}/api/inventory/waste`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ingredient_id: targetIng.id,
+                quantity: 2.0,
+                reason: 'waste_error',
+                notes: 'Erreur cuisson steak haché',
+                staff_email: 'chef@atelier-chris.fr'
+            })
+        });
+        assert.strictEqual(wasteRes.status, 200);
+        const wasteData = await wasteRes.json();
+        assert.strictEqual(wasteData.success, true);
+
+        const logsRes = await fetch(`${BASE_URL}/api/inventory/logs`);
+        assert.strictEqual(logsRes.status, 200);
+        const logs = await logsRes.json();
+        assert.ok(Array.isArray(logs));
+        assert.ok(logs.some(l => l.reason === 'waste_error'));
+    });
+
+    test('27. GET /api/modules & POST /api/modules/toggle & POST /api/modules/preset - should manage subscription features', async () => {
+        const modRes = await fetch(`${BASE_URL}/api/modules`);
+        assert.strictEqual(modRes.status, 200);
+        const modules = await modRes.json();
+        assert.ok(Array.isArray(modules));
+        assert.ok(modules.length >= 6);
+
+        // Tester le toggle unitaire
+        const targetMod = modules[0];
+        const toggleRes = await fetch(`${BASE_URL}/api/modules/toggle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                moduleId: targetMod.id,
+                isEnabled: true
+            })
+        });
+        assert.strictEqual(toggleRes.status, 200);
+        const toggleData = await toggleRes.json();
+        assert.strictEqual(toggleData.success, true);
+        assert.strictEqual(toggleData.module.is_enabled, true);
+
+        // Tester l'application de la formule Essentiel
+        const essentielRes = await fetch(`${BASE_URL}/api/modules/preset`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tier: 'essentiel' })
+        });
+        assert.strictEqual(essentielRes.status, 200);
+        const essentielData = await essentielRes.json();
+        assert.strictEqual(essentielData.success, true);
+        assert.ok(essentielData.modules.some(m => m.tier === 'essentiel' && m.is_enabled));
+
+        // Tester l'application de la formule Pro & Chaînes
+        const presetRes = await fetch(`${BASE_URL}/api/modules/preset`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tier: 'multi_sites' })
+        });
+        assert.strictEqual(presetRes.status, 200);
+        const presetData = await presetRes.json();
+        assert.strictEqual(presetData.success, true);
+        assert.ok(presetData.modules.every(m => m.is_enabled === true));
+
+        // Tester l'application d'une verticale métier (Café / Bar)
+        const vertRes = await fetch(`${BASE_URL}/api/modules/vertical`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ vertical: 'cafe_bar' })
+        });
+        assert.strictEqual(vertRes.status, 200);
+        const vertData = await vertRes.json();
+        assert.strictEqual(vertData.success, true);
+        assert.strictEqual(vertData.vertical, 'cafe_bar');
+    });
+
+    test('28. POST /api/orders/mock-create with seats, allergies, modifiers & course suites', async () => {
+        const createRes = await fetch(`${BASE_URL}/api/orders/mock-create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: '02',
+                clientName: 'Gourmet Jean-Luc',
+                items: [
+                    {
+                        name: 'Moscow Mule Premium',
+                        price: 12.50,
+                        quantity: 1,
+                        seat_number: 1,
+                        station: 'bar',
+                        course_step: 'boisson',
+                        course_status: 'fire'
+                    },
+                    {
+                        name: "Burger Signature L'Atelier",
+                        price: 18.50,
+                        quantity: 1,
+                        seat_number: 2,
+                        station: 'chaud',
+                        course_step: 'plat',
+                        course_status: 'hold',
+                        cooking_pref: 'saignant',
+                        allergies: ['gluten', 'arachides'],
+                        modifiers: [
+                            { type: 'sans', label: 'Oignons' },
+                            { type: 'extra', label: 'Cheddar' }
+                        ]
+                    }
+                ]
+            })
+        });
+        assert.strictEqual(createRes.status, 200);
+        const data = await createRes.json();
+        assert.strictEqual(data.success, true);
+        assert.ok(data.orderId);
+
+        // Vérifier dans GET /api/orders
+        const ordersRes = await fetch(`${BASE_URL}/api/orders`);
+        const orders = await ordersRes.json();
+        const createdOrder = orders.find(o => o.id === data.orderId);
+        assert.ok(createdOrder);
+        assert.strictEqual(createdOrder.items.length, 2);
+
+        const burgerItem = createdOrder.items.find(it => it.name.includes('Burger'));
+        assert.ok(burgerItem);
+        assert.strictEqual(burgerItem.seat_number, 2);
+        assert.strictEqual(burgerItem.course_status, 'hold');
+        assert.ok(Array.isArray(burgerItem.allergies));
+        assert.ok(burgerItem.allergies.includes('gluten'));
+
+        // Test 29: Course status update (Fire suite) & Allergy acknowledgment
+        const fireRes = await fetch(`${BASE_URL}/api/orders/items/${burgerItem.id}/course-status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ course_status: 'fire' })
+        });
+        if (fireRes.status !== 200) {
+            const errBody = await fireRes.text();
+            console.error('FIRE RES ERROR:', fireRes.status, errBody, 'burgerItem:', burgerItem);
+        }
+        assert.strictEqual(fireRes.status, 200);
+        const fireData = await fireRes.json();
+        assert.strictEqual(fireData.success, true);
+        assert.strictEqual(fireData.item.course_status, 'fire');
+
+        const ackRes = await fetch(`${BASE_URL}/api/orders/items/${burgerItem.id}/acknowledge-allergy`, {
+            method: 'PATCH'
+        });
+        assert.strictEqual(ackRes.status, 200);
+        const ackData = await ackRes.json();
+        assert.strictEqual(ackData.success, true);
+        assert.strictEqual(ackData.item.allergy_acknowledged, true);
+
+        // Test 30: KDS station bump
+        const bumpRes = await fetch(`${BASE_URL}/api/orders/${createdOrder.id}/bump`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ station: 'chaud', staffEmail: 'chef@atelier-chris.fr' })
+        });
+        assert.strictEqual(bumpRes.status, 200);
+        const bumpData = await bumpRes.json();
+        assert.strictEqual(bumpData.success, true);
+    });
 });
+
+
 

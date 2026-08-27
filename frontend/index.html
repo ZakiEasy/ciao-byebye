@@ -18,7 +18,19 @@
     <!-- Client Optional Authentication Modal (Splash) -->
     <div class="client-auth-overlay active" id="client-auth-overlay">
         <div class="client-auth-modal glass">
-            <div class="logo" style="font-size: 28px; margin-bottom: 15px; text-align: center;">
+            <!-- Language Selector on Client Login Modal -->
+            <div class="modal-lang-bar" style="display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-bottom:12px;">
+                <label for="modal-lang-select" style="font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
+                    <i class="fa-solid fa-globe"></i>
+                </label>
+                <select id="modal-lang-select" onchange="changeLanguage(this.value)" class="glass-select" aria-label="Langue de l'application" style="padding: 4px 10px; font-size:12px;">
+                    <option value="fr">🇫🇷 FR</option>
+                    <option value="en">🇬🇧 EN</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                    <option value="es">🇪🇸 ES</option>
+                </select>
+            </div>
+            <div class="logo" style="font-size: 28px; margin-bottom: 12px; text-align: center;">
                 <span class="logo-accent">Ciao</span> Byebye
             </div>
             <h2 data-i18n="splash_title">Bienvenue sur Ciao Byebye</h2>

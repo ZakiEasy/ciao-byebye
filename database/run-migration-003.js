@@ -14,16 +14,16 @@ const client = new Client({
   ssl: isLocalhost ? false : { rejectUnauthorized: false }
 });
 
-const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
+const migrationSql = fs.readFileSync(path.join(__dirname, 'migrations/003_pricing_tiers_and_verticals.sql'), 'utf8');
 
 async function run() {
   try {
     await client.connect();
-    console.log('Connected to DB');
-    await client.query(schema);
-    console.log('Schema executed successfully!');
+    console.log('[MIGRATION 003] Connecté à Supabase PostgreSQL...');
+    await client.query(migrationSql);
+    console.log('[MIGRATION 003] Migration 003 (Offres Essentiel/Pro/Multi-sites & Modules) appliquée avec succès !');
   } catch (err) {
-    console.error('Error executing schema:', err);
+    console.error('[MIGRATION 003] Erreur :', err);
   } finally {
     await client.end();
   }

@@ -538,11 +538,33 @@
     </div>
 
     <!-- Header -->
-    <header class="dashboard-header">
-        <div class="logo">
-            <span class="logo-accent">Ciao</span> Byebye 
-            <span id="dashboard-role-title" style="font-size: 14px; font-weight:400; color:var(--text-muted); margin-left: 10px;">Tableau de Bord</span>
+    <header class="dashboard-header" style="flex-wrap: wrap; gap: 12px;">
+        <div style="display:flex; align-items:center; gap: 16px;">
+            <div class="logo">
+                <span class="logo-accent">Ciao</span> Byebye 
+                <span id="dashboard-role-title" style="font-size: 14px; font-weight:400; color:var(--text-muted); margin-left: 10px;">Tableau de Bord</span>
+            </div>
+
+            <!-- Main Feature Navigation Tabs -->
+            <nav id="dashboard-main-nav" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <button class="action-btn active" id="tab-btn-kds" onclick="switchMainTab('kds')" style="padding:6px 12px; font-size:12px;">
+                    <i class="fa-solid fa-fire-burner"></i> KDS Cuisine
+                </button>
+                <button class="action-btn secondary" id="tab-btn-floorplan" onclick="switchMainTab('floorplan')" style="padding:6px 12px; font-size:12px;">
+                    <i class="fa-solid fa-map"></i> Plan de Tables 2D
+                </button>
+                <button class="action-btn secondary" id="tab-btn-inventory" onclick="switchMainTab('inventory')" style="padding:6px 12px; font-size:12px;">
+                    <i class="fa-solid fa-boxes-stacked"></i> Stocks & BOM
+                </button>
+                <button class="action-btn secondary" id="tab-btn-modules" onclick="switchMainTab('modules')" style="padding:6px 12px; font-size:12px;">
+                    <i class="fa-solid fa-toggle-on"></i> Modules & Offres
+                </button>
+                <button class="action-btn secondary" id="tab-btn-menu" onclick="switchMainTab('menu')" style="padding:6px 12px; font-size:12px;">
+                    <i class="fa-solid fa-utensils"></i> Menu
+                </button>
+            </nav>
         </div>
+
         <div class="stats-container">
             <!-- Lang, Currency & Fullscreen Selectors -->
             <div class="i18n-selectors" style="display:flex; align-items:center; gap:6px;">
@@ -565,9 +587,7 @@
                 </button>
             </div>
 
-            <div id="header-btn-container">
-                <!-- Buttons like 'Gérer le Menu' load here -->
-            </div>
+            <div id="header-btn-container"></div>
             
             <div class="stat-badge">
                 <i class="fa-solid fa-fire-burner"></i> <span id="stat-cooking-label">En Cuisine :</span> <span id="stat-cooking">0</span>
@@ -649,7 +669,7 @@
                 col_ready: "Prêtes / À Retirer",
                 btn_ready: "Prête à servir !",
                 btn_served: "Commande Livrée",
-                btn_manage_menu: "Gérer dispo Menu",
+                btn_manage_menu: "Gérer le Menu",
                 btn_view_orders: "Voir Commandes",
                 pickup_cooking: "En Préparation",
                 pickup_ready: "Prêt au comptoir",
@@ -660,8 +680,17 @@
                 timer_min: "min",
                 empty_cooking: "Aucune commande en préparation.",
                 empty_ready: "Aucune commande en attente de retrait.",
-                menu_mgmt_title: "Disponibilité du Menu",
-                menu_mgmt_desc: "Désactivez les produits temporairement en rupture de stock pour bloquer leur commande.",
+                menu_mgmt_title: "Gestion du Menu & Création de Plats",
+                menu_mgmt_desc: "Gérez votre carte, créez des plats manuellement ou importez un menu scanné par photo.",
+                menu_tab_catalog: "📋 Catalogue & Stock",
+                menu_tab_create: "➕ Créer un Plat",
+                menu_tab_scan: "📸 Scanner une Carte (Photo / IA)",
+                menu_tab_url: "🌐 Importer par URL & Design System",
+                url_input_label: "URL du site web ou restaurant en ligne :",
+                btn_scrape_url: "Analyser le Site & Extraire (Menu + Design System)",
+                design_system_title: "🎨 Design System Extrait de la Marque",
+                btn_apply_theme: "🚀 Appliquer ce Thème au Restaurant (En Direct)",
+                theme_applied_toast: "✨ Nouveau Design System appliqué à l'ensemble du restaurant !",
                 category_label: "Catégorie :",
                 assignment_title: "Affectation des Serveurs",
                 assignment_desc: "Attribuez chaque table physique à un serveur de l'équipe.",
@@ -669,7 +698,23 @@
                 th_server: "Serveur Responsable",
                 unassigned: "Non assignée",
                 active_orders_service: "Commandes en cours de service",
-                media_title: "En direct de nos Ateliers"
+                media_title: "En direct de nos Ateliers",
+                lbl_dish_name: "Nom du Plat",
+                lbl_dish_price: "Prix (€)",
+                lbl_dish_desc: "Description & Ingrédients",
+                lbl_dish_category: "Catégorie",
+                lbl_dish_image: "Photo / Image URL",
+                lbl_dish_badges: "Badges & Spécialités",
+                btn_save_dish: "Enregistrer et Publier le Plat",
+                live_preview_title: "Aperçu Direct (Design Nâga Street Food)",
+                scan_dropzone_title: "Déposez une photo de menu ou prenez un cliché",
+                scan_dropzone_sub: "JPG, PNG ou capture caméra de la carte du restaurant",
+                btn_load_naga_preset: "🥢 Charger l'Exemple Nâga Street Food (Lok-Lak & Lot-Tcha)",
+                scan_progress: "Analyse OCR et reconnaissance des plats...",
+                detected_items_title: "Plats Extraits du Menu",
+                btn_import_all_db: "Importer tout en Base de Données",
+                search_placeholder: "Rechercher un plat...",
+                all_categories: "Toutes les catégories"
             },
             en: {
                 title_kds: "Dashboard",
@@ -679,7 +724,7 @@
                 col_ready: "Ready / To Pickup",
                 btn_ready: "Ready to serve!",
                 btn_served: "Order Delivered",
-                btn_manage_menu: "Manage Menu Stock",
+                btn_manage_menu: "Manage Menu",
                 btn_view_orders: "View Orders",
                 pickup_cooking: "In Preparation",
                 pickup_ready: "Ready for Pickup",
@@ -690,8 +735,17 @@
                 timer_min: "min",
                 empty_cooking: "No orders currently cooking.",
                 empty_ready: "No orders waiting for pickup.",
-                menu_mgmt_title: "Menu Availability",
-                menu_mgmt_desc: "Disable items temporarily out of stock to prevent customer orders.",
+                menu_mgmt_title: "Menu Management & Dish Creation",
+                menu_mgmt_desc: "Manage your food catalog, create dishes manually or scan menu photos with AI.",
+                menu_tab_catalog: "📋 Catalog & Stock",
+                menu_tab_create: "➕ Create Dish",
+                menu_tab_scan: "📸 Scan Menu Photo (AI)",
+                menu_tab_url: "🌐 Import by URL & Design System",
+                url_input_label: "Restaurant or Online Menu Website URL:",
+                btn_scrape_url: "Analyze Website & Extract (Menu + Design System)",
+                design_system_title: "🎨 Extracted Brand Design System",
+                btn_apply_theme: "🚀 Apply this Theme to Restaurant (Live)",
+                theme_applied_toast: "✨ New Design System applied across the restaurant!",
                 category_label: "Category:",
                 assignment_title: "Server Table Assignments",
                 assignment_desc: "Assign physical tables to waitstaff members in real-time.",
@@ -699,7 +753,23 @@
                 th_server: "Assigned Server",
                 unassigned: "Unassigned",
                 active_orders_service: "Active Table Orders",
-                media_title: "Live from our Kitchen"
+                media_title: "Live from our Kitchen",
+                lbl_dish_name: "Dish Name",
+                lbl_dish_price: "Price (€)",
+                lbl_dish_desc: "Description & Ingredients",
+                lbl_dish_category: "Category",
+                lbl_dish_image: "Photo / Image URL",
+                lbl_dish_badges: "Badges & Tags",
+                btn_save_dish: "Save and Publish Dish",
+                live_preview_title: "Live Preview (Nâga Street Food Design)",
+                scan_dropzone_title: "Drop a menu photo or take a picture",
+                scan_dropzone_sub: "JPG, PNG or camera snapshot of the printed menu",
+                btn_load_naga_preset: "🥢 Load Nâga Street Food Example (Lok-Lak & Lot-Tcha)",
+                scan_progress: "OCR analysis and dish recognition...",
+                detected_items_title: "Extracted Menu Items",
+                btn_import_all_db: "Import All to Database",
+                search_placeholder: "Search dishes...",
+                all_categories: "All categories"
             },
             ar: {
                 title_kds: "لوحة التحكم",
@@ -709,7 +779,7 @@
                 col_ready: "جاهزة للاستلام والتقديم",
                 btn_ready: "جاهزة للتقديم !",
                 btn_served: "تم تسليم الطلب",
-                btn_manage_menu: "إدارة المنتجات",
+                btn_manage_menu: "إدارة قائمة الطعام",
                 btn_view_orders: "عرض الطلبات",
                 pickup_cooking: "قيد التحضير",
                 pickup_ready: "جاهز للاستلام عند المنصة",
@@ -720,8 +790,17 @@
                 timer_min: "دقيقة",
                 empty_cooking: "لا توجد طلبات قيد التحضير حالياً.",
                 empty_ready: "لا توجد طلبات تنتظر الاستلام.",
-                menu_mgmt_title: "إدارة توفر قائمة الطعام",
-                menu_mgmt_desc: "عطّل المنتجات غير المتوفرة لمنع الزبائن من طلبها مؤقتاً.",
+                menu_mgmt_title: "إدارة قائمة الطعام وإضافة الأطباق",
+                menu_mgmt_desc: "إدارة توفر المنتجات، إنشاء أطباق يدوياً أو مسح القوائم بالذكاء الاصطناعي والصور.",
+                menu_tab_catalog: "📋 قائمة الأطباق والمخزون",
+                menu_tab_create: "➕ إضافة طبق جديد",
+                menu_tab_scan: "📸 مسح القائمة بالصورة والذكاء الاصطناعي",
+                menu_tab_url: "🌐 استيراد بالرابط وهوية التصميم",
+                url_input_label: "رابط موقع المطعم أو القائمة الإلكترونية :",
+                btn_scrape_url: "تحليل الموقع واستخراج القائمة والهوية البصرية",
+                design_system_title: "🎨 هوية التصميم البصري المستخرجة",
+                btn_apply_theme: "🚀 تطبيق هذا المظهر على المطعم فوراً",
+                theme_applied_toast: "✨ تم تطبيق هوية التصميم الجديدة على المطعم بنجاح !",
                 category_label: "الفئة :",
                 assignment_title: "توزيع الطاولات على طاقم الخدمة",
                 assignment_desc: "حدد النادل المسؤول عن كل طاولة مع المزامنة الفورية.",
@@ -729,7 +808,23 @@
                 th_server: "النادل المسؤول",
                 unassigned: "غير معينة",
                 active_orders_service: "الطلبات الجارية في الصالة",
-                media_title: "مباشر من مطابخنا وعروض اليوم"
+                media_title: "مباشر من مطابخنا وعروض اليوم",
+                lbl_dish_name: "اسم الطبق",
+                lbl_dish_price: "السعر (€)",
+                lbl_dish_desc: "الوصف والمكونات",
+                lbl_dish_category: "الفئة",
+                lbl_dish_image: "رابط الصورة / صورة الطبق",
+                lbl_dish_badges: "الشارات والميزات",
+                btn_save_dish: "حفظ ونشر الطبق في القائمة",
+                live_preview_title: "معاينة مباشرة (تصميم ستريت فود)",
+                scan_dropzone_title: "اسحب صورة القائمة هنا أو التقط صورة بالكاميرا",
+                scan_dropzone_sub: "ملفات JPG، PNG أو التقاط مباشر لقائمة المطعم",
+                btn_load_naga_preset: "🥢 تحميل نموذج قائمة ناغا ستريت فود (لوك لاك ولوت تشا)",
+                scan_progress: "جاري المسح الضوئي واستخراج الأطباق بالذكاء الاصطناعي...",
+                detected_items_title: "الأطباق المستخرجة",
+                btn_import_all_db: "استيراد وحفظ الكل في قاعدة البيانات",
+                search_placeholder: "بحث عن طبق...",
+                all_categories: "جميع الفئات"
             },
             es: {
                 title_kds: "Panel de Control",
@@ -750,8 +845,17 @@
                 timer_min: "min",
                 empty_cooking: "No hay pedidos en preparación.",
                 empty_ready: "No hay pedidos pendientes de entrega.",
-                menu_mgmt_title: "Disponibilidad del Menú",
-                menu_mgmt_desc: "Desactive platos temporalmente agotados para bloquear pedidos.",
+                menu_mgmt_title: "Gestión del Menú y Creación de Platos",
+                menu_mgmt_desc: "Gestione los platos, cree nuevos artículos manualmente o escanee una foto de la carta.",
+                menu_tab_catalog: "📋 Catálogo y Stock",
+                menu_tab_create: "➕ Crear Plato",
+                menu_tab_scan: "📸 Escanear Menú (Foto/IA)",
+                menu_tab_url: "🌐 Importar por URL y Sistema de Diseño",
+                url_input_label: "URL del sitio web del restaurante o menú en línea:",
+                btn_scrape_url: "Analizar Sitio Web y Extraer (Menú + Diseño)",
+                design_system_title: "🎨 Sistema de Diseño Extraído",
+                btn_apply_theme: "🚀 Aplicar este Tema al Restaurante (En Directo)",
+                theme_applied_toast: "✨ ¡Nuevo Sistema de Diseño aplicado al restaurante!",
                 category_label: "Categoría:",
                 assignment_title: "Asignación de Mesas",
                 assignment_desc: "Asigne cada mesa física a un camarero en tiempo real.",
@@ -759,7 +863,23 @@
                 th_server: "Camarero Asignado",
                 unassigned: "Sin asignar",
                 active_orders_service: "Pedidos Activos en Sala",
-                media_title: "En directo desde la cocina"
+                media_title: "En directo desde la cocina",
+                lbl_dish_name: "Nombre del Plato",
+                lbl_dish_price: "Precio (€)",
+                lbl_dish_desc: "Descripción e Ingredientes",
+                lbl_dish_category: "Categoría",
+                lbl_dish_image: "Foto / URL de Imagen",
+                lbl_dish_badges: "Etiquetas y Especialidades",
+                btn_save_dish: "Guardar y Publicar Plato",
+                live_preview_title: "Vista Previa Directa (Diseño Nâga Street Food)",
+                scan_dropzone_title: "Arrastre una foto del menú o capture con la cámara",
+                scan_dropzone_sub: "JPG, PNG o foto de la carta impresa",
+                btn_load_naga_preset: "🥢 Cargar Ejemplo Nâga Street Food (Lok-Lak & Lot-Tcha)",
+                scan_progress: "Análisis OCR y reconocimiento de platos...",
+                detected_items_title: "Platos Extraídos del Menú",
+                btn_import_all_db: "Importar todo a la Base de Datos",
+                search_placeholder: "Buscar un plato...",
+                all_categories: "Todas las categorías"
             }
         };
 
@@ -832,10 +952,49 @@
         let activeRole = loggedUserRole;
         let showMenuManagement = false;
 
+        let activeMainTab = 'kds'; // 'kds' | 'floorplan' | 'inventory' | 'modules' | 'menu'
+        let kdsActiveStation = 'all'; // 'all' | 'chaud' | 'froid' | 'bar' | 'passe'
+        let floorPlanActiveZone = 'all'; // 'all' | 'salle' | 'terrasse' | 'mezzanine' | 'bar'
+        let floorPlanTables = [];
+        let selectedTableModalData = null;
+        let inventoryIngredients = [];
+        let inventoryRecipes = [];
+        let inventoryLogs = [];
+        let inventoryActiveSubTab = 'ingredients'; // 'ingredients' | 'recipes' | 'waste'
+        let restaurantModulesList = [];
+
+        function switchMainTab(tab) {
+            activeMainTab = tab;
+            showMenuManagement = (tab === 'menu');
+            
+            ['kds', 'floorplan', 'inventory', 'modules', 'menu'].forEach(tName => {
+                const btn = document.getElementById(`tab-btn-${tName}`);
+                if (btn) {
+                    if (tName === tab) {
+                        btn.className = 'action-btn active';
+                    } else {
+                        btn.className = 'action-btn secondary';
+                    }
+                }
+            });
+
+            updateRoleTitle();
+            if (tab === 'floorplan') {
+                renderFloorPlanView();
+            } else if (tab === 'inventory') {
+                renderInventoryView();
+            } else if (tab === 'modules') {
+                renderModulesView();
+            } else if (tab === 'menu') {
+                renderMenuManagement();
+            } else {
+                fetchOrders();
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('user-email').innerText = loggedUserEmail;
             
-            // Sync selectors
             const langSelect = document.getElementById('kds-lang-select');
             if (langSelect) langSelect.value = kdsLang;
             const currSelect = document.getElementById('kds-currency-select');
@@ -843,7 +1002,6 @@
 
             changeKdsLanguage(kdsLang);
 
-            // Show Manager Switcher if role is 'gestionnaire'
             if (loggedUserRole === 'gestionnaire') {
                 document.getElementById('manager-switcher-container').style.display = 'block';
                 document.getElementById('active-profile-select').value = activeEmail;
@@ -916,9 +1074,13 @@
         let orders = [];
 
         async function fetchOrders() {
-            if (showMenuManagement) return;
+            if (activeMainTab !== 'kds' && activeMainTab !== 'floorplan') return;
             try {
-                const response = await fetch(`/api/orders?email=${encodeURIComponent(activeEmail)}`);
+                let url = `/api/orders?email=${encodeURIComponent(activeEmail)}`;
+                if (kdsActiveStation && kdsActiveStation !== 'all') {
+                    url += `&station=${kdsActiveStation}`;
+                }
+                const response = await fetch(url);
                 if (!response.ok) throw new Error('Failed to fetch orders');
                 orders = await response.json();
                 renderDashboard();
@@ -928,97 +1090,130 @@
         }
 
         function renderDashboard() {
-            const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
-            const mainContent = document.getElementById('dashboard-main-content');
-            
-            // 1. PUBLIC PICKUP SCREEN VIEW (Comptoir Public de Retrait avec Vidéo Démo & Promos)
             if (activeRole === 'technique') {
-                const cookingOrders = orders.filter(o => o.order_status === 'en_cuisine');
-                const readyOrders = orders.filter(o => o.order_status === 'prete');
-                const activePromo = promoVideos[currentPromoVideoIndex] || promoVideos[0];
-
-                mainContent.innerHTML = `
-                    <div class="pickup-container">
-                        <!-- Column 1: Cooking / In Prep -->
-                        <div class="pickup-column">
-                            <div class="pickup-title"><i class="fa-solid fa-spinner fa-spin" style="color:#ef4444;"></i> ${t.pickup_cooking}</div>
-                            <div class="pickup-list">
-                                ${cookingOrders.length === 0 ? `<div style="color:var(--text-muted); font-style:italic;">${t.pickup_no_cooking}</div>` : 
-                                  cookingOrders.map((o, index) => `
-                                    <div class="pickup-name-card">
-                                        ${o.client_name} <span style="font-size:15px; color:var(--text-muted); margin-left:10px;">#Q-${index+1}</span>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-
-                        <!-- Column 2: Ready for Pickup -->
-                        <div class="pickup-column">
-                            <div class="pickup-title" style="color:#10b981;"><i class="fa-solid fa-bell"></i> ${t.pickup_ready}</div>
-                            <div class="pickup-list">
-                                ${readyOrders.length === 0 ? `<div style="color:var(--text-muted); font-style:italic;">${t.pickup_no_ready}</div>` : 
-                                  readyOrders.map((o) => `
-                                    <div class="pickup-name-card ready">
-                                        🎉 ${o.client_name} <span style="font-size:15px; color:#10b981; margin-left:10px;">(${t.table_prefix} ${o.table_number})</span>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-
-                        <!-- Column 3: Live Preparation Video Reel & Promotions Showcase -->
-                        <div class="pickup-media-column">
-                            <div class="pickup-title" style="font-size:20px; color:var(--primary); margin-bottom:12px; padding-bottom:8px;">
-                                <i class="fa-solid fa-play-circle"></i> ${t.media_title}
-                            </div>
-                            
-                            <!-- Main Video Player Screen -->
-                            <div class="promo-video-wrapper">
-                                <video id="kiosk-promo-video" src="${activePromo.src}" autoplay muted loop playsinline></video>
-                                <span class="video-overlay-badge" id="kiosk-video-badge">${activePromo.badge}</span>
-                            </div>
-
-                            <!-- Playlist Switcher Tabs -->
-                            <div class="video-playlist-tabs">
-                                ${promoVideos.map((vid, idx) => `
-                                    <div class="playlist-tab ${idx === currentPromoVideoIndex ? 'active' : ''}" onclick="setPromoVideo(${idx})">
-                                        <div class="playlist-tab-info">
-                                            <strong>${vid.title}</strong>
-                                            <span>${vid.desc}</span>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
-                `;
+                renderPublicPickupView();
                 return;
             }
 
-            // 2. CHEF DE SALLE VIEW
+            if (activeMainTab === 'floorplan') {
+                renderFloorPlanView();
+                return;
+            } else if (activeMainTab === 'inventory') {
+                renderInventoryView();
+                return;
+            } else if (activeMainTab === 'modules') {
+                renderModulesView();
+                return;
+            } else if (activeMainTab === 'menu') {
+                renderMenuManagement();
+                return;
+            }
+
             if (activeRole === 'chef_de_salle') {
                 renderChefDeSalleView();
                 return;
             }
 
-            // 3. STANDARD KDS VIEW
-            mainContent.innerHTML = `
-                <!-- Column 1: Cooking -->
-                <section class="kds-column">
-                    <div class="column-header">
-                        <h2><i class="fa-solid fa-fire-burner" style="color: #ef4444;"></i> ${t.col_cooking}</h2>
-                        <span class="count" id="count-cooking" style="background:#ef4444; color:#fff;">0</span>
-                    </div>
-                    <div class="cards-list" id="list-cooking"></div>
-                </section>
+            renderKdsView();
+        }
 
-                <!-- Column 2: Ready -->
-                <section class="kds-column">
-                    <div class="column-header">
-                        <h2><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> ${t.col_ready}</h2>
-                        <span class="count" id="count-ready" style="background:#10b981; color:#fff;">0</span>
+        function renderPublicPickupView() {
+            const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
+            const mainContent = document.getElementById('dashboard-main-content');
+            const cookingOrders = orders.filter(o => o.order_status === 'en_cuisine');
+            const readyOrders = orders.filter(o => o.order_status === 'prete');
+            const activePromo = promoVideos[currentPromoVideoIndex] || promoVideos[0];
+
+            mainContent.innerHTML = `
+                <div class="pickup-container">
+                    <div class="pickup-column">
+                        <div class="pickup-title"><i class="fa-solid fa-spinner fa-spin" style="color:#ef4444;"></i> ${t.pickup_cooking}</div>
+                        <div class="pickup-list">
+                            ${cookingOrders.length === 0 ? `<div style="color:var(--text-muted); font-style:italic;">${t.pickup_no_cooking}</div>` : 
+                              cookingOrders.map((o, index) => `
+                                <div class="pickup-name-card">
+                                    ${o.client_name} <span style="font-size:15px; color:var(--text-muted); margin-left:10px;">#Q-${index+1}</span>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
-                    <div class="cards-list" id="list-ready"></div>
-                </section>
+
+                    <div class="pickup-column">
+                        <div class="pickup-title" style="color:#10b981;"><i class="fa-solid fa-bell"></i> ${t.pickup_ready}</div>
+                        <div class="pickup-list">
+                            ${readyOrders.length === 0 ? `<div style="color:var(--text-muted); font-style:italic;">${t.pickup_no_ready}</div>` : 
+                              readyOrders.map((o) => `
+                                <div class="pickup-name-card ready">
+                                    <span>🎉 ${o.client_name}</span>
+                                    <span style="font-size:18px; color:var(--primary);"><i class="fa-solid fa-circle-check"></i></span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="pickup-column video-column">
+                        <div class="pickup-title" style="color:var(--primary);"><i class="fa-solid fa-tv"></i> ${t.media_title}</div>
+                        <div class="video-kiosk-wrapper">
+                            <video id="kiosk-promo-video" src="${activePromo.src}" autoplay muted loop playsinline></video>
+                            <span class="video-overlay-badge" id="kiosk-video-badge">${activePromo.badge}</span>
+                        </div>
+                        <div class="video-playlist-tabs">
+                            ${promoVideos.map((vid, idx) => `
+                                <div class="playlist-tab ${idx === currentPromoVideoIndex ? 'active' : ''}" onclick="setPromoVideo(${idx})">
+                                    <div class="playlist-tab-info">
+                                        <strong>${vid.title}</strong>
+                                        <span>${vid.desc}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderKdsView() {
+            const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
+            const mainContent = document.getElementById('dashboard-main-content');
+
+            mainContent.innerHTML = `
+                <div style="display:flex; flex-direction:column; height:100%; width:100%;">
+                    <div class="kds-station-bar">
+                        <span style="font-size:13px; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-satellite-dish" style="color:var(--primary);"></i> Poste KDS :
+                        </span>
+                        <button class="station-btn ${kdsActiveStation === 'all' ? 'active' : ''}" onclick="setKdsStation('all')">
+                            🍳 Tous / Passe Expo
+                        </button>
+                        <button class="station-btn ${kdsActiveStation === 'chaud' ? 'active' : ''}" onclick="setKdsStation('chaud')">
+                            🥩 Chaud / Grill
+                        </button>
+                        <button class="station-btn ${kdsActiveStation === 'froid' ? 'active' : ''}" onclick="setKdsStation('froid')">
+                            🥗 Froid / Entrées
+                        </button>
+                        <button class="station-btn ${kdsActiveStation === 'bar' ? 'active' : ''}" onclick="setKdsStation('bar')">
+                            🍹 Bar / Boissons
+                        </button>
+                    </div>
+
+                    <div style="flex:1; display:grid; grid-template-columns: 1fr 1fr; gap:20px; overflow:hidden;">
+                        <section class="kds-column">
+                            <div class="column-header">
+                                <h2><i class="fa-solid fa-fire-burner" style="color: #ef4444;"></i> ${t.col_cooking}</h2>
+                                <span class="count" id="count-cooking" style="background:#ef4444; color:#fff;">0</span>
+                            </div>
+                            <div class="cards-list" id="list-cooking"></div>
+                        </section>
+
+                        <section class="kds-column">
+                            <div class="column-header">
+                                <h2><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> ${t.col_ready}</h2>
+                                <span class="count" id="count-ready" style="background:#10b981; color:#fff;">0</span>
+                            </div>
+                            <div class="cards-list" id="list-ready"></div>
+                        </section>
+                    </div>
+                </div>
             `;
 
             const cookingList = document.getElementById('list-cooking');
@@ -1027,51 +1222,98 @@
             const cookingOrders = orders.filter(o => o.order_status === 'en_cuisine');
             const readyOrders = orders.filter(o => o.order_status === 'prete');
 
-            // Update Header counters
             document.getElementById('stat-cooking').innerText = cookingOrders.length;
             document.getElementById('count-cooking').innerText = cookingOrders.length;
             document.getElementById('stat-ready').innerText = readyOrders.length;
             document.getElementById('count-ready').innerText = readyOrders.length;
 
-            // Render Cooking Orders
             if (cookingOrders.length === 0) {
                 cookingList.innerHTML = `<div class="empty-column-msg">${t.empty_cooking}</div>`;
             } else {
                 cookingList.innerHTML = cookingOrders.map((o, index) => {
                     const elapsedMin = Math.floor((new Date() - new Date(o.created_at)) / 60000);
                     const isCashPending = o.payment_status === 'a_payer_en_caisse';
+                    const isLongWait = elapsedMin >= 20;
+                    const timerColor = elapsedMin < 10 ? '#10b981' : (elapsedMin < 20 ? '#f59e0b' : '#ef4444');
                     const orderTotal = o.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
                     return `
-                        <div class="order-card glass" ${isCashPending ? 'style="border-color: rgba(245, 158, 11, 0.4);"' : ''}>
+                        <div class="order-card glass ${isLongWait ? 'wait-alert-pulse' : ''}" style="${isCashPending ? 'border-color: rgba(245, 158, 11, 0.4);' : ''}">
                             <div class="card-header">
                                 <div class="client-info">
-                                    <h3>${o.client_name}</h3>
-                                    <div style="display:flex; gap: 6px; margin-top:4px; flex-wrap: wrap;">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <h3>${o.client_name}</h3>
                                         <span class="queue-badge">#Q-${index+1}</span>
-                                        <span class="elapsed-timer" data-time="${o.created_at}">⏱️ ${elapsedMin} ${t.timer_min}</span>
-                                        ${isCashPending ? '<span class="cash-badge-kds"><i class="fa-solid fa-money-bill-wave"></i> À Encaisser en Espèces</span>' : '<span style="font-size:10px; color:#10b981; font-weight:700;"><i class="fa-solid fa-check"></i> Payé Stripe</span>'}
+                                    </div>
+                                    <div style="display:flex; gap: 6px; margin-top:4px; flex-wrap: wrap; align-items:center;">
+                                        <span class="elapsed-timer" style="color:${timerColor}; font-weight:700;">
+                                            ⏱️ ${elapsedMin} ${t.timer_min} ${isLongWait ? '🚨 ALERTE RETARD' : ''}
+                                        </span>
+                                        ${o.table_zone ? `<span style="font-size:10px; background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; color:var(--text-muted);"><i class="fa-solid fa-map-pin"></i> ${o.table_zone}</span>` : ''}
+                                        ${isCashPending ? '<span class="cash-badge-kds"><i class="fa-solid fa-money-bill-wave"></i> Espèces</span>' : ''}
                                     </div>
                                 </div>
                                 <span class="table-num">${t.table_prefix} ${o.table_number}</span>
                             </div>
-                            <ul class="card-items" style="max-height: 220px; overflow-y: auto; padding-right: 5px;">
-                                ${o.items.map(item => `
-                                    <li>
-                                        <div class="item-qty-name">
-                                            <span class="item-qty">${item.quantity}x</span>
-                                            <span>${item.name}</span>
-                                        </div>
-                                        <span>${formatKdsPrice(item.price * item.quantity)}</span>
-                                    </li>
-                                `).join('')}
+
+                            <ul class="card-items" style="max-height: 260px; overflow-y: auto; padding-right: 5px;">
+                                ${o.items.map(item => {
+                                    const isHold = item.course_status === 'hold';
+                                    const hasAllergy = Array.isArray(item.allergies) && item.allergies.length > 0;
+                                    const hasMods = Array.isArray(item.modifiers) && item.modifiers.length > 0;
+
+                                    return `
+                                        <li style="flex-direction:column; align-items:flex-start; gap:4px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05); ${isHold ? 'opacity:0.65;' : ''}">
+                                            <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                                                <div class="item-qty-name">
+                                                    <span class="seat-badge">🪑 S${item.seat_number || 1}</span>
+                                                    <span class="item-qty">${item.quantity}x</span>
+                                                    <strong>${item.name}</strong>
+                                                </div>
+                                                <div style="display:flex; align-items:center; gap:6px;">
+                                                    <span class="${isHold ? 'course-badge-hold' : 'course-badge-fire'}">
+                                                        ${isHold ? '⏸️ HOLD' : '🔥 FIRE'}
+                                                    </span>
+                                                    ${isHold ? `
+                                                        <button class="btn-fire-suite" onclick="fireCourseSuite('${item.id}')" title="Réclamer la suite pour ce plat">
+                                                            <i class="fa-solid fa-fire"></i> Réclame
+                                                        </button>
+                                                    ` : ''}
+                                                </div>
+                                            </div>
+
+                                            ${hasAllergy ? `
+                                                <div class="allergy-alert-banner" style="width:100%;">
+                                                    <span>⚠️ ALLERGIE : ${item.allergies.join(', ').toUpperCase()}</span>
+                                                    <button class="allergy-ack-btn ${item.allergy_acknowledged ? 'acknowledged' : ''}" onclick="acknowledgeAllergy('${item.id}')">
+                                                        ${item.allergy_acknowledged ? '✅ Acquittée' : '⚠️ Acquitter'}
+                                                    </button>
+                                                </div>
+                                            ` : ''}
+
+                                            ${hasMods || item.cooking_pref ? `
+                                                <div class="modifier-list">
+                                                    ${item.cooking_pref ? `<span class="mod-badge-cook"><i class="fa-solid fa-fire"></i> ${item.cooking_pref}</span>` : ''}
+                                                    ${(item.modifiers || []).map(m => {
+                                                        if (m.type === 'sans') return `<span class="mod-badge-sans">SANS ${m.label}</span>`;
+                                                        if (m.type === 'extra') return `<span class="mod-badge-extra">+ EXTRA ${m.label}</span>`;
+                                                        if (m.type === 'sub') return `<span class="mod-badge-sub">↔ ${m.label}</span>`;
+                                                        return `<span class="badge-tag">${m.label}</span>`;
+                                                    }).join('')}
+                                                </div>
+                                            ` : ''}
+                                        </li>
+                                    `;
+                                }).join('')}
                             </ul>
-                            <div class="card-actions" style="display:flex; gap: 8px; flex-wrap:wrap;">
+
+                            <div class="card-actions" style="display:flex; gap: 8px; flex-wrap:wrap; margin-top:10px;">
                                 ${isCashPending ? `
                                     <button class="btn-cash-collect" onclick="collectCashPayment('${o.id}')" title="Valider le paiement en espèces">
                                         <i class="fa-solid fa-hand-holding-dollar"></i> Encaisser (${formatKdsPrice(orderTotal)})
                                     </button>
                                 ` : ''}
-                                <button class="action-btn" onclick="updateOrderStatus('${o.id}', 'prete')" style="flex:1;">
+                                <button class="action-btn" onclick="bumpKdsOrder('${o.id}', '${kdsActiveStation}')" style="flex:1;">
                                     <i class="fa-solid fa-mug-hot"></i> ${t.btn_ready}
                                 </button>
                             </div>
@@ -1080,7 +1322,6 @@
                 }).join('');
             }
 
-            // Render Ready Orders
             if (readyOrders.length === 0) {
                 readyList.innerHTML = `<div class="empty-column-msg">${t.empty_ready}</div>`;
             } else {
@@ -1097,6 +1338,7 @@
                             ${o.items.map(item => `
                                 <li>
                                     <div class="item-qty-name">
+                                        <span class="seat-badge">🪑 S${item.seat_number || 1}</span>
                                         <span class="item-qty" style="color:#10b981;">${item.quantity}x</span>
                                         <span>${item.name}</span>
                                     </div>
@@ -1114,91 +1356,401 @@
             }
         }
 
-        // 4. RENDERING FOR CHEF DE SALLE
-        let staffList = [];
-        async function renderChefDeSalleView() {
-            const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
-            const mainContent = document.getElementById('dashboard-main-content');
-            
+        function setKdsStation(station) {
+            kdsActiveStation = station;
+            fetchOrders();
+        }
+
+        async function fireCourseSuite(itemId) {
             try {
-                const response = await fetch('/api/staff');
-                staffList = await response.json();
-            } catch (err) {
-                console.error(err);
+                const res = await fetch(`/api/orders/items/${itemId}/course-status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ course_status: 'fire' })
+                });
+                if (res.ok) fetchOrders();
+            } catch (e) {
+                console.error('Erreur réclame suite:', e);
+            }
+        }
+
+        async function acknowledgeAllergy(itemId) {
+            try {
+                const res = await fetch(`/api/orders/items/${itemId}/acknowledge-allergy`, { method: 'PATCH' });
+                if (res.ok) fetchOrders();
+            } catch (e) {
+                console.error('Erreur acquittement allergie:', e);
+            }
+        }
+
+        async function bumpKdsOrder(orderId, station) {
+            try {
+                const res = await fetch(`/api/orders/${orderId}/bump`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ station: station === 'all' ? 'passe' : station, staffEmail: activeEmail })
+                });
+                if (res.ok) fetchOrders();
+            } catch (e) {
+                console.error('Erreur bump:', e);
+            }
+        }
+
+        async function renderFloorPlanView() {
+            const mainContent = document.getElementById('dashboard-main-content');
+            try {
+                const res = await fetch('/api/tables/layout');
+                floorPlanTables = await res.json();
+            } catch (e) {
+                console.error('Erreur chargement plan tables:', e);
             }
 
-            const tables = ['01', '02', '03', '04', '05'];
+            const filteredTables = floorPlanActiveZone === 'all' 
+                ? floorPlanTables 
+                : floorPlanTables.filter(t => t.zone === floorPlanActiveZone);
 
             mainContent.innerHTML = `
-                <div class="assignment-view">
-                    <!-- Left column: Table assignments -->
-                    <div class="menu-mgmt-panel">
-                        <h2><i class="fa-solid fa-chair" style="color:var(--primary);"></i> ${t.assignment_title}</h2>
-                        <p style="font-size:12px; color:var(--text-muted); margin-bottom: 20px;">${t.assignment_desc}</p>
-                        
-                        <table class="assignment-table">
-                            <thead>
-                                <tr>
-                                    <th>${t.th_table}</th>
-                                    <th>${t.th_server}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tables.map(tableNum => {
-                                    const assignedWaiter = staffList.find(s => s.assigned_tables && s.assigned_tables.includes(tableNum));
-                                    const assignedEmail = assignedWaiter ? assignedWaiter.email : '';
-                                    return `
-                                        <tr>
-                                            <td><strong>${t.table_prefix} ${tableNum}</strong></td>
-                                            <td>
-                                                <select onchange="assignTableToStaff('${tableNum}', this.value)" style="width:100%; padding:8px; background:#000; border:1px solid var(--glass-border); color:#fff; border-radius:4px; outline:none; cursor:pointer;">
-                                                    <option value="">${t.unassigned}</option>
-                                                    <option value="david@atelier-chris.fr" ${assignedEmail === 'david@atelier-chris.fr' ? 'selected' : ''}>David (david@)</option>
-                                                    <option value="sophie@atelier-chris.fr" ${assignedEmail === 'sophie@atelier-chris.fr' ? 'selected' : ''}>Sophie (sophie@)</option>
-                                                </select>
-                                            </td>
-                                        </tr>
-                                    `;
-                                }).join('')}
-                            </tbody>
-                        </table>
+                <div style="display:flex; flex-direction:column; height:100%; width:100%;">
+                    <div class="floorplan-toolbar">
+                        <div class="zone-chips">
+                            <span style="font-size:13px; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:6px; margin-right:6px;">
+                                <i class="fa-solid fa-layer-group" style="color:var(--primary);"></i> Zones :
+                            </span>
+                            <button class="zone-chip ${floorPlanActiveZone === 'all' ? 'active' : ''}" onclick="setFloorPlanZone('all')">🏢 Toutes</button>
+                            <button class="zone-chip ${floorPlanActiveZone === 'salle' ? 'active' : ''}" onclick="setFloorPlanZone('salle')">🍽️ Salle</button>
+                            <button class="zone-chip ${floorPlanActiveZone === 'terrasse' ? 'active' : ''}" onclick="setFloorPlanZone('terrasse')">☀️ Terrasse</button>
+                            <button class="zone-chip ${floorPlanActiveZone === 'mezzanine' ? 'active' : ''}" onclick="setFloorPlanZone('mezzanine')">🛋️ Mezzanine</button>
+                            <button class="zone-chip ${floorPlanActiveZone === 'bar' ? 'active' : ''}" onclick="setFloorPlanZone('bar')">🍸 Bar</button>
+                        </div>
+
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <button class="action-btn secondary" onclick="openAddTableModal()" style="font-size:12px; padding:6px 12px;">
+                                <i class="fa-solid fa-plus"></i> Ajouter Table
+                            </button>
+                            <button class="action-btn secondary" onclick="renderFloorPlanView()" style="font-size:12px; padding:6px 12px;">
+                                <i class="fa-solid fa-rotate"></i> Actualiser
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- Right column: All active orders -->
-                    <div class="kds-column">
-                        <div class="column-header">
-                            <h2><i class="fa-solid fa-receipt"></i> ${t.active_orders_service}</h2>
-                            <span class="count" style="background:var(--primary); color:#000;">${orders.length}</span>
+                    <div class="floorplan-viewport" id="floorplan-canvas">
+                        ${filteredTables.map(t => {
+                            const isLongWait = t.wait_minutes && t.wait_minutes >= 20;
+                            const statusClass = `status-${t.service_status || 'libre'}`;
+                            const shapeClass = `shape-${t.shape || 'square'}`;
+                            const isMerged = !!t.merged_parent_id;
+
+                            return `
+                                <div class="table-node ${shapeClass} ${statusClass} ${isLongWait ? 'wait-alert-pulse' : ''}" 
+                                     style="left:${t.pos_x}px; top:${t.pos_y}px; width:${t.width || 100}px; height:${t.height || 100}px;"
+                                     onclick="openTableActionModal('${t.id}')">
+                                    <div class="table-node-number">${t.number}</div>
+                                    <div class="table-node-capacity">${t.min_covers}-${t.max_covers}p (${t.actual_covers || 0} cvts)</div>
+                                    ${t.assigned_waiter_email ? `<div class="table-node-server">👤 ${t.assigned_waiter_email.split('@')[0]}</div>` : ''}
+                                    ${isLongWait ? `<div class="table-node-wait-timer">⚠️ >20min</div>` : ''}
+                                    ${isMerged ? `<span style="font-size:8px; color:var(--primary);"><i class="fa-solid fa-link"></i> Fusion</span>` : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:12px; font-size:11px; color:var(--text-muted); justify-content:center;">
+                        <span><strong style="color:#10b981;">●</strong> Libre</span>
+                        <span><strong style="color:#3b82f6;">●</strong> Réservée</span>
+                        <span><strong style="color:#f59e0b;">●</strong> Commande prise</span>
+                        <span><strong style="color:#ef4444;">●</strong> En cuisine (Cuisson)</span>
+                        <span><strong style="color:#06b6d4;">●</strong> Servie</span>
+                        <span><strong style="color:#8b5cf6;">●</strong> Addition demandée</span>
+                        <span><strong style="color:#ef4444;">🚨</strong> Alerte attente >20min</span>
+                    </div>
+                </div>
+
+                <div id="table-modal-container"></div>
+            `;
+        }
+
+        function setFloorPlanZone(zone) {
+            floorPlanActiveZone = zone;
+            renderFloorPlanView();
+        }
+
+        function openTableActionModal(tableId) {
+            const table = floorPlanTables.find(t => t.id === tableId);
+            if (!table) return;
+            selectedTableModalData = table;
+            const container = document.getElementById('table-modal-container');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div class="table-mgmt-modal-overlay" onclick="closeTableModal(event)">
+                    <div class="table-mgmt-modal" onclick="event.stopPropagation()">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                            <h3 style="font-size:18px; font-weight:800;">
+                                <i class="fa-solid fa-chair" style="color:var(--primary);"></i> ${table.name || 'Table ' + table.number} (${table.zone})
+                            </h3>
+                            <button onclick="closeTableModal()" style="background:none; border:none; color:#9ca3af; font-size:18px; cursor:pointer;">✕</button>
                         </div>
-                        <div class="cards-list" style="overflow-y:auto; height: 100%;">
-                            ${orders.length === 0 ? `<div class="empty-column-msg">${t.empty_cooking}</div>` : 
-                              orders.map(o => {
-                                const server = staffList.find(s => s.assigned_tables && s.assigned_tables.includes(o.table_number));
-                                const serverName = server ? (server.email.startsWith('david') ? 'David' : 'Sophie') : t.unassigned;
-                                const serverColor = server ? (server.email.startsWith('david') ? '#3b82f6' : '#ec4899') : '#9ca3af';
-                                return `
-                                    <div class="order-card glass">
-                                        <div class="card-header">
-                                            <div class="client-info">
-                                                <h3>${o.client_name}</h3>
-                                                <span>${o.order_status === 'en_cuisine' ? t.col_cooking : t.col_ready}</span>
-                                            </div>
-                                            <div>
-                                                <span class="table-num" style="margin-right:8px;">${t.table_prefix} ${o.table_number}</span>
-                                                <span style="font-size:11px; background:${serverColor}; color:#000; font-weight:700; padding:4px 8px; border-radius:4px;">
-                                                    👤 ${serverName}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <ul class="card-items">
-                                            ${o.items.map(item => `<li><span>${item.quantity}x ${item.name}</span></li>`).join('')}
-                                        </ul>
-                                    </div>
-                                `;
-                              }).join('')}
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px;">
+                            <div>
+                                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Statut de Service</label>
+                                <select id="modal-service-status" onchange="updateTableServiceStatus('${table.id}', this.value)" class="glass-select" style="width:100%;">
+                                    <option value="libre" ${table.service_status === 'libre' ? 'selected' : ''}>🟢 Libre</option>
+                                    <option value="reservee" ${table.service_status === 'reservee' ? 'selected' : ''}>🔵 Réservée</option>
+                                    <option value="commande_prise" ${table.service_status === 'commande_prise' ? 'selected' : ''}>🟡 Commande Prise</option>
+                                    <option value="en_preparation" ${table.service_status === 'en_preparation' ? 'selected' : ''}>🔥 En Cuisine</option>
+                                    <option value="servie" ${table.service_status === 'servie' ? 'selected' : ''}>💎 Servie</option>
+                                    <option value="addition_demandee" ${table.service_status === 'addition_demandee' ? 'selected' : ''}>🟣 Addition Demandée</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Couverts Réels</label>
+                                <input type="number" id="modal-actual-covers" min="0" max="${table.max_covers || 8}" value="${table.actual_covers || table.nominal_covers || 2}" 
+                                       onchange="updateTableCovers('${table.id}', this.value)"
+                                       style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px; font-family:inherit;">
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px;">
+                            <div>
+                                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">État d'Hygiène</label>
+                                <select id="modal-cleaning-status" onchange="updateTableCleaning('${table.id}', this.value)" class="glass-select" style="width:100%;">
+                                    <option value="propre" ${table.cleaning_status === 'propre' ? 'selected' : ''}>✨ Propre & Prête</option>
+                                    <option value="a_debarrasser" ${table.cleaning_status === 'a_debarrasser' ? 'selected' : ''}>🧹 À Débarrasser</option>
+                                    <option value="a_desinfecter" ${table.cleaning_status === 'a_desinfecter' ? 'selected' : ''}>🧼 À Désinfecter</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Serveur Assigné</label>
+                                <select onchange="assignTableToStaff('${table.number}', this.value)" class="glass-select" style="width:100%;">
+                                    <option value="">Non assignée</option>
+                                    <option value="david@atelier-chris.fr" ${table.assigned_waiter_email === 'david@atelier-chris.fr' ? 'selected' : ''}>David</option>
+                                    <option value="sophie@atelier-chris.fr" ${table.assigned_waiter_email === 'sophie@atelier-chris.fr' ? 'selected' : ''}>Sophie</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px; border-top:1px solid var(--glass-border); padding-top:16px;">
+                            <button class="action-btn" onclick="updateTableServiceStatus('${table.id}', 'servie'); closeTableModal();" style="flex:1;">
+                                <i class="fa-solid fa-circle-check"></i> Marquer Servie
+                            </button>
+                            <button class="action-btn secondary" onclick="updateTableServiceStatus('${table.id}', 'libre'); closeTableModal();" style="flex:1;">
+                                <i class="fa-solid fa-broom"></i> Libérer Table
+                            </button>
+                            ${table.merged_parent_id ? `
+                                <button class="action-btn secondary" onclick="splitTable('${table.merged_parent_id}'); closeTableModal();" style="color:#ef4444;">
+                                    <i class="fa-solid fa-scissors"></i> Dissocier
+                                </button>
+                            ` : ''}
                         </div>
                     </div>
                 </div>
+            `;
+        }
+
+        function closeTableModal(event) {
+            if (event && event.target && !event.target.classList.contains('table-mgmt-modal-overlay')) return;
+            const container = document.getElementById('table-modal-container');
+            if (container) container.innerHTML = '';
+        }
+
+        async function updateTableServiceStatus(tableId, service_status) {
+            try {
+                await fetch(`/api/tables/${tableId}/service`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ service_status })
+                });
+                renderFloorPlanView();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function updateTableCovers(tableId, actual_covers) {
+            try {
+                await fetch(`/api/tables/${tableId}/service`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ actual_covers: parseInt(actual_covers, 10) })
+                });
+                renderFloorPlanView();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function updateTableCleaning(tableId, cleaning_status) {
+            try {
+                await fetch(`/api/tables/${tableId}/service`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cleaning_status })
+                });
+                renderFloorPlanView();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function splitTable(parentTableId) {
+            try {
+                await fetch('/api/tables/split', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ parentTableId })
+                });
+                renderFloorPlanView();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function openAddTableModal() {
+            const container = document.getElementById('table-modal-container');
+            if (!container) return;
+            container.innerHTML = `
+                <div class="table-mgmt-modal-overlay" onclick="closeTableModal(event)">
+                    <div class="table-mgmt-modal" onclick="event.stopPropagation()">
+                        <h3 style="font-size:18px; font-weight:800; margin-bottom:16px;">
+                            <i class="fa-solid fa-plus" style="color:var(--primary);"></i> Ajouter une Table au Plan
+                        </h3>
+                        <form onsubmit="submitAddTable(event)">
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Numéro de Table</label>
+                                    <input type="text" id="add-table-num" required placeholder="Ex: 09" style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px;">
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Zone</label>
+                                    <select id="add-table-zone" class="glass-select" style="width:100%;">
+                                        <option value="salle">Salle Principale</option>
+                                        <option value="terrasse">Terrasse</option>
+                                        <option value="mezzanine">Mezzanine</option>
+                                        <option value="bar">Bar</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Forme</label>
+                                    <select id="add-table-shape" class="glass-select" style="width:100%;">
+                                        <option value="square">Carrée</option>
+                                        <option value="round">Ronde</option>
+                                        <option value="rect">Rectangle</option>
+                                        <option value="high_top">Mange-debout</option>
+                                        <option value="bar_seat">Comptoir Bar</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Capacité (Max couverts)</label>
+                                    <input type="number" id="add-table-max" value="4" min="1" max="20" style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px;">
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:8px; margin-top:16px;">
+                                <button type="submit" class="action-btn" style="flex:1;">Créer la Table</button>
+                                <button type="button" class="action-btn secondary" onclick="closeTableModal()">Annuler</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function submitAddTable(e) {
+            e.preventDefault();
+            const number = document.getElementById('add-table-num').value;
+            const zone = document.getElementById('add-table-zone').value;
+            const shape = document.getElementById('add-table-shape').value;
+            const max_covers = parseInt(document.getElementById('add-table-max').value, 10);
+            try {
+                await fetch('/api/tables/layout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ number, name: `Table ${number}`, zone, shape, max_covers, nominal_covers: max_covers, pos_x: 120, pos_y: 120 })
+                });
+                closeTableModal();
+                renderFloorPlanView();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function renderInventoryView() {
+            const mainContent = document.getElementById('dashboard-main-content');
+            try {
+                const [ingRes, recRes, logRes] = await Promise.all([
+                    fetch('/api/inventory/ingredients'),
+                    fetch('/api/inventory/recipes'),
+                    fetch('/api/inventory/logs')
+                ]);
+                inventoryIngredients = await ingRes.json();
+                inventoryRecipes = await recRes.json();
+                inventoryLogs = await logRes.json();
+            } catch (e) {
+                console.error('Erreur chargement inventaire:', e);
+            }
+
+            mainContent.innerHTML = `
+                <div class="menu-mgmt-panel" style="overflow-y:auto; height:100%;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+                        <div>
+                            <h2 style="font-size:22px; font-weight:800;"><i class="fa-solid fa-boxes-stacked" style="color:var(--primary);"></i> Inventaire & Fiches Recettes (BOM)</h2>
+                            <p style="font-size:12px; color:var(--text-muted);">Suivi des stocks en direct, fiches techniques de production et déclaration des pertes.</p>
+                        </div>
+                        <div class="menu-nav-tabs">
+                            <button class="menu-tab-btn ${inventoryActiveSubTab === 'ingredients' ? 'active' : ''}" onclick="setInventorySubTab('ingredients')">📦 Ingrédients (${inventoryIngredients.length})</button>
+                            <button class="menu-tab-btn ${inventoryActiveSubTab === 'recipes' ? 'active' : ''}" onclick="setInventorySubTab('recipes')">🧾 Fiches Recettes</button>
+                            <button class="menu-tab-btn ${inventoryActiveSubTab === 'waste' ? 'active' : ''}" onclick="setInventorySubTab('waste')">🗑️ Pertes Cuisine (${inventoryLogs.length})</button>
+                        </div>
+                    </div>
+
+                    ${inventoryActiveSubTab === 'ingredients' ? `
+                        <div class="stock-grid">
+                            ${inventoryIngredients.map(ing => {
+                                const stockNum = parseFloat(ing.current_stock);
+                                const threshNum = parseFloat(ing.min_threshold);
+                                const isLow = stockNum <= threshNum;
+                                const isZero = stockNum <= 0 || ing.is_86;
+                                const fillPct = Math.min(100, Math.max(5, (stockNum / (threshNum * 3)) * 100));
+                                const barClass = isZero ? 'low' : (isLow ? 'medium' : 'high');
+
+                                return `
+                                    <div class="stock-card ${isZero ? 'style="border-color:#ef4444;"' : ''}">
+                                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                            <div>
+                                                <strong style="font-size:14px; color:#fff;">${ing.name}</strong>
+                                                <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Catégorie: ${ing.category}</div>
+                                            </div>
+                                            <span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:12px; background:${isZero ? '#ef4444' : (isLow ? '#f59e0b' : '#10b981')}; color:#000;">
+                                                ${isZero ? 'RUPTURE 86' : (isLow ? 'SEUIL BAS' : 'EN STOCK')}
+                                            </span>
+                                        </div>
+
+                                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:4px;">
+                                            <span>Stock restant : <strong style="color:var(--primary);">${stockNum} ${ing.unit}</strong></span>
+                                            <span style="color:var(--text-muted);">Alerte : ${threshNum} ${ing.unit}</span>
+                                        </div>
+
+                                        <div class="stock-bar-container">
+                                            <div class="stock-bar-fill ${barClass}" style="width:${fillPct}%;"></div>
+                                        </div>
+
+                                        <div style="display:flex; gap:6px; margin-top:6px;">
+                                            <button class="action-btn secondary" onclick="adjustStock('${ing.id}', 10)" style="flex:1; padding:4px 8px; font-size:11px;">
+                                                +10 ${ing.unit}
+                                            </button>
+                                            <button class="action-btn secondary" onclick="adjustStock('${ing.id}', -10)" style="flex:1; padding:4px 8px; font-size:11px;">
+                                                -10 ${ing.unit}
+                                            </button>
+                                            <button class="action-btn ${ing.is_86 ? '' : 'secondary'}" onclick="toggle86('${ing.id}', ${!ing.is_86})" style="font-size:11px; padding:4px 8px; color:${ing.is_86 ? '#fff' : '#ef4444'};">
+                                                ${ing.is_86 ? '✅ Réassort' : '🚨 86'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
             `;
         }
 
@@ -1233,93 +1785,1037 @@
             }
         }
 
-        // 5. RENDERING FOR MENU MANAGEMENT
+        // 4.9. RENDERING FOR MODULES & SUBSCRIPTION TIERS (ESSENTIEL, PRO, MULTI-SITES & VERTICALES MÉTIERS)
+        async function renderModulesView() {
+            const mainContent = document.getElementById('dashboard-main-content');
+            try {
+                const res = await fetch('/api/modules');
+                restaurantModulesList = await res.json();
+            } catch (e) {
+                console.error('Erreur chargement modules:', e);
+            }
+
+            const essentielCount = restaurantModulesList.filter(m => m.tier === 'essentiel' && m.is_enabled).length;
+            const proCount = restaurantModulesList.filter(m => m.tier === 'pro' && m.is_enabled).length;
+            const multiCount = restaurantModulesList.filter(m => m.tier === 'multi_sites' && m.is_enabled).length;
+            const totalActive = restaurantModulesList.filter(m => m.is_enabled).length;
+
+            mainContent.innerHTML = `
+                <div class="menu-mgmt-panel" style="overflow-y:auto; height:100%;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+                        <div>
+                            <h2 style="font-size:22px; font-weight:800;"><i class="fa-solid fa-toggle-on" style="color:var(--primary);"></i> Formules d'Abonnement, Modules & Verticales Métiers</h2>
+                            <p style="font-size:12px; color:var(--text-muted);">Configurez vos offres de pricing (Essentiel, Pro, Multi-sites), appliquez vos configurations métiers (Café, Bistro, Gastro, Fast Casual) ou activez unitairement chaque fonctionnalité.</p>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.05); padding:6px 14px; border-radius:20px; font-size:12px; border:1px solid var(--glass-border);">
+                            Modules actifs : <strong style="color:var(--primary);">${totalActive} / ${restaurantModulesList.length}</strong>
+                        </div>
+                    </div>
+
+                    <!-- 1. OFFRES INITIALES DE PRICING -->
+                    <div style="margin-bottom:28px;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+                            <span style="font-size:16px; font-weight:800; color:#fff;">1. Formules d'Abonnement Core (Pricing)</span>
+                            <span style="font-size:11px; background:rgba(245,158,11,0.15); color:var(--primary); padding:2px 8px; border-radius:10px; font-weight:700;">OFFRES OFFICIELLES</span>
+                        </div>
+
+                        <div class="tier-cards-container">
+                            <!-- ESSENTIEL -->
+                            <div class="tier-card ${proCount === 0 && multiCount === 0 ? 'active' : ''}">
+                                <div>
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <h3 style="font-size:18px; font-weight:800; color:#34d399;"><i class="fa-solid fa-seedling"></i> Essentiel</h3>
+                                        <span class="vertical-badge" style="background:rgba(52,211,153,0.15); color:#34d399;">STARTER</span>
+                                    </div>
+                                    <div class="tier-price">49 € <span style="font-size:13px; color:var(--text-muted); font-weight:400;">HT / mois</span></div>
+                                    <p style="font-size:12px; color:var(--text-muted); line-height:1.4;">Idéal pour les cafés, bars et petits établissements souhaitant fluidifier la commande et le paiement sans complexité.</p>
+                                    <ul style="margin:14px 0; padding-left:18px; font-size:12px; color:#cbd5e1; display:flex; flex-direction:column; gap:6px;">
+                                        <li><i class="fa-solid fa-check" style="color:#34d399;"></i> Commande & Paiement QR Code</li>
+                                        <li><i class="fa-solid fa-check" style="color:#34d399;"></i> Encaissement CB Stripe & Espèces</li>
+                                        <li><i class="fa-solid fa-check" style="color:#34d399;"></i> KDS Monoposte Cuisine avec son</li>
+                                        <li><i class="fa-solid fa-check" style="color:#34d399;"></i> Gestion de Carte en temps réel</li>
+                                    </ul>
+                                </div>
+                                <button class="action-btn" onclick="applyModulePreset('essentiel')" style="width:100%; margin-top:14px; background:rgba(52,211,153,0.2); border:1px solid #34d399; color:#fff;">
+                                    <i class="fa-solid fa-bolt"></i> Activer Formule Essentiel
+                                </button>
+                            </div>
+
+                            <!-- PRO -->
+                            <div class="tier-card ${proCount > 0 && multiCount === 0 ? 'active' : ''}">
+                                <div>
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <h3 style="font-size:18px; font-weight:800; color:#38bdf8;"><i class="fa-solid fa-crown"></i> Pro</h3>
+                                        <span class="vertical-badge" style="background:rgba(56,189,248,0.15); color:#38bdf8;">RECOMMANDÉ</span>
+                                    </div>
+                                    <div class="tier-price">129 € <span style="font-size:13px; color:var(--text-muted); font-weight:400;">HT / mois</span></div>
+                                    <p style="font-size:12px; color:var(--text-muted); line-height:1.4;">Pour les restaurants traditionnels, bistros et brasseries avec service à table complet et gestion des stocks.</p>
+                                    <ul style="margin:14px 0; padding-left:18px; font-size:12px; color:#cbd5e1; display:flex; flex-direction:column; gap:6px;">
+                                        <li><i class="fa-solid fa-check" style="color:#38bdf8;"></i> <strong>Tout l'Essentiel inclus</strong></li>
+                                        <li><i class="fa-solid fa-check" style="color:#38bdf8;"></i> <strong>Plan de Tables 2D Interactif</strong></li>
+                                        <li><i class="fa-solid fa-check" style="color:#38bdf8;"></i> Gestion des Suites & Réclame (HOLD/FIRE)</li>
+                                        <li><i class="fa-solid fa-check" style="color:#38bdf8;"></i> Alertes Allergies & Temporisation >20 min</li>
+                                        <li><i class="fa-solid fa-check" style="color:#38bdf8;"></i> Stocks Dynamiques BOM & Rupture 86 auto</li>
+                                        <li><i class="fa-solid fa-check" style="color:#38bdf8;"></i> Suivi des Pertes & Gaspillage</li>
+                                    </ul>
+                                </div>
+                                <button class="action-btn" onclick="applyModulePreset('pro')" style="width:100%; margin-top:14px; background:rgba(56,189,248,0.2); border:1px solid #38bdf8; color:#fff;">
+                                    <i class="fa-solid fa-fire"></i> Activer Formule Pro
+                                </button>
+                            </div>
+
+                            <!-- CHAÎNES & MULTI-SITES -->
+                            <div class="tier-card ${multiCount > 0 ? 'active' : ''}">
+                                <div>
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <h3 style="font-size:18px; font-weight:800; color:#c084fc;"><i class="fa-solid fa-building"></i> Chaînes & Multi-sites</h3>
+                                        <span class="vertical-badge" style="background:rgba(192,132,252,0.15); color:#c084fc;">ENTERPRISE</span>
+                                    </div>
+                                    <div class="tier-price">249 € <span style="font-size:13px; color:var(--text-muted); font-weight:400;">HT / mois / site</span></div>
+                                    <p style="font-size:12px; color:var(--text-muted); line-height:1.4;">Pour les groupes de restauration, franchises, food-courts et gastronomiques multi-postes à fort volume.</p>
+                                    <ul style="margin:14px 0; padding-left:18px; font-size:12px; color:#cbd5e1; display:flex; flex-direction:column; gap:6px;">
+                                        <li><i class="fa-solid fa-check" style="color:#c084fc;"></i> <strong>Tout le Pro inclus</strong></li>
+                                        <li><i class="fa-solid fa-check" style="color:#c084fc;"></i> <strong>Routage Multi-KDS (Chaud, Froid, Bar, Passe)</strong></li>
+                                        <li><i class="fa-solid fa-check" style="color:#c084fc;"></i> Numérotation & Couverts par Siège (S1, S2...)</li>
+                                        <li><i class="fa-solid fa-check" style="color:#c084fc;"></i> Multi-zones & Pilotage centralisé</li>
+                                        <li><i class="fa-solid fa-check" style="color:#c084fc;"></i> Support dédié 24/7 & API multi-établissements</li>
+                                    </ul>
+                                </div>
+                                <button class="action-btn" onclick="applyModulePreset('multi_sites')" style="width:100%; margin-top:14px; background:rgba(192,132,252,0.2); border:1px solid #c084fc; color:#fff;">
+                                    <i class="fa-solid fa-gem"></i> Activer Chaînes & Multi-sites
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. VERTICALES MÉTIERS (PRESETS SECTORIELS) -->
+                    <div style="margin-bottom:28px;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+                            <span style="font-size:16px; font-weight:800; color:#fff;">2. Verticales Métiers (Configurations Sectorielles)</span>
+                            <span style="font-size:11px; background:rgba(56,189,248,0.15); color:#38bdf8; padding:2px 8px; border-radius:10px; font-weight:700;">PRESETS MÉTIERS</span>
+                        </div>
+                        <div class="vertical-cards-container">
+                            <div class="vertical-card" onclick="applyModuleVertical('cafe_bar')">
+                                <div>
+                                    <div style="font-size:24px; margin-bottom:6px;">☕🍸</div>
+                                    <strong style="font-size:14px; color:#fff;">Café, Bar & Comptoir</strong>
+                                    <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">Débit rapide, auto-fire des boissons, tables de comptoir et encaissement express.</p>
+                                </div>
+                                <button class="action-btn secondary" style="font-size:11px; padding:6px 10px;">Appliquer cette Verticale</button>
+                            </div>
+
+                            <div class="vertical-card" onclick="applyModuleVertical('bistro')">
+                                <div>
+                                    <div style="font-size:24px; margin-bottom:6px;">🍽️🍷</div>
+                                    <strong style="font-size:14px; color:#fff;">Bistro & Brasserie</strong>
+                                    <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">Plan de salle & terrasse, suites HOLD/FIRE, fusions de tables et alertes 20 min.</p>
+                                </div>
+                                <button class="action-btn secondary" style="font-size:11px; padding:6px 10px;">Appliquer cette Verticale</button>
+                            </div>
+
+                            <div class="vertical-card" onclick="applyModuleVertical('gastro')">
+                                <div>
+                                    <div style="font-size:24px; margin-bottom:6px;">👑🍾</div>
+                                    <strong style="font-size:14px; color:#fff;">Gastronomique & Fine Dining</strong>
+                                    <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">Sièges individuels, passe expo, traçabilité BOM et acquittement obligatoire allergies.</p>
+                                </div>
+                                <button class="action-btn secondary" style="font-size:11px; padding:6px 10px;">Appliquer cette Verticale</button>
+                            </div>
+
+                            <div class="vertical-card" onclick="applyModuleVertical('fast_casual')">
+                                <div>
+                                    <div style="font-size:24px; margin-bottom:6px;">🌯🍟</div>
+                                    <strong style="font-size:14px; color:#fff;">Fast Casual & Food Court</strong>
+                                    <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">Postes multiples de préparation, rupture 86 automatique et file d'attente optimisée.</p>
+                                </div>
+                                <button class="action-btn secondary" style="font-size:11px; padding:6px 10px;">Appliquer cette Verticale</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. COMMUTATEURS UNITAIRES (FEATURE TOGGLES) -->
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                            <span style="font-size:16px; font-weight:800; color:#fff;">3. Commutateurs de Modules Unitaires (Granulaire)</span>
+                        </div>
+                        <div class="stock-grid">
+                            ${restaurantModulesList.map(mod => {
+                                const tierColor = mod.tier === 'essentiel' ? '#34d399' : (mod.tier === 'pro' ? '#38bdf8' : '#c084fc');
+                                const tierLabel = mod.tier === 'essentiel' ? 'Essentiel' : (mod.tier === 'pro' ? 'Pro' : 'Multi-sites');
+                                return `
+                                    <div class="stock-card" style="border-color:${mod.is_enabled ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'};">
+                                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+                                            <div>
+                                                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                                    <strong style="font-size:14px; color:#fff;">${mod.name}</strong>
+                                                    <span style="font-size:10px; font-weight:700; padding:1px 6px; border-radius:8px; background:${tierColor}20; color:${tierColor}; border:1px solid ${tierColor}40;">
+                                                        ${tierLabel}
+                                                    </span>
+                                                </div>
+                                                <p style="font-size:11px; color:var(--text-muted); margin-top:4px; line-height:1.4;">${mod.description || ''}</p>
+                                            </div>
+                                            <label class="switch-label">
+                                                <input type="checkbox" ${mod.is_enabled ? 'checked' : ''} onchange="toggleModule('${mod.id}', this.checked)">
+                                                <span class="switch-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function applyModulePreset(tier) {
+            try {
+                const res = await fetch('/api/modules/preset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tier })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    renderModulesView();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function applyModuleVertical(vertical) {
+            try {
+                const res = await fetch('/api/modules/vertical', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ vertical })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    renderModulesView();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function toggleModule(moduleId, isEnabled) {
+            try {
+                await fetch('/api/modules/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ moduleId, isEnabled })
+                });
+                renderModulesView();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // 5. RENDERING FOR MENU MANAGEMENT (CATALOGUE, CRÉATION MANUELLE, SCAN PHOTO & EXTRACTION URL DESIGN SYSTEM)
+        let currentMenuSubTab = 'catalog'; // 'catalog' | 'create' | 'scan' | 'url_import'
+        let cachedMenuItems = [];
+        let detectedScanItems = [];
+        let extractedScrapeData = null;
+        let scrapedUrlInput = 'https://naga-streetfood.dishop.co/';
+        let catalogCategoryFilter = 'all';
+        let catalogSearchQuery = '';
+
         async function renderMenuManagement() {
             const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
             const mainContent = document.getElementById('dashboard-main-content');
+
             try {
                 const response = await fetch('/api/menu/all');
-                const menuItems = await response.json();
+                cachedMenuItems = await response.json();
+            } catch (error) {
+                console.error('Erreur chargement menu:', error);
+            }
 
-                mainContent.innerHTML = `
-                    <div class="menu-mgmt-panel">
-                        <h2><i class="fa-solid fa-utensils" style="color:var(--primary);"></i> ${t.menu_mgmt_title}</h2>
-                        <p style="font-size:12px; color:var(--text-muted); margin-bottom: 20px;">${t.menu_mgmt_desc}</p>
-                        <div class="menu-mgmt-list">
-                            ${menuItems.map(item => `
-                                <div class="menu-mgmt-item">
-                                    <div>
-                                        <strong style="font-size:15px; color:#fff;">${item.name}</strong>
-                                        <span style="display:block; font-size:11px; color:var(--text-muted); text-transform:uppercase;">${t.category_label} ${item.category}</span>
-                                    </div>
-                                    <label class="switch">
-                                        <input type="checkbox" ${item.is_available ? 'checked' : ''} onchange="toggleProductAvailability('${item.id}', this.checked)">
-                                        <span class="slider"></span>
-                                    </label>
+            mainContent.innerHTML = `
+                <div class="menu-mgmt-panel">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+                        <div>
+                            <h2 style="font-size:22px; font-weight:800;"><i class="fa-solid fa-utensils" style="color:var(--primary);"></i> ${t.menu_mgmt_title}</h2>
+                            <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">${t.menu_mgmt_desc}</p>
+                        </div>
+                        <div id="kds-toast-container"></div>
+                    </div>
+
+                    <!-- Sub Navigation Tabs -->
+                    <div class="menu-nav-tabs">
+                        <button class="menu-tab-btn ${currentMenuSubTab === 'catalog' ? 'active' : ''}" onclick="setMenuSubTab('catalog')">
+                            ${t.menu_tab_catalog} <span class="count" style="font-size:11px; padding:2px 6px; border-radius:10px; background:rgba(255,255,255,0.1); color:#fff;">${cachedMenuItems.length}</span>
+                        </button>
+                        <button class="menu-tab-btn ${currentMenuSubTab === 'create' ? 'active' : ''}" onclick="setMenuSubTab('create')">
+                            ${t.menu_tab_create}
+                        </button>
+                        <button class="menu-tab-btn ${currentMenuSubTab === 'scan' ? 'active' : ''}" onclick="setMenuSubTab('scan')">
+                            ${t.menu_tab_scan}
+                        </button>
+                        <button class="menu-tab-btn ${currentMenuSubTab === 'url_import' ? 'active' : ''}" onclick="setMenuSubTab('url_import')">
+                            ${t.menu_tab_url}
+                        </button>
+                    </div>
+
+                    <!-- Dynamic Sub-view Container -->
+                    <div id="menu-subtab-content">
+                        ${currentMenuSubTab === 'catalog' ? renderCatalogView() : ''}
+                        ${currentMenuSubTab === 'create' ? renderCreateView() : ''}
+                        ${currentMenuSubTab === 'scan' ? renderScanView() : ''}
+                        ${currentMenuSubTab === 'url_import' ? renderUrlImportView() : ''}
+                    </div>
+                </div>
+            `;
+
+            if (currentMenuSubTab === 'create') {
+                updateLiveDishPreview();
+            }
+        }
+
+        function setMenuSubTab(tab) {
+            currentMenuSubTab = tab;
+            renderMenuManagement();
+        }
+
+        function showKdsToast(msg, type = 'success') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                background: ${type === 'success' ? '#10b981' : '#ef4444'};
+                color: #000;
+                font-weight: 700;
+                font-size: 13px;
+                padding: 8px 16px;
+                border-radius: var(--radius-sm);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+                animation: fadeIn 0.3s ease;
+            `;
+            toast.innerText = msg;
+            const container = document.getElementById('kds-toast-container');
+            if (container) {
+                container.innerHTML = '';
+                container.appendChild(toast);
+                setTimeout(() => toast.remove(), 4000);
+            }
+        }
+
+        // ==========================================
+        // SUB-VIEW 1: CATALOG & AVAILABILITY
+        // ==========================================
+        function renderCatalogView() {
+            const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
+            let filtered = cachedMenuItems;
+
+            if (catalogCategoryFilter !== 'all') {
+                filtered = filtered.filter(item => item.category === catalogCategoryFilter);
+            }
+            if (catalogSearchQuery.trim()) {
+                const q = catalogSearchQuery.toLowerCase();
+                filtered = filtered.filter(item => item.name.toLowerCase().includes(q) || (item.description && item.description.toLowerCase().includes(q)));
+            }
+
+            return `
+                <div style="margin-bottom: 16px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between; align-items: center;">
+                    <!-- Category Pills -->
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn-secondary-dark ${catalogCategoryFilter === 'all' ? 'active' : ''}" style="${catalogCategoryFilter === 'all' ? 'border-color:var(--primary); color:var(--primary);' : ''}" onclick="setCatalogFilter('all')">${t.all_categories}</button>
+                        <button class="btn-secondary-dark" style="${catalogCategoryFilter === 'entree' ? 'border-color:var(--primary); color:var(--primary);' : ''}" onclick="setCatalogFilter('entree')">🥢 Entrées</button>
+                        <button class="btn-secondary-dark" style="${catalogCategoryFilter === 'plat' ? 'border-color:var(--primary); color:var(--primary);' : ''}" onclick="setCatalogFilter('plat')">🍲 Plats / Bowls</button>
+                        <button class="btn-secondary-dark" style="${catalogCategoryFilter === 'dessert' ? 'border-color:var(--primary); color:var(--primary);' : ''}" onclick="setCatalogFilter('dessert')">🍨 Desserts</button>
+                        <button class="btn-secondary-dark" style="${catalogCategoryFilter === 'boisson' ? 'border-color:var(--primary); color:var(--primary);' : ''}" onclick="setCatalogFilter('boisson')">🍹 Boissons</button>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div style="min-width: 220px;">
+                        <input type="text" placeholder="${t.search_placeholder}" value="${catalogSearchQuery}" oninput="handleCatalogSearch(this.value)" style="width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: #fff; font-family: inherit; font-size: 13px; outline: none;">
+                    </div>
+                </div>
+
+                <div class="menu-mgmt-list">
+                    ${filtered.length === 0 ? `<div class="empty-column-msg">Aucun plat trouvé dans cette catégorie.</div>` : 
+                      filtered.map(item => `
+                        <div class="menu-mgmt-item">
+                            <div style="display: flex; align-items: center; gap: 14px;">
+                                <div style="width: 50px; height: 50px; border-radius: var(--radius-sm); overflow: hidden; background: #000; flex-shrink: 0; border: 1px solid var(--glass-border);">
+                                    <img src="${item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200'}" alt="${item.name}" style="width: 100%; height: 100%; object-fit: cover;">
                                 </div>
-                            `).join('')}
+                                <div>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <strong style="font-size: 15px; color: #fff;">${item.name}</strong>
+                                        <span class="badge-tag badge-signature" style="font-size:10px;">${formatKdsPrice(item.price_cents / 100)}</span>
+                                    </div>
+                                    <span style="display: block; font-size: 11px; color: var(--text-muted); margin-top:2px;">
+                                        ${item.description ? item.description.substring(0, 90) + '...' : ''}
+                                    </span>
+                                    <span style="font-size: 10px; color: var(--primary); text-transform: uppercase; font-weight:700;">
+                                        ${t.category_label} ${item.category}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <label class="switch" title="Activer / Désactiver">
+                                    <input type="checkbox" ${item.is_available ? 'checked' : ''} onchange="toggleProductAvailability('${item.id}', this.checked)">
+                                    <span class="slider"></span>
+                                </label>
+                                <button onclick="deleteDish('${item.id}', '${item.name.replace(/'/g, "\\'")}')" style="background: none; border: none; color: #ef4444; font-size: 14px; cursor: pointer; padding: 4px;" title="Supprimer">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function setCatalogFilter(cat) {
+            catalogCategoryFilter = cat;
+            renderMenuManagement();
+        }
+
+        function handleCatalogSearch(query) {
+            catalogSearchQuery = query;
+            renderMenuManagement();
+        }
+
+        // ==========================================
+        // SUB-VIEW 2: MANUAL DISH CREATOR (NAGA DESIGN)
+        // ==========================================
+        const nagaPhotoPresets = [
+            { name: "Lok-Lak Wok", url: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600" },
+            { name: "Crispy Chicken", url: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&q=80&w=600" },
+            { name: "Lot-Tcha Noodles", url: "https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&q=80&w=600" },
+            { name: "Veggie Wok Tofu", url: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600" },
+            { name: "Nems & Rolls", url: "https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&q=80&w=600" },
+            { name: "Teuk-a-Lok Mango", url: "https://images.unsplash.com/photo-1553530666-ba11a7da3888?auto=format&fit=crop&q=80&w=600" },
+            { name: "Cocktail Street", url: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=600" }
+        ];
+
+        function renderCreateView() {
+            const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
+
+            return `
+                <div class="menu-creator-grid">
+                    <!-- Left Column: Form -->
+                    <div class="form-card">
+                        <h3><i class="fa-solid fa-plus-circle" style="color:var(--primary);"></i> ${t.menu_tab_create}</h3>
+                        <form onsubmit="handleCreateDishSubmit(event)" id="dish-create-form">
+                            <div class="form-group-row">
+                                <div class="form-field">
+                                    <label for="create-dish-name">${t.lbl_dish_name} *</label>
+                                    <input type="text" id="create-dish-name" required placeholder="Ex: Lok-Lak Bœuf Sauté au Wok" value="Lok-Lak Bœuf Sauté au Wok" oninput="updateLiveDishPreview()">
+                                </div>
+                                <div class="form-field">
+                                    <label for="create-dish-category">${t.lbl_dish_category} *</label>
+                                    <select id="create-dish-category" onchange="updateLiveDishPreview()">
+                                        <option value="plat" selected>🍲 Plat / Bowl / Wok</option>
+                                        <option value="entree">🥢 Entrée / Nems</option>
+                                        <option value="dessert">🍨 Dessert / Teuk-a-Lok</option>
+                                        <option value="boisson">🍹 Boisson / Cocktail</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group-row">
+                                <div class="form-field">
+                                    <label for="create-dish-price">${t.lbl_dish_price} *</label>
+                                    <input type="number" step="0.10" id="create-dish-price" required placeholder="14.50" value="14.50" oninput="updateLiveDishPreview()">
+                                </div>
+                                <div class="form-field">
+                                    <label for="create-dish-badge">${t.lbl_dish_badges}</label>
+                                    <select id="create-dish-badge" onchange="updateLiveDishPreview()">
+                                        <option value="signature">🌟 Recette Signature</option>
+                                        <option value="spicy">🌶️ Pimenté (Street Spicy)</option>
+                                        <option value="bestseller">🔥 Best-Seller</option>
+                                        <option value="veggie">🌿 Végétarien</option>
+                                        <option value="wok">🍜 Wok Master Minute</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="create-dish-desc">${t.lbl_dish_desc}</label>
+                                <textarea id="create-dish-desc" placeholder="Dés de bœuf mariné sauté au wok à feu vif, sauce cambodgienne savoureuse, riz jasmin, œuf au plat..." oninput="updateLiveDishPreview()">Dés de bœuf mariné sauté au wok à feu vif, sauce cambodgienne savoureuse, riz jasmin parfumé, œuf au plat coulant et salade croquante.</textarea>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="create-dish-image">${t.lbl_dish_image}</label>
+                                <input type="url" id="create-dish-image" value="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600" oninput="updateLiveDishPreview()">
+                                
+                                <div style="margin-top:8px;">
+                                    <span style="font-size:11px; color:var(--text-muted);">Galerie Street Food instantanée :</span>
+                                    <div class="photo-preset-chips">
+                                        ${nagaPhotoPresets.map((preset, idx) => `
+                                            <div class="photo-chip ${idx === 0 ? 'active' : ''}" onclick="setPhotoChip('${preset.url}', this)" title="${preset.name}">
+                                                <img src="${preset.url}" alt="${preset.name}">
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-primary-glow" style="width: 100%; margin-top: 10px;">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> ${t.btn_save_dish}
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Right Column: Live Naga Design Preview -->
+                    <div class="naga-preview-wrapper">
+                        <h3 style="font-size:14px; font-weight:700; color:var(--text-muted); margin-bottom:12px; text-transform:uppercase; letter-spacing:0.5px;">
+                            <i class="fa-solid fa-eye" style="color:var(--primary);"></i> ${t.live_preview_title}
+                        </h3>
+
+                        <div class="naga-dish-card">
+                            <div class="naga-dish-image-box">
+                                <img id="preview-dish-img" src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600" alt="Dish Preview">
+                                <div class="naga-dish-badge-overlay" id="preview-dish-badges">
+                                    <span class="badge-tag badge-signature" id="preview-tag-badge">🌟 Recette Signature</span>
+                                </div>
+                                <div class="naga-dish-price-tag" id="preview-dish-price">14.50 €</div>
+                            </div>
+
+                            <div class="naga-dish-body">
+                                <div class="naga-dish-title" id="preview-dish-name">Lok-Lak Bœuf Sauté au Wok</div>
+                                <div class="naga-dish-desc" id="preview-dish-desc">Dés de bœuf mariné sauté au wok à feu vif, sauce cambodgienne savoureuse, riz jasmin parfumé, œuf au plat coulant et salade croquante.</div>
+                                
+                                <div class="naga-dish-footer">
+                                    <span id="preview-dish-category"><i class="fa-solid fa-utensils"></i> Catégorie: Plat</span>
+                                    <span style="color: #10b981; font-weight:700;"><i class="fa-solid fa-circle-check"></i> Disponible en ligne</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                `;
-            } catch (error) {
-                console.error(error);
+                </div>
+            `;
+        }
+
+        function setPhotoChip(url, element) {
+            document.getElementById('create-dish-image').value = url;
+            document.querySelectorAll('.photo-chip').forEach(c => c.classList.remove('active'));
+            if (element) element.classList.add('active');
+            updateLiveDishPreview();
+        }
+
+        function updateLiveDishPreview() {
+            const name = document.getElementById('create-dish-name')?.value || 'Nom du Plat';
+            const price = parseFloat(document.getElementById('create-dish-price')?.value || 0);
+            const desc = document.getElementById('create-dish-desc')?.value || 'Description du plat...';
+            const cat = document.getElementById('create-dish-category')?.value || 'plat';
+            const img = document.getElementById('create-dish-image')?.value || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600';
+            const badge = document.getElementById('create-dish-badge')?.value || 'signature';
+
+            const nameEl = document.getElementById('preview-dish-name');
+            const priceEl = document.getElementById('preview-dish-price');
+            const descEl = document.getElementById('preview-dish-desc');
+            const catEl = document.getElementById('preview-dish-category');
+            const imgEl = document.getElementById('preview-dish-img');
+            const badgesEl = document.getElementById('preview-dish-badges');
+
+            if (nameEl) nameEl.innerText = name;
+            if (priceEl) priceEl.innerText = formatKdsPrice(price);
+            if (descEl) descEl.innerText = desc;
+            if (catEl) catEl.innerHTML = `<i class="fa-solid fa-utensils"></i> Catégorie: ${cat.toUpperCase()}`;
+            if (imgEl) imgEl.src = img;
+
+            const badgeConfig = {
+                signature: { class: 'badge-signature', label: '🌟 Recette Signature' },
+                spicy: { class: 'badge-spicy', label: '🌶️ Pimenté (Street Spicy)' },
+                bestseller: { class: 'badge-bestseller', label: '🔥 Best-Seller' },
+                veggie: { class: 'badge-veggie', label: '🌿 Végétarien' },
+                wok: { class: 'badge-wok', label: '🍜 Wok Master Minute' }
+            };
+
+            const selected = badgeConfig[badge] || badgeConfig.signature;
+            if (badgesEl) {
+                badgesEl.innerHTML = `<span class="badge-tag ${selected.class}">${selected.label}</span>`;
             }
         }
 
-        async function toggleProductAvailability(productId, isAvailable) {
+        async function handleCreateDishSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('create-dish-name').value.trim();
+            const category = document.getElementById('create-dish-category').value;
+            const price = parseFloat(document.getElementById('create-dish-price').value);
+            const description = document.getElementById('create-dish-desc').value.trim();
+            const image_url = document.getElementById('create-dish-image').value.trim();
+
             try {
-                await fetch(`/api/menu/${productId}/availability`, {
-                    method: 'PATCH',
+                const res = await fetch('/api/menu', {
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ is_available: isAvailable })
+                    body: JSON.stringify({
+                        name,
+                        category,
+                        price,
+                        description,
+                        image_url,
+                        is_available: true
+                    })
                 });
+
+                if (!res.ok) throw new Error('Erreur création plat');
+                const data = await res.json();
+                showKdsToast(`🎉 Plat "${name}" créé et publié avec succès !`);
+                currentMenuSubTab = 'catalog';
+                renderMenuManagement();
             } catch (err) {
                 console.error(err);
+                alert('Erreur lors de la création du plat.');
             }
         }
 
-        function updateTimersDisplay() {
+        // ==========================================
+        // SUB-VIEW 3: PHOTO SCANNER (OCR & NAGA PRESET)
+        // ==========================================
+        function renderScanView() {
             const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
-            const badges = document.querySelectorAll('.elapsed-timer');
-            badges.forEach(badge => {
-                const createdAt = badge.dataset.time;
-                if (createdAt) {
-                    const elapsedMin = Math.floor((new Date() - new Date(createdAt)) / 60000);
-                    badge.innerText = `⏱️ ${elapsedMin} ${t.timer_min}`;
+
+            return `
+                <div class="scanner-container">
+                    <!-- Left Column: Scan Area -->
+                    <div class="form-card">
+                        <h3><i class="fa-solid fa-camera-retro" style="color:var(--primary);"></i> ${t.menu_tab_scan}</h3>
+                        <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">
+                            Prenez en photo une carte papier de restaurant ou téléversez un menu pour extraire automatiquement les plats, ingrédients et prix.
+                        </p>
+
+                        <!-- Dropzone & Camera upload -->
+                        <div class="dropzone-box" onclick="document.getElementById('scan-file-input').click()">
+                            <i class="fa-solid fa-camera scanner-icon"></i>
+                            <strong style="font-size:14px; color:#fff; display:block; margin-bottom:4px;">${t.scan_dropzone_title}</strong>
+                            <span style="font-size:12px; color:var(--text-muted);">${t.scan_dropzone_sub}</span>
+                            <div class="scan-laser-line" id="scan-laser"></div>
+                        </div>
+                        <input type="file" id="scan-file-input" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)">
+
+                        <!-- Scan Status / Loader -->
+                        <div id="scan-status-box" style="display:none; margin-top:14px; padding:12px; background:rgba(245,158,11,0.1); border:1px solid var(--primary); border-radius:var(--radius-sm); text-align:center; font-size:13px; color:var(--primary); font-weight:600;">
+                            <i class="fa-solid fa-spinner fa-spin"></i> <span id="scan-status-text">${t.scan_progress}</span>
+                        </div>
+
+                        <div style="margin-top:16px; display:flex; flex-direction:column; gap:10px;">
+                            <!-- Fast Naga preset button -->
+                            <button type="button" class="btn-primary-glow" onclick="scanPresetNagaMenu()">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> ${t.btn_load_naga_preset}
+                            </button>
+
+                            <!-- Scanned Image Preview Thumbnail -->
+                            <div class="scanned-preview-img-box" id="scanned-preview-box" style="display:none;">
+                                <img id="scanned-preview-img" src="" alt="Menu Scanné">
+                            </div>
+
+                            <!-- Optional OCR Raw Text review -->
+                            <div style="margin-top:10px;">
+                                <label style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Texte OCR extrait (ajustable) :</label>
+                                <textarea id="ocr-raw-text" placeholder="Entrez ou collez le texte du menu si besoin..." style="width:100%; height:70px; margin-top:4px; padding:8px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); color:#fff; border-radius:var(--radius-sm); font-size:12px; font-family:monospace;"></textarea>
+                                <button type="button" class="btn-secondary-dark" style="margin-top:6px; width:100%; justify-content:center;" onclick="reparseCustomText()">
+                                    <i class="fa-solid fa-arrows-rotate"></i> Réanalyser le texte OCR
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Detected Items & Bulk Import -->
+                    <div class="form-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                            <h3><i class="fa-solid fa-list-check" style="color:#10b981;"></i> ${t.detected_items_title} (<span id="detected-count">${detectedScanItems.length}</span>)</h3>
+                            ${detectedScanItems.length > 0 ? `
+                                <button type="button" class="btn-primary-glow" onclick="importAllDetectedItems()" style="padding:8px 16px; font-size:13px;">
+                                    <i class="fa-solid fa-cloud-arrow-down"></i> ${t.btn_import_all_db}
+                                </button>
+                            ` : ''}
+                        </div>
+
+                        <div id="detected-items-container" style="max-height: 520px; overflow-y: auto;">
+                            ${detectedScanItems.length === 0 ? `
+                                <div style="padding:40px 20px; text-align:center; color:var(--text-muted); font-style:italic;">
+                                    <i class="fa-solid fa-file-invoice" style="font-size:36px; margin-bottom:10px; opacity:0.4; display:block;"></i>
+                                    Aucun plat scanné pour le moment.<br>Téléversez une photo de menu ou cliquez sur le bouton Nâga Street Food pour lancer la détection IA.
+                                </div>
+                            ` : `
+                                <table class="detected-items-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Plat & Description</th>
+                                            <th>Catégorie</th>
+                                            <th>Prix (€)</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${detectedScanItems.map((item, idx) => `
+                                            <tr>
+                                                <td>
+                                                    <strong style="color:#fff; font-size:14px;">${item.name}</strong>
+                                                    <div style="font-size:11px; color:var(--text-muted); line-height:1.3; margin-top:2px;">${item.description}</div>
+                                                </td>
+                                                <td>
+                                                    <span class="badge-tag badge-wok">${item.category}</span>
+                                                </td>
+                                                <td>
+                                                    <strong style="color:var(--primary); font-size:14px;">${(item.price_cents / 100).toFixed(2)} €</strong>
+                                                </td>
+                                                <td>
+                                                    <button onclick="removeDetectedItem(${idx})" style="background:none; border:none; color:#ef4444; cursor:pointer;" title="Retirer">
+                                                        <i class="fa-solid fa-times"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Image = e.target.result;
+                const previewImg = document.getElementById('scanned-preview-img');
+                const previewBox = document.getElementById('scanned-preview-box');
+                if (previewImg && previewBox) {
+                    previewImg.src = base64Image;
+                    previewBox.style.display = 'block';
                 }
-            });
+                processPhotoScan(base64Image);
+            };
+            reader.readAsDataURL(file);
         }
 
-        async function updateOrderStatus(orderId, status) {
+        async function scanPresetNagaMenu() {
+            const nagaMenuImg = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800";
+            const previewImg = document.getElementById('scanned-preview-img');
+            const previewBox = document.getElementById('scanned-preview-box');
+            if (previewImg && previewBox) {
+                previewImg.src = nagaMenuImg;
+                previewBox.style.display = 'block';
+            }
+            processPhotoScan(nagaMenuImg);
+        }
+
+        async function reparseCustomText() {
+            const customText = document.getElementById('ocr-raw-text')?.value;
+            processPhotoScan(null, customText);
+        }
+
+        async function processPhotoScan(imageData, customText = '') {
+            const laser = document.getElementById('scan-laser');
+            const statusBox = document.getElementById('scan-status-box');
+            if (laser) laser.style.display = 'block';
+            if (statusBox) statusBox.style.display = 'block';
+
             try {
-                const response = await fetch(`/api/orders/${orderId}/status`, {
-                    method: 'PATCH',
+                const res = await fetch('/api/menu/scan-photo', {
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status })
+                    body: JSON.stringify({
+                        image_data: imageData,
+                        custom_text: customText
+                    })
                 });
 
-                if (!response.ok) throw new Error('Failed to update order status');
-                fetchOrders();
-            } catch (error) {
-                console.error('Error updating order status:', error);
+                if (!res.ok) throw new Error('Erreur scan photo');
+                const data = await res.json();
+                detectedScanItems = data.detected_items || [];
+                
+                showKdsToast(`✨ ${detectedScanItems.length} plats extraits de la carte avec succès !`);
+                renderMenuManagement();
+            } catch (err) {
+                console.error(err);
+                alert('Erreur lors du scan du menu.');
+            } finally {
+                if (laser) laser.style.display = 'none';
+                if (statusBox) statusBox.style.display = 'none';
             }
         }
 
-        async function collectCashPayment(orderId) {
+        // ==========================================
+        // SUB-VIEW 4: WEB SCRAPER & DESIGN SYSTEM EXTRACTOR (NAGA DISHOP & LIVE SITES)
+        // ==========================================
+        function renderUrlImportView() {
+            const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
+            const ds = extractedScrapeData?.design_system;
+            const items = extractedScrapeData?.menu_items || [];
+
+            return `
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- URL Input Box -->
+                    <div class="form-card">
+                        <h3><i class="fa-solid fa-globe" style="color:var(--primary);"></i> ${t.menu_tab_url}</h3>
+                        <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
+                            Indiquez l'URL d'un site de restaurant (ex: Dishop, Deliveroo, site vitrine) pour extraire à la fois sa carte complète et l'ensemble de son <strong>Design System</strong> (palette de couleurs, typographie, ambiance de marque).
+                        </p>
+
+                        <div class="url-input-bar">
+                            <input type="url" id="scrape-url-input" class="url-input-field" placeholder="https://naga-streetfood.dishop.co/" value="${scrapedUrlInput}">
+                            <button type="button" class="btn-primary-glow" id="btn-run-scrape" onclick="scrapeRestaurantUrl()">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> ${t.btn_scrape_url}
+                            </button>
+                        </div>
+
+                        <!-- Shortcut Preset Chips -->
+                        <div class="url-preset-chips">
+                            <span style="font-size:11px; color:var(--text-muted); font-weight:700;">Exemples rapides :</span>
+                            <div class="url-chip ${scrapedUrlInput.includes('naga') ? 'active' : ''}" onclick="setScrapePreset('https://naga-streetfood.dishop.co/')">
+                                🥢 Nâga Street Food (Dishop)
+                            </div>
+                            <div class="url-chip" onclick="setScrapePreset('https://burger-artisan.fr/carte')">
+                                🍔 Burger Gourmet Club
+                            </div>
+                            <div class="url-chip" onclick="setScrapePreset('https://trattoria-bella.it/menu')">
+                                🍕 Trattoria Bella Italia
+                            </div>
+                        </div>
+
+                        <!-- Scrape Loader -->
+                        <div id="scrape-loader-box" style="display:none; padding:12px; background:rgba(245,158,11,0.1); border:1px solid var(--primary); border-radius:var(--radius-sm); text-align:center; font-size:13px; color:var(--primary); font-weight:600;">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Analyse approfondie du site et extraction du Design System en cours...
+                        </div>
+                    </div>
+
+                    <!-- EXTRACTED DESIGN SYSTEM PANEL -->
+                    ${ds ? `
+                        <div class="design-system-preview-card">
+                            <div class="design-system-header">
+                                <div class="brand-avatar-box">
+                                    <img src="${ds.logo_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=200'}" alt="Logo" class="brand-logo-img">
+                                    <div>
+                                        <div class="brand-title-text">${ds.brand_name}</div>
+                                        <div class="brand-tagline-text">${ds.tagline}</div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-primary-glow" onclick="applyScrapedDesignSystem()" style="padding:10px 20px; font-size:13px;">
+                                    <i class="fa-solid fa-palette"></i> ${t.btn_apply_theme}
+                                </button>
+                            </div>
+
+                            <!-- Color Palette Swatches -->
+                            <div style="font-size:12px; font-weight:700; color:#fff; margin-bottom:8px;">
+                                <i class="fa-solid fa-swatchbook" style="color:var(--primary);"></i> Palette de Couleurs Extraite :
+                            </div>
+                            <div class="theme-swatches-grid">
+                                <div class="theme-swatch-item">
+                                    <div class="swatch-color-pill" style="background:${ds.primary_color};"></div>
+                                    <div class="swatch-label">Primaire</div>
+                                    <div class="swatch-hex">${ds.primary_color}</div>
+                                </div>
+                                <div class="theme-swatch-item">
+                                    <div class="swatch-color-pill" style="background:${ds.accent_color};"></div>
+                                    <div class="swatch-label">Accent</div>
+                                    <div class="swatch-hex">${ds.accent_color}</div>
+                                </div>
+                                <div class="theme-swatch-item">
+                                    <div class="swatch-color-pill" style="background:${ds.bg_dark}; border:1px solid #444;"></div>
+                                    <div class="swatch-label">Arrière-Plan</div>
+                                    <div class="swatch-hex">${ds.bg_dark}</div>
+                                </div>
+                                <div class="theme-swatch-item">
+                                    <div class="swatch-color-pill" style="background:${ds.card_bg}; border:1px solid #444;"></div>
+                                    <div class="swatch-label">Cartes Glass</div>
+                                    <div class="swatch-hex">Glassmorphism</div>
+                                </div>
+                                <div class="theme-swatch-item">
+                                    <div class="swatch-color-pill" style="display:flex; align-items:center; justify-content:center; background:#1e1e24; color:#fff; font-size:10px; font-weight:bold;">
+                                        ${ds.font_family.split(',')[0]}
+                                    </div>
+                                    <div class="swatch-label">Typographie</div>
+                                    <div class="swatch-hex">${ds.font_family.split(',')[0].replace(/'/g, '')}</div>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- EXTRACTED MENU ITEMS TABLE -->
+                    ${items.length > 0 ? `
+                        <div class="form-card">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+                                <h3><i class="fa-solid fa-utensils" style="color:#10b981;"></i> Plats Détectés (${items.length})</h3>
+                                <button type="button" class="btn-primary-glow" onclick="importAllScrapedUrlItems()">
+                                    <i class="fa-solid fa-cloud-arrow-down"></i> ${t.btn_import_all_db}
+                                </button>
+                            </div>
+
+                            <div style="max-height: 480px; overflow-y: auto;">
+                                <table class="detected-items-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Aperçu</th>
+                                            <th>Plat & Ingrédients</th>
+                                            <th>Catégorie</th>
+                                            <th>Prix (€)</th>
+                                            <th>Badges</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${items.map(item => `
+                                            <tr>
+                                                <td style="width: 54px;">
+                                                    <img src="${item.image_url}" alt="${item.name}" style="width:46px; height:46px; border-radius:var(--radius-sm); object-fit:cover; border:1px solid var(--glass-border);">
+                                                </td>
+                                                <td>
+                                                    <strong style="color:#fff; font-size:14px;">${item.name}</strong>
+                                                    <div style="font-size:11px; color:var(--text-muted); line-height:1.3; margin-top:2px;">${item.description}</div>
+                                                </td>
+                                                <td>
+                                                    <span class="badge-tag badge-wok">${item.category}</span>
+                                                </td>
+                                                <td>
+                                                    <strong style="color:var(--primary); font-size:14px;">${(item.price_cents / 100).toFixed(2)} €</strong>
+                                                </td>
+                                                <td>
+                                                    ${(item.tags || []).map(tag => `<span class="badge-tag badge-signature" style="font-size:10px; margin:2px;">${tag}</span>`).join('')}
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function setScrapePreset(url) {
+            scrapedUrlInput = url;
+            const input = document.getElementById('scrape-url-input');
+            if (input) input.value = url;
+            scrapeRestaurantUrl();
+        }
+
+        async function scrapeRestaurantUrl() {
+            const input = document.getElementById('scrape-url-input');
+            const url = input ? input.value.trim() : scrapedUrlInput;
+            if (!url) {
+                alert('Veuillez entrer une URL valide.');
+                return;
+            }
+            scrapedUrlInput = url;
+
+            const loader = document.getElementById('scrape-loader-box');
+            const btn = document.getElementById('btn-run-scrape');
+            if (loader) loader.style.display = 'block';
+            if (btn) btn.disabled = true;
+
             try {
-                const res = await fetch(`/api/orders/${orderId}/cash-payment`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' }
+                const res = await fetch('/api/menu/scrape-url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
                 });
-                if (!res.ok) throw new Error('Erreur encaissement');
-                fetchOrders();
-            } catch (e) {
-                console.error('Erreur encaissement espèces:', e);
-                alert('Erreur lors de la validation du paiement en espèces.');
+
+                if (!res.ok) throw new Error('Erreur scraping URL');
+                const data = await res.json();
+                extractedScrapeData = data;
+
+                showKdsToast(`🎉 ${data.extracted_count} plats et le Design System de "${data.brand_name}" extraits avec succès !`);
+                renderMenuManagement();
+            } catch (err) {
+                console.error(err);
+                alert('Erreur lors de l\'extraction du site web.');
+            } finally {
+                if (loader) loader.style.display = 'none';
+                if (btn) btn.disabled = false;
             }
         }
+
+        async function applyScrapedDesignSystem() {
+            if (!extractedScrapeData || !extractedScrapeData.design_system) return;
+
+            try {
+                const res = await fetch('/api/theme/apply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ theme: extractedScrapeData.design_system })
+                });
+
+                if (!res.ok) throw new Error('Erreur application thème');
+                const data = await res.json();
+                applyActiveTheme(data.theme);
+                showKdsToast(`🎨 Design System de ${data.theme.brand_name} appliqué en direct !`);
+            } catch (err) {
+                console.error(err);
+                alert('Erreur lors de l\'application du thème.');
+            }
+        }
+
+        async function importAllScrapedUrlItems() {
+            if (!extractedScrapeData || !extractedScrapeData.menu_items || extractedScrapeData.menu_items.length === 0) return;
+
+            try {
+                const res = await fetch('/api/menu/bulk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ products: extractedScrapeData.menu_items })
+                });
+
+                if (!res.ok) throw new Error('Erreur import menu URL');
+                const data = await res.json();
+                showKdsToast(`🎉 ${data.count} plats importés en base de données et publiés sur le menu client !`);
+                currentMenuSubTab = 'catalog';
+                renderMenuManagement();
+            } catch (err) {
+                console.error(err);
+                alert('Erreur lors de l\'enregistrement des plats.');
+            }
+        }
+
+        // ==========================================
+        // DYNAMIC THEME SUPPORT FOR KDS
+        // ==========================================
+        function applyActiveTheme(theme) {
+            if (!theme) return;
+            const root = document.documentElement;
+            if (theme.primary_color) {
+                root.style.setProperty('--primary', theme.primary_color);
+                root.style.setProperty('--primary-color', theme.primary_color);
+            }
+            if (theme.primary_glow) {
+                root.style.setProperty('--primary-glow', theme.primary_glow);
+            }
+            if (theme.accent_color) {
+                root.style.setProperty('--accent', theme.accent_color);
+            }
+            if (theme.bg_dark) {
+                root.style.setProperty('--bg-dark', theme.bg_dark);
+            }
+            if (theme.card_bg) {
+                root.style.setProperty('--card-bg', theme.card_bg);
+            }
+            if (theme.font_family) {
+                root.style.setProperty('--font-main', theme.font_family);
+            }
+            if (theme.brand_name) {
+                const brandTitle = document.getElementById('kds-brand-title');
+                if (brandTitle) brandTitle.innerText = theme.brand_name;
+            }
+        }
+
+        async function loadActiveTheme() {
+            try {
+                const res = await fetch('/api/theme/active');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.theme) applyActiveTheme(data.theme);
+                }
+            } catch (e) {}
+        }
+
+        loadActiveTheme();
 
         if (socket) {
+            socket.on('theme_updated', (theme) => {
+                applyActiveTheme(theme);
+            });
             socket.on('new_order', () => {
                 fetchOrders();
                 try {
@@ -1351,6 +2847,43 @@
             socket.on('menu_updated', () => {
                 if (showMenuManagement) {
                     renderMenuManagement();
+                }
+            });
+
+            socket.on('table_layout_updated', () => {
+                if (activeMainTab === 'floorplan') {
+                    renderFloorPlanView();
+                }
+            });
+
+            socket.on('course_status_updated', () => {
+                if (activeMainTab === 'kds') {
+                    fetchOrders();
+                }
+            });
+
+            socket.on('allergy_acknowledged', () => {
+                if (activeMainTab === 'kds') {
+                    fetchOrders();
+                }
+            });
+
+            socket.on('inventory_updated', () => {
+                if (activeMainTab === 'inventory') {
+                    renderInventoryView();
+                }
+            });
+
+            socket.on('inventory_86_alert', (data) => {
+                showKdsToast(`🚨 RUPTURE 86 : L'ingrédient ${data.ingredient_name || ''} est épuisé !`);
+                if (activeMainTab === 'inventory') {
+                    renderInventoryView();
+                }
+            });
+
+            socket.on('module_toggled', () => {
+                if (activeMainTab === 'modules') {
+                    renderModulesView();
                 }
             });
         }

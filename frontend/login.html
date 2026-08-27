@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ciao Byebye - Connexion Portail Pro</title>
-    <!-- Google Fonts -->
+    <title>Ciao Byebye - Connexion Portail Pro KDS</title>
+    <!-- Google Fonts (Outfit & Cairo for Arabic) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style variables -->
@@ -21,32 +21,69 @@
             justify-content: center;
             min-height: 100vh;
             background: linear-gradient(135deg, #0a0a0c 0%, #121217 100%);
+            position: relative;
+        }
+
+        .login-top-bar {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10;
+        }
+
+        html[dir="rtl"] .login-top-bar {
+            right: auto;
+            left: 24px;
+        }
+
+        .lang-picker-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            backdrop-filter: blur(8px);
+            transition: all 0.2s ease;
+        }
+
+        .lang-picker-btn:hover, .lang-picker-btn:focus {
+            border-color: var(--primary);
+            background: rgba(245, 158, 11, 0.1);
         }
 
         .login-container {
             width: 100%;
-            max-width: 440px;
+            max-width: 460px;
             padding: 20px;
         }
 
         .login-card {
-            padding: 40px;
+            padding: 36px;
             border-radius: var(--radius-lg);
             border: 1px solid var(--glass-border);
             text-align: center;
             box-shadow: var(--shadow-main);
+            position: relative;
         }
 
         .login-card h2 {
             font-size: 24px;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .login-card p {
             font-size: 14px;
             color: var(--text-muted);
-            margin-bottom: 30px;
+            margin-bottom: 24px;
         }
 
         /* SSO Provider Buttons */
@@ -54,7 +91,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .sso-btn {
@@ -68,7 +105,7 @@
             border: 1px solid var(--glass-border);
             background: rgba(255, 255, 255, 0.03);
             color: var(--text-primary);
-            font-family: var(--font-main);
+            font-family: inherit;
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
@@ -77,7 +114,7 @@
 
         .sso-btn:hover {
             background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.25);
             transform: translateY(-1px);
         }
 
@@ -104,7 +141,7 @@
             text-align: center;
             color: var(--text-muted);
             font-size: 12px;
-            margin: 24px 0;
+            margin: 20px 0;
         }
 
         .separator::before,
@@ -122,38 +159,52 @@
             margin-left: 12px;
         }
 
+        html[dir="rtl"] .separator:not(:empty)::before {
+            margin-right: 0;
+            margin-left: 12px;
+        }
+
+        html[dir="rtl"] .separator:not(:empty)::after {
+            margin-left: 0;
+            margin-right: 12px;
+        }
+
         /* Traditional form */
         .input-group {
             text-align: left;
             margin-bottom: 16px;
         }
 
+        html[dir="rtl"] .input-group {
+            text-align: right;
+        }
+
         .input-group label {
             display: block;
             font-size: 12px;
-            font-weight: 500;
+            font-weight: 600;
             color: var(--text-muted);
             margin-bottom: 6px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        .input-group input {
+        .input-group input, .input-group select {
             width: 100%;
             padding: 12px 16px;
             border-radius: var(--radius-md);
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.25);
             border: 1px solid var(--glass-border);
             color: var(--text-primary);
-            font-family: var(--font-main);
+            font-family: inherit;
             font-size: 14px;
             outline: none;
             transition: all 0.2s ease;
         }
 
-        .input-group input:focus {
+        .input-group input:focus, .input-group select:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
         }
 
         .login-submit-btn {
@@ -163,9 +214,9 @@
             color: #000;
             padding: 12px;
             border-radius: var(--radius-md);
-            font-family: var(--font-main);
+            font-family: inherit;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
             margin-top: 10px;
@@ -174,64 +225,212 @@
         .login-submit-btn:hover {
             background: var(--primary-hover);
             border-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        html[dir="rtl"] {
+            font-family: 'Cairo', 'Outfit', sans-serif;
         }
     </style>
 </head>
 <body>
 
+    <!-- Language Selector in Top Bar -->
+    <div class="login-top-bar">
+        <label for="login-lang-select" style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-globe"></i> <span id="lbl-lang-text">Langue :</span>
+        </label>
+        <select id="login-lang-select" onchange="setLoginLanguage(this.value)" class="lang-picker-btn" aria-label="Choisir la langue">
+            <option value="fr">🇫🇷 Français (FR)</option>
+            <option value="en">🇬🇧 English (EN)</option>
+            <option value="ar">🇸🇦 العربية (AR)</option>
+            <option value="es">🇪🇸 Español (ES)</option>
+        </select>
+    </div>
+
     <div class="login-container">
         <div class="login-card glass animate-fade-in">
-            <div class="logo" style="margin-bottom: 15px; font-size: 28px;">
+            <div class="logo" style="margin-bottom: 12px; font-size: 28px;">
                 <span class="logo-accent">Ciao</span> Byebye
             </div>
-            <h2>Portail Pro Cuisine</h2>
-            <p>Connectez-vous pour accéder au KDS</p>
+            <h2 id="login-title">Portail Pro Cuisine & KDS</h2>
+            <p id="login-desc">Connectez-vous pour accéder au tableau de bord KDS</p>
 
             <!-- Staff Profile Selector -->
             <div class="input-group" style="margin-bottom: 20px;">
-                <label for="sso-profile">Profil de démonstration (SSO)</label>
-                <select id="sso-profile" style="width: 100%; padding: 12px 16px; border-radius: var(--radius-md); background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: var(--text-primary); font-family: var(--font-main); font-size: 14px; outline: none; cursor: pointer;">
-                    <option value="chef@atelier-chris.fr">👨‍🍳 Chef Cuisine (chef@atelier-chris.fr)</option>
-                    <option value="maitre@atelier-chris.fr">🤵 Chef de Salle (maitre@atelier-chris.fr)</option>
-                    <option value="david@atelier-chris.fr">🏃‍♂️ Serveur David (david@atelier-chris.fr - Tables 5, 8, 12)</option>
-                    <option value="sophie@atelier-chris.fr">🏃‍♀️ Serveuse Sophie (sophie@atelier-chris.fr - Tables 1, 2, 3)</option>
-                    <option value="boss@atelier-chris.fr">📈 Gestionnaire / Admin (boss@atelier-chris.fr)</option>
-                    <option value="pickup@atelier-chris.fr">📺 Comptoir Technique (pickup@atelier-chris.fr)</option>
-                    <option value="barman@atelier-chris.fr">🍹 Barman (barman@atelier-chris.fr - Boissons uniquement)</option>
+                <label for="sso-profile" id="lbl-demo-profile">Profil de démonstration (SSO)</label>
+                <select id="sso-profile">
+                    <option value="chef@atelier-chris.fr" id="opt-chef">👨‍🍳 Chef Cuisine (chef@atelier-chris.fr)</option>
+                    <option value="maitre@atelier-chris.fr" id="opt-maitre">🤵 Chef de Salle (maitre@atelier-chris.fr)</option>
+                    <option value="david@atelier-chris.fr" id="opt-david">🏃‍♂️ Serveur David (david@atelier-chris.fr - Tables 5, 8, 12)</option>
+                    <option value="sophie@atelier-chris.fr" id="opt-sophie">🏃‍♀️ Serveuse Sophie (sophie@atelier-chris.fr - Tables 1, 2, 3)</option>
+                    <option value="boss@atelier-chris.fr" id="opt-boss">📈 Gestionnaire / Direction (boss@atelier-chris.fr)</option>
+                    <option value="pickup@atelier-chris.fr" id="opt-pickup">📺 Comptoir Retrait Public (pickup@atelier-chris.fr)</option>
+                    <option value="barman@atelier-chris.fr" id="opt-barman">🍹 Barman (barman@atelier-chris.fr - Boissons)</option>
                 </select>
             </div>
 
             <!-- SSO Options -->
             <div class="sso-buttons-container">
                 <button class="sso-btn google" onclick="triggerSSO('Google')">
-                    <i class="fa-brands fa-google"></i> Se connecter avec Google
+                    <i class="fa-brands fa-google"></i> <span id="btn-sso-google">Se connecter avec Google</span>
                 </button>
                 <button class="sso-btn apple" onclick="triggerSSO('Apple')">
-                    <i class="fa-brands fa-apple"></i> Se connecter avec Apple
+                    <i class="fa-brands fa-apple"></i> <span id="btn-sso-apple">Se connecter avec Apple</span>
                 </button>
                 <button class="sso-btn microsoft" onclick="triggerSSO('Microsoft')">
-                    <i class="fa-brands fa-windows"></i> Se connecter avec Microsoft
+                    <i class="fa-brands fa-windows"></i> <span id="btn-sso-microsoft">Se connecter avec Microsoft</span>
                 </button>
             </div>
 
-            <div class="separator">ou identifiants de secours</div>
+            <div class="separator" id="separator-text">ou identifiants de secours</div>
 
             <!-- Traditional login form -->
             <form onsubmit="handleManualLogin(event)">
                 <div class="input-group">
-                    <label for="email">Adresse e-mail</label>
+                    <label for="email" id="lbl-email">Adresse e-mail</label>
                     <input type="email" id="email" required placeholder="chef@atelier-chris.fr">
                 </div>
                 <div class="input-group">
-                    <label for="password">Mot de passe</label>
+                    <label for="password" id="lbl-password">Mot de passe</label>
                     <input type="password" id="password" required placeholder="••••••••">
                 </div>
-                <button type="submit" class="login-submit-btn">Se connecter</button>
+                <button type="submit" class="login-submit-btn" id="btn-login-submit">Se connecter</button>
             </form>
         </div>
     </div>
 
     <script>
+        const loginTranslations = {
+            fr: {
+                lang_label: "Langue :",
+                title: "Portail Pro Cuisine & KDS",
+                desc: "Connectez-vous pour accéder au tableau de bord KDS",
+                demo_profile: "Profil de démonstration (SSO)",
+                opt_chef: "👨‍🍳 Chef Cuisine (chef@atelier-chris.fr)",
+                opt_maitre: "🤵 Chef de Salle (maitre@atelier-chris.fr)",
+                opt_david: "🏃‍♂️ Serveur David (david@atelier-chris.fr - Tables 5, 8, 12)",
+                opt_sophie: "🏃‍♀️ Serveuse Sophie (sophie@atelier-chris.fr - Tables 1, 2, 3)",
+                opt_boss: "📈 Gestionnaire / Direction (boss@atelier-chris.fr)",
+                opt_pickup: "📺 Comptoir Retrait Public (pickup@atelier-chris.fr)",
+                opt_barman: "🍹 Barman (barman@atelier-chris.fr - Boissons)",
+                btn_google: "Se connecter avec Google",
+                btn_apple: "Se connecter avec Apple",
+                btn_microsoft: "Se connecter avec Microsoft",
+                separator: "ou identifiants de secours",
+                lbl_email: "Adresse e-mail",
+                lbl_password: "Mot de passe",
+                btn_submit: "Se connecter"
+            },
+            en: {
+                lang_label: "Language:",
+                title: "Kitchen & KDS Pro Portal",
+                desc: "Sign in to access the KDS kitchen dashboard",
+                demo_profile: "Demo Staff Profile (SSO)",
+                opt_chef: "👨‍🍳 Kitchen Head Chef (chef@atelier-chris.fr)",
+                opt_maitre: "🤵 Head Waiter / Floor Manager (maitre@atelier-chris.fr)",
+                opt_david: "🏃‍♂️ Waiter David (david@ - Tables 5, 8, 12)",
+                opt_sophie: "🏃‍♀️ Waitress Sophie (sophie@ - Tables 1, 2, 3)",
+                opt_boss: "📈 General Manager / Admin (boss@atelier-chris.fr)",
+                opt_pickup: "📺 Public Pickup Kiosk (pickup@atelier-chris.fr)",
+                opt_barman: "🍹 Bartender (barman@ - Drinks only)",
+                btn_google: "Sign in with Google",
+                btn_apple: "Sign in with Apple",
+                btn_microsoft: "Sign in with Microsoft",
+                separator: "or manual credentials",
+                lbl_email: "Email address",
+                lbl_password: "Password",
+                btn_submit: "Sign In"
+            },
+            ar: {
+                lang_label: "اللغة :",
+                title: "بوابة المطبخ وإدارة الطلبات KDS",
+                desc: "سجّل الدخول للوصول إلى لوحة تحكم المطبخ والخدمة",
+                demo_profile: "الملف التجريبي لطاقم العمل (SSO)",
+                opt_chef: "👨‍🍳 الشيف الرئيسي (chef@atelier-chris.fr)",
+                opt_maitre: "🤵 مدير الصالة (maitre@atelier-chris.fr)",
+                opt_david: "🏃‍♂️ النادل دافيد (طاولات 5، 8، 12)",
+                opt_sophie: "🏃‍♀️ النادلة صوفي (طاولات 1، 2، 3)",
+                opt_boss: "📈 المدير العام والإدارة (boss@atelier-chris.fr)",
+                opt_pickup: "📺 شاشة الاستلام العامة (pickup@atelier-chris.fr)",
+                opt_barman: "🍹 مسؤول المشروبات (barman@atelier-chris.fr)",
+                btn_google: "تسجيل الدخول عبر Google",
+                btn_apple: "تسجيل الدخول عبر Apple",
+                btn_microsoft: "تسجيل الدخول عبر Microsoft",
+                separator: "أو عبر بيانات الدخول البديلة",
+                lbl_email: "البريد الإلكتروني",
+                lbl_password: "كلمة المرور",
+                btn_submit: "تسجيل الدخول"
+            },
+            es: {
+                lang_label: "Idioma:",
+                title: "Portal Pro Cocina y KDS",
+                desc: "Inicie sesión para acceder al panel de cocina KDS",
+                demo_profile: "Perfil de demostración (SSO)",
+                opt_chef: "👨‍🍳 Jefe de Cocina (chef@atelier-chris.fr)",
+                opt_maitre: "🤵 Jefe de Sala (maitre@atelier-chris.fr)",
+                opt_david: "🏃‍♂️ Camarero David (david@ - Mesas 5, 8, 12)",
+                opt_sophie: "🏃‍♀️ Camarera Sophie (sophie@ - Mesas 1, 2, 3)",
+                opt_boss: "📈 Gerente / Dirección (boss@atelier-chris.fr)",
+                opt_pickup: "📺 Pantalla de Retirada (pickup@atelier-chris.fr)",
+                opt_barman: "🍹 Camarero de Barra (barman@ - Bebidas)",
+                btn_google: "Iniciar sesión con Google",
+                btn_apple: "Iniciar sesión con Apple",
+                btn_microsoft: "Iniciar sesión con Microsoft",
+                separator: "o credenciales de respaldo",
+                lbl_email: "Correo electrónico",
+                lbl_password: "Contraseña",
+                btn_submit: "Iniciar sesión"
+            }
+        };
+
+        let currentLoginLang = localStorage.getItem('ciao_kds_lang') || 'fr';
+
+        function setLoginLanguage(lang) {
+            currentLoginLang = lang;
+            localStorage.setItem('ciao_kds_lang', lang);
+            localStorage.setItem('ciao_lang', lang);
+
+            const select = document.getElementById('login-lang-select');
+            if (select) select.value = lang;
+
+            if (lang === 'ar') {
+                document.documentElement.setAttribute('dir', 'rtl');
+                document.documentElement.setAttribute('lang', 'ar');
+            } else {
+                document.documentElement.setAttribute('dir', 'ltr');
+                document.documentElement.setAttribute('lang', lang);
+            }
+
+            const t = loginTranslations[lang] || loginTranslations.fr;
+            document.getElementById('lbl-lang-text').innerText = t.lang_label;
+            document.getElementById('login-title').innerText = t.title;
+            document.getElementById('login-desc').innerText = t.desc;
+            document.getElementById('lbl-demo-profile').innerText = t.demo_profile;
+            
+            document.getElementById('opt-chef').innerText = t.opt_chef;
+            document.getElementById('opt-maitre').innerText = t.opt_maitre;
+            document.getElementById('opt-david').innerText = t.opt_david;
+            document.getElementById('opt-sophie').innerText = t.opt_sophie;
+            document.getElementById('opt-boss').innerText = t.opt_boss;
+            document.getElementById('opt-pickup').innerText = t.opt_pickup;
+            document.getElementById('opt-barman').innerText = t.opt_barman;
+
+            document.getElementById('btn-sso-google').innerText = t.btn_google;
+            document.getElementById('btn-sso-apple').innerText = t.btn_apple;
+            document.getElementById('btn-sso-microsoft').innerText = t.btn_microsoft;
+
+            document.getElementById('separator-text').innerText = t.separator;
+            document.getElementById('lbl-email').innerText = t.lbl_email;
+            document.getElementById('lbl-password').innerText = t.lbl_password;
+            document.getElementById('btn-login-submit').innerText = t.btn_submit;
+        }
+
+        // Initialize language
+        document.addEventListener('DOMContentLoaded', () => {
+            setLoginLanguage(currentLoginLang);
+        });
+
         // Check if already authenticated
         if (sessionStorage.getItem('ciao_byebye_auth') === 'true') {
             window.location.href = 'dashboard.html';
