@@ -1419,14 +1419,21 @@
             const mainContent = document.getElementById('dashboard-main-content');
             try {
                 const res = await fetch('/api/tables/layout');
-                floorPlanTables = await res.json();
+                if (res.ok) {
+                    const data = await res.json();
+                    floorPlanTables = Array.isArray(data) ? data : [];
+                } else {
+                    floorPlanTables = Array.isArray(floorPlanTables) ? floorPlanTables : [];
+                }
             } catch (e) {
                 console.error('Erreur chargement plan tables:', e);
+                floorPlanTables = Array.isArray(floorPlanTables) ? floorPlanTables : [];
             }
 
+            const currentTables = Array.isArray(floorPlanTables) ? floorPlanTables : [];
             const filteredTables = floorPlanActiveZone === 'all' 
-                ? floorPlanTables 
-                : floorPlanTables.filter(t => t.zone === floorPlanActiveZone);
+                ? currentTables 
+                : currentTables.filter(t => t && t.zone === floorPlanActiveZone);
 
             mainContent.innerHTML = `
                 <div style="display:flex; flex-direction:column; height:100%; width:100%;">
@@ -1705,11 +1712,19 @@
                     fetch('/api/inventory/recipes'),
                     fetch('/api/inventory/logs')
                 ]);
-                inventoryIngredients = await ingRes.json();
-                inventoryRecipes = await recRes.json();
-                inventoryLogs = await logRes.json();
+                const [ingData, recData, logData] = await Promise.all([
+                    ingRes.ok ? ingRes.json() : [],
+                    recRes.ok ? recRes.json() : [],
+                    logRes.ok ? logRes.json() : []
+                ]);
+                inventoryIngredients = Array.isArray(ingData) ? ingData : [];
+                inventoryRecipes = Array.isArray(recData) ? recData : [];
+                inventoryLogs = Array.isArray(logData) ? logData : [];
             } catch (e) {
                 console.error('Erreur chargement inventaire:', e);
+                inventoryIngredients = Array.isArray(inventoryIngredients) ? inventoryIngredients : [];
+                inventoryRecipes = Array.isArray(inventoryRecipes) ? inventoryRecipes : [];
+                inventoryLogs = Array.isArray(inventoryLogs) ? inventoryLogs : [];
             }
 
             mainContent.innerHTML = `
@@ -1947,15 +1962,22 @@
             const mainContent = document.getElementById('dashboard-main-content');
             try {
                 const res = await fetch('/api/modules');
-                restaurantModulesList = await res.json();
+                if (res.ok) {
+                    const data = await res.json();
+                    restaurantModulesList = Array.isArray(data) ? data : [];
+                } else {
+                    restaurantModulesList = Array.isArray(restaurantModulesList) ? restaurantModulesList : [];
+                }
             } catch (e) {
                 console.error('Erreur chargement modules:', e);
+                restaurantModulesList = Array.isArray(restaurantModulesList) ? restaurantModulesList : [];
             }
 
-            const essentielCount = restaurantModulesList.filter(m => m.tier === 'essentiel' && m.is_enabled).length;
-            const proCount = restaurantModulesList.filter(m => m.tier === 'pro' && m.is_enabled).length;
-            const multiCount = restaurantModulesList.filter(m => m.tier === 'multi_sites' && m.is_enabled).length;
-            const totalActive = restaurantModulesList.filter(m => m.is_enabled).length;
+            const currentModules = Array.isArray(restaurantModulesList) ? restaurantModulesList : [];
+            const essentielCount = currentModules.filter(m => m && m.tier === 'essentiel' && m.is_enabled).length;
+            const proCount = currentModules.filter(m => m && m.tier === 'pro' && m.is_enabled).length;
+            const multiCount = currentModules.filter(m => m && m.tier === 'multi_sites' && m.is_enabled).length;
+            const totalActive = currentModules.filter(m => m && m.is_enabled).length;
 
             mainContent.innerHTML = `
                 <div class="menu-mgmt-panel" style="overflow-y:auto; height:100%;">
