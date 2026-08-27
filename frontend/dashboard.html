@@ -1449,7 +1449,13 @@
                             <button class="zone-chip ${floorPlanActiveZone === 'bar' ? 'active' : ''}" onclick="setFloorPlanZone('bar')">🍸 Bar</button>
                         </div>
 
-                        <div style="display:flex; gap:8px; align-items:center;">
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <button class="action-btn secondary" onclick="openMergeTableModal()" style="font-size:12px; padding:6px 12px; color:var(--primary); border-color:rgba(245,158,11,0.4);">
+                                <i class="fa-solid fa-link"></i> Fusionner Tables
+                            </button>
+                            <button class="action-btn secondary" onclick="unmergeAllDaily()" style="font-size:12px; padding:6px 12px; color:#a855f7; border-color:rgba(168,85,247,0.4);" title="Clôturer le service du jour et dissocier toutes les tables">
+                                <i class="fa-solid fa-moon"></i> Clôture Journée
+                            </button>
                             <button class="action-btn secondary" onclick="openAddTableModal()" style="font-size:12px; padding:6px 12px;">
                                 <i class="fa-solid fa-plus"></i> Ajouter Table
                             </button>
@@ -1474,7 +1480,7 @@
                                     <div class="table-node-capacity">${t.min_covers}-${t.max_covers}p (${t.actual_covers || 0} cvts)</div>
                                     ${t.assigned_waiter_email ? `<div class="table-node-server">👤 ${t.assigned_waiter_email.split('@')[0]}</div>` : ''}
                                     ${isLongWait ? `<div class="table-node-wait-timer">⚠️ >20min</div>` : ''}
-                                    ${isMerged ? `<span style="font-size:8px; color:var(--primary);"><i class="fa-solid fa-link"></i> Fusion</span>` : ''}
+                                    ${isMerged ? `<span style="font-size:9px; color:var(--primary); font-weight:700;"><i class="fa-solid fa-link"></i> ${t.unmerge_policy === 'at_day_end' ? 'Fusion Journée' : 'Fusion Service'}</span>` : ''}
                                 </div>
                             `;
                         }).join('')}
@@ -1501,7 +1507,7 @@
         }
 
         function openTableActionModal(tableId) {
-            const table = floorPlanTables.find(t => t.id === tableId);
+            const table = (floorPlanTables || []).find(t => (t.id === tableId || t.number === tableId));
             if (!table) return;
             selectedTableModalData = table;
             const container = document.getElementById('table-modal-container');
@@ -1532,7 +1538,7 @@
 
                             <div>
                                 <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Couverts Réels</label>
-                                <input type="number" id="modal-actual-covers" min="0" max="${table.max_covers || 8}" value="${table.actual_covers || table.nominal_covers || 2}" 
+                                <input type="number" id="modal-actual-covers" min="0" max="${table.max_covers || 20}" value="${table.actual_covers || table.nominal_covers || 2}" 
                                        onchange="updateTableCovers('${table.id}', this.value)"
                                        style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px; font-family:inherit;">
                             </div>
@@ -1558,6 +1564,7 @@
                             </div>
                         </div>
 
+                        <!-- Actions rapides -->
                         <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px; border-top:1px solid var(--glass-border); padding-top:16px;">
                             <button class="action-btn" onclick="updateTableServiceStatus('${table.id}', 'servie'); closeTableModal();" style="flex:1;">
                                 <i class="fa-solid fa-circle-check"></i> Marquer Servie
@@ -1565,11 +1572,17 @@
                             <button class="action-btn secondary" onclick="updateTableServiceStatus('${table.id}', 'libre'); closeTableModal();" style="flex:1;">
                                 <i class="fa-solid fa-broom"></i> Libérer Table
                             </button>
+                            <button class="action-btn secondary" onclick="openMergeTableModal('${table.id}', '${table.number}')" style="color:var(--primary); border-color:rgba(245,158,11,0.4);">
+                                <i class="fa-solid fa-link"></i> Fusionner
+                            </button>
                             ${table.merged_parent_id ? `
-                                <button class="action-btn secondary" onclick="splitTable('${table.merged_parent_id}'); closeTableModal();" style="color:#ef4444;">
+                                <button class="action-btn secondary" onclick="splitTable('${table.id}'); closeTableModal();" style="color:#ef4444; border-color:rgba(239,68,68,0.4);">
                                     <i class="fa-solid fa-scissors"></i> Dissocier
                                 </button>
                             ` : ''}
+                            <button class="action-btn secondary" onclick="deleteTable('${table.id}', '${table.number}')" style="color:#ef4444; border-color:rgba(239,68,68,0.4);" title="Supprimer la table">
+                                <i class="fa-solid fa-trash"></i> Supprimer
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1614,19 +1627,6 @@
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ cleaning_status })
-                });
-                renderFloorPlanView();
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        async function splitTable(parentTableId) {
-            try {
-                await fetch('/api/tables/split', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ parentTableId })
                 });
                 renderFloorPlanView();
             } catch (e) {
@@ -2207,10 +2207,18 @@
 
             try {
                 const response = await fetch('/api/menu/all');
-                cachedMenuItems = await response.json();
+                if (response.ok) {
+                    const data = await response.json();
+                    cachedMenuItems = Array.isArray(data) ? data : [];
+                } else {
+                    cachedMenuItems = Array.isArray(cachedMenuItems) ? cachedMenuItems : [];
+                }
             } catch (error) {
                 console.error('Erreur chargement menu:', error);
+                cachedMenuItems = Array.isArray(cachedMenuItems) ? cachedMenuItems : [];
             }
+
+            const currentItemsCount = (Array.isArray(cachedMenuItems) ? cachedMenuItems : []).length;
 
             mainContent.innerHTML = `
                 <div class="menu-mgmt-panel">
@@ -2225,7 +2233,7 @@
                     <!-- Sub Navigation Tabs -->
                     <div class="menu-nav-tabs">
                         <button class="menu-tab-btn ${currentMenuSubTab === 'catalog' ? 'active' : ''}" onclick="setMenuSubTab('catalog')">
-                            ${t.menu_tab_catalog} <span class="count" style="font-size:11px; padding:2px 6px; border-radius:10px; background:rgba(255,255,255,0.1); color:#fff;">${cachedMenuItems.length}</span>
+                            ${t.menu_tab_catalog} <span class="count" style="font-size:11px; padding:2px 6px; border-radius:10px; background:rgba(255,255,255,0.1); color:#fff;">${currentItemsCount}</span>
                         </button>
                         <button class="menu-tab-btn ${currentMenuSubTab === 'create' ? 'active' : ''}" onclick="setMenuSubTab('create')">
                             ${t.menu_tab_create}
@@ -2284,14 +2292,15 @@
         // ==========================================
         function renderCatalogView() {
             const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
-            let filtered = cachedMenuItems;
+            let currentItems = Array.isArray(cachedMenuItems) ? cachedMenuItems : [];
+            let filtered = currentItems;
 
             if (catalogCategoryFilter !== 'all') {
-                filtered = filtered.filter(item => item.category === catalogCategoryFilter);
+                filtered = filtered.filter(item => item && item.category === catalogCategoryFilter);
             }
-            if (catalogSearchQuery.trim()) {
+            if (catalogSearchQuery && catalogSearchQuery.trim()) {
                 const q = catalogSearchQuery.toLowerCase();
-                filtered = filtered.filter(item => item.name.toLowerCase().includes(q) || (item.description && item.description.toLowerCase().includes(q)));
+                filtered = filtered.filter(item => item && ((item.name && item.name.toLowerCase().includes(q)) || (item.description && item.description.toLowerCase().includes(q))));
             }
 
             return `

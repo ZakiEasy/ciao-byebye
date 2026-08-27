@@ -703,6 +703,66 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         assert.strictEqual(syncData.lead.hubspot_synced, true);
         assert.ok(syncData.hubspot_deal_id);
     });
+
+    test('31. DELETE /api/tables/:id - should delete a table and broadcast update', async () => {
+        // 1. Créer une table temporaire à supprimer
+        const createRes = await fetch(`${BASE_URL}/api/tables/layout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ number: '99', name: 'Table 99 Temp', zone: 'salle', shape: 'square', max_covers: 4, min_covers: 2, nominal_covers: 4, pos_x: 300, pos_y: 300 })
+        });
+        assert.strictEqual(createRes.status, 200);
+        const createData = await createRes.json();
+        const createdId = createData.table.id;
+
+        // 2. Supprimer la table
+        const delRes = await fetch(`${BASE_URL}/api/tables/${createdId}`, {
+            method: 'DELETE'
+        });
+        assert.strictEqual(delRes.status, 200);
+        const delData = await delRes.json();
+        assert.strictEqual(delData.success, true);
+        assert.strictEqual(delData.deleted.number, '99');
+    });
+
+    test('32. POST /api/tables/merge (at_service_end & at_day_end) & unmerge-all-daily', async () => {
+        // 1. Récupérer les tables
+        const layoutRes = await fetch(`${BASE_URL}/api/tables/layout`);
+        const tables = await layoutRes.json();
+        const t1 = tables.find(t => t.number === '01') || tables[0];
+        const t2 = tables.find(t => t.number === '02') || tables[1];
+
+        // 2. Fusionner Table 01 et Table 02 avec unmerge_policy = at_service_end
+        const mergeRes = await fetch(`${BASE_URL}/api/tables/merge`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                primaryTableId: t1.id,
+                secondaryTableIds: [t2.id],
+                unmerge_policy: 'at_service_end'
+            })
+        });
+        assert.strictEqual(mergeRes.status, 200);
+        const mergeData = await mergeRes.json();
+        assert.strictEqual(mergeData.success, true);
+        assert.strictEqual(mergeData.unmerge_policy, 'at_service_end');
+
+        // 3. Libérer la table pour déclencher la dissociation automatique fin de service
+        const freeRes = await fetch(`${BASE_URL}/api/tables/${t1.id}/service`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ service_status: 'libre' })
+        });
+        assert.strictEqual(freeRes.status, 200);
+
+        // 4. Clôture de fin de journée globale
+        const dailyResetRes = await fetch(`${BASE_URL}/api/tables/unmerge-all-daily`, {
+            method: 'POST'
+        });
+        assert.strictEqual(dailyResetRes.status, 200);
+        const dailyData = await dailyResetRes.json();
+        assert.strictEqual(dailyData.success, true);
+    });
 });
 
 
