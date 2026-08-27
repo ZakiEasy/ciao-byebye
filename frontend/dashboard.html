@@ -525,6 +525,7 @@
             <div>
                 Simuler le profil :
                 <select id="active-profile-select" onchange="changeSimulatedProfile(this.value)" style="padding: 3px 8px; font-size:12px; font-weight:600; border-radius:4px; border:none; outline:none; background:#fff; color:#000;">
+                    <option value="superadmin@ciao-byebye.fr" selected>👑 SuperAdmin Global (Accès Total & Multi-Tenants)</option>
                     <option value="boss@atelier-chris.fr">📈 Gestionnaire (Toutes les fonctions)</option>
                     <option value="chef@atelier-chris.fr">👨‍🍳 Cuisine / Chef (chef@atelier-chris.fr)</option>
                     <option value="maitre@atelier-chris.fr">🤵 Chef de Salle (maitre@atelier-chris.fr)</option>
@@ -1011,9 +1012,11 @@
 
             changeKdsLanguage(kdsLang);
 
-            if (loggedUserRole === 'gestionnaire') {
+            if (loggedUserRole === 'gestionnaire' || loggedUserRole === 'superadmin' || loggedUserEmail === 'superadmin@ciao-byebye.fr') {
                 document.getElementById('manager-switcher-container').style.display = 'block';
                 document.getElementById('active-profile-select').value = activeEmail;
+                const modBtn = document.getElementById('tab-btn-modules');
+                if (modBtn) modBtn.style.display = 'inline-block';
             }
             
             updateRoleTitle();
@@ -1023,12 +1026,18 @@
 
         function changeSimulatedProfile(email) {
             activeEmail = email;
-            if (email === 'chef@atelier-chris.fr') activeRole = 'cuisine';
+            if (email === 'superadmin@ciao-byebye.fr') activeRole = 'superadmin';
+            else if (email === 'chef@atelier-chris.fr') activeRole = 'cuisine';
             else if (email === 'maitre@atelier-chris.fr') activeRole = 'chef_de_salle';
             else if (email.startsWith('david') || email.startsWith('sophie')) activeRole = 'serveur';
             else if (email === 'pickup@atelier-chris.fr') activeRole = 'technique';
             else if (email === 'barman@atelier-chris.fr') activeRole = 'bar';
             else activeRole = 'gestionnaire';
+
+            const modBtn = document.getElementById('tab-btn-modules');
+            if (modBtn) {
+                modBtn.style.display = (activeRole === 'superadmin' || activeRole === 'gestionnaire' || loggedUserRole === 'superadmin') ? 'inline-block' : 'none';
+            }
 
             showMenuManagement = false;
             updateRoleTitle();
@@ -1038,6 +1047,7 @@
         function updateRoleTitle() {
             const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
             const roleLabels = {
+                'superadmin': '👑 ' + (t.title_kds || 'KDS') + ' - SuperAdmin HQ',
                 'cuisine': '👨‍🍳 ' + t.title_kds + ' - Cuisine',
                 'chef_de_salle': '🤵 ' + t.title_kds + ' - Chef de Salle',
                 'serveur': '🏃 ' + t.title_kds + ' - Serveur',
@@ -1053,7 +1063,7 @@
             if (statRdy) statRdy.innerText = t.stat_ready;
 
             const headerBtnContainer = document.getElementById('header-btn-container');
-            if (activeRole === 'cuisine' || activeRole === 'gestionnaire') {
+            if (activeRole === 'cuisine' || activeRole === 'gestionnaire' || activeRole === 'superadmin') {
                 headerBtnContainer.innerHTML = `
                     <button class="action-btn secondary" onclick="toggleMenuManagement()">
                         <i class="fa-solid fa-utensils"></i> ${showMenuManagement ? t.btn_view_orders : t.btn_manage_menu}

@@ -260,6 +260,7 @@
             <div class="input-group" style="margin-bottom: 20px;">
                 <label for="sso-profile" id="lbl-demo-profile">Profil de démonstration (SSO)</label>
                 <select id="sso-profile">
+                    <option value="superadmin@ciao-byebye.fr" id="opt-superadmin" selected>👑 SuperAdmin Global (superadmin@ciao-byebye.fr - Accès Total)</option>
                     <option value="chef@atelier-chris.fr" id="opt-chef">👨‍🍳 Chef Cuisine (chef@atelier-chris.fr)</option>
                     <option value="maitre@atelier-chris.fr" id="opt-maitre">🤵 Chef de Salle (maitre@atelier-chris.fr)</option>
                     <option value="david@atelier-chris.fr" id="opt-david">🏃‍♂️ Serveur David (david@atelier-chris.fr - Tables 5, 8, 12)</option>
@@ -307,6 +308,7 @@
                 title: "Portail Pro Cuisine & KDS",
                 desc: "Connectez-vous pour accéder au tableau de bord KDS",
                 demo_profile: "Profil de démonstration (SSO)",
+                opt_superadmin: "👑 SuperAdmin Global (superadmin@ciao-byebye.fr - Accès Total)",
                 opt_chef: "👨‍🍳 Chef Cuisine (chef@atelier-chris.fr)",
                 opt_maitre: "🤵 Chef de Salle (maitre@atelier-chris.fr)",
                 opt_david: "🏃‍♂️ Serveur David (david@atelier-chris.fr - Tables 5, 8, 12)",
@@ -327,6 +329,7 @@
                 title: "Kitchen & KDS Pro Portal",
                 desc: "Sign in to access the KDS kitchen dashboard",
                 demo_profile: "Demo Staff Profile (SSO)",
+                opt_superadmin: "👑 Global SuperAdmin (superadmin@ciao-byebye.fr - Full Access)",
                 opt_chef: "👨‍🍳 Kitchen Head Chef (chef@atelier-chris.fr)",
                 opt_maitre: "🤵 Head Waiter / Floor Manager (maitre@atelier-chris.fr)",
                 opt_david: "🏃‍♂️ Waiter David (david@ - Tables 5, 8, 12)",
@@ -347,6 +350,7 @@
                 title: "بوابة المطبخ وإدارة الطلبات KDS",
                 desc: "سجّل الدخول للوصول إلى لوحة تحكم المطبخ والخدمة",
                 demo_profile: "الملف التجريبي لطاقم العمل (SSO)",
+                opt_superadmin: "👑 المشرف العام المتميز (superadmin@ciao-byebye.fr - وصول كامل)",
                 opt_chef: "👨‍🍳 الشيف الرئيسي (chef@atelier-chris.fr)",
                 opt_maitre: "🤵 مدير الصالة (maitre@atelier-chris.fr)",
                 opt_david: "🏃‍♂️ النادل دافيد (طاولات 5، 8، 12)",
@@ -367,6 +371,7 @@
                 title: "Portal Pro Cocina y KDS",
                 desc: "Inicie sesión para acceder al panel de cocina KDS",
                 demo_profile: "Perfil de demostración (SSO)",
+                opt_superadmin: "👑 SuperAdmin Global (superadmin@ciao-byebye.fr - Acceso Total)",
                 opt_chef: "👨‍🍳 Jefe de Cocina (chef@atelier-chris.fr)",
                 opt_maitre: "🤵 Jefe de Sala (maitre@atelier-chris.fr)",
                 opt_david: "🏃‍♂️ Camarero David (david@ - Mesas 5, 8, 12)",
@@ -408,6 +413,7 @@
             document.getElementById('login-desc').innerText = t.desc;
             document.getElementById('lbl-demo-profile').innerText = t.demo_profile;
             
+            if (document.getElementById('opt-superadmin')) document.getElementById('opt-superadmin').innerText = t.opt_superadmin;
             document.getElementById('opt-chef').innerText = t.opt_chef;
             document.getElementById('opt-maitre').innerText = t.opt_maitre;
             document.getElementById('opt-david').innerText = t.opt_david;
