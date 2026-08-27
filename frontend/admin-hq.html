@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ciao Byebye HQ — SuperAdmin & Déploiements Multi-Tenants</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background-color: #0b0c10;
+            color: #f1f5f9;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .hq-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        .hq-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 20px 24px;
+            background: rgba(18, 18, 24, 0.8);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            backdrop-filter: blur(12px);
+            margin-bottom: 24px;
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .kpi-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.2s ease;
+        }
+        .kpi-card:hover {
+            border-color: rgba(245, 158, 11, 0.4);
+            transform: translateY(-2px);
+        }
+        .kpi-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .kpi-val {
+            font-size: 26px;
+            font-weight: 800;
+            color: #fff;
+        }
+        .kpi-lbl {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .deploy-table-wrapper {
+            background: rgba(18, 18, 24, 0.7);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+        .deploy-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+        .deploy-table th {
+            background: rgba(255, 255, 255, 0.04);
+            padding: 14px 16px;
+            font-weight: 700;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--glass-border);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+        .deploy-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            vertical-align: middle;
+        }
+        .deploy-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .badge-status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .status-active { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .status-trial { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
+        .status-overdue { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+        .status-provisioning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    </style>
+</head>
+<body>
+
+    <div class="hq-container">
+        <!-- Header -->
+        <header class="hq-header">
+            <div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:24px; font-weight:900; color:var(--primary);"><i class="fa-solid fa-server"></i> Ciao Byebye HQ</span>
+                    <span style="background:rgba(239,68,68,0.2); color:#f87171; font-size:10px; font-weight:800; padding:2px 8px; border-radius:10px; border:1px solid #ef4444;">SUPERADMIN INTERNE</span>
+                </div>
+                <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">Gestion des déploiements clients, provisionnement d'infrastructure, gestion des offres & suivi financier.</p>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <a href="/sales-crm.html" class="action-btn secondary" style="text-decoration:none; font-size:12px; padding:8px 14px;">
+                    <i class="fa-solid fa-bullseye"></i> Espace Commercial / CRM
+                </a>
+                <a href="/dashboard.html" class="action-btn secondary" style="text-decoration:none; font-size:12px; padding:8px 14px;">
+                    <i class="fa-solid fa-utensils"></i> Vue Client Restaurant
+                </a>
+                <button class="action-btn" onclick="openCreateDeploymentModal()" style="font-size:12px; padding:8px 16px;">
+                    <i class="fa-solid fa-plus"></i> Nouveau Déploiement Client
+                </button>
+            </div>
+        </header>
+
+        <!-- KPI Metrics -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:rgba(16,185,129,0.15); color:#34d399;"><i class="fa-solid fa-shop"></i></div>
+                <div>
+                    <div class="kpi-val" id="kpi-total-clients">--</div>
+                    <div class="kpi-lbl">Clients Déployés</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:rgba(245,158,11,0.15); color:var(--primary);"><i class="fa-solid fa-euro-sign"></i></div>
+                <div>
+                    <div class="kpi-val" id="kpi-total-mrr">-- €</div>
+                    <div class="kpi-lbl">MRR Récurrent Actif</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:rgba(56,189,248,0.15); color:#38bdf8;"><i class="fa-solid fa-stopwatch"></i></div>
+                <div>
+                    <div class="kpi-val" id="kpi-total-trials">--</div>
+                    <div class="kpi-lbl">Offres d'Essai en cours</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:rgba(192,132,252,0.15); color:#c084fc;"><i class="fa-solid fa-cubes"></i></div>
+                <div>
+                    <div class="kpi-val" id="kpi-infra-health">100%</div>
+                    <div class="kpi-lbl">Santé Infrastructure (Supabase)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deployments Management Table -->
+        <div class="deploy-table-wrapper">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--glass-border); flex-wrap:wrap; gap:12px;">
+                <h3 style="font-size:16px; font-weight:800; color:#fff;"><i class="fa-solid fa-network-wired" style="color:var(--primary);"></i> Déploiements & Infrastructures Restaurants</h3>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="search-deployments" oninput="filterDeployments()" placeholder="Rechercher restaurant, domaine..." style="padding:6px 12px; background:rgba(0,0,0,0.4); border:1px solid var(--glass-border); color:#fff; border-radius:6px; font-size:12px;">
+                    <select id="filter-plan" onchange="filterDeployments()" class="glass-select" style="font-size:12px;">
+                        <option value="all">Tous les Plans</option>
+                        <option value="essentiel">Essentiel (49€)</option>
+                        <option value="pro">Pro (129€)</option>
+                        <option value="multi_sites">Chaînes & Multi-sites (249€)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table class="deploy-table">
+                    <thead>
+                        <tr>
+                            <th>Restaurant & Tenant</th>
+                            <th>Domaine / Infra</th>
+                            <th>Offre & Verticale</th>
+                            <th>Abonnement & Finances</th>
+                            <th>Période d'Essai / Renouvellement</th>
+                            <th>Actions SuperAdmin</th>
+                        </tr>
+                    </thead>
+                    <tbody id="deployments-table-body">
+                        <!-- Rempli par JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale de Déploiement / Édition -->
+    <div id="deployment-modal-container"></div>
+
+    <script>
+        let allDeployments = [];
+
+        async function fetchDeployments() {
+            try {
+                const res = await fetch('/api/admin/deployments');
+                allDeployments = await res.json();
+                renderDeployments(allDeployments);
+                updateKPIs(allDeployments);
+            } catch (err) {
+                console.error('Erreur chargement déploiements:', err);
+            }
+        }
+
+        function updateKPIs(data) {
+            document.getElementById('kpi-total-clients').textContent = data.length;
+            const activeMRR = data
+                .filter(d => d.subscription_status === 'active')
+                .reduce((acc, curr) => acc + (curr.monthly_fee_cents || 0), 0) / 100;
+            document.getElementById('kpi-total-mrr').textContent = `${activeMRR.toLocaleString('fr-FR')} €`;
+            const trials = data.filter(d => d.subscription_status === 'trial').length;
+            document.getElementById('kpi-total-trials').textContent = trials;
+        }
+
+        function renderDeployments(data) {
+            const tbody = document.getElementById('deployments-table-body');
+            if (!tbody) return;
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">Aucun client déployé.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map(d => {
+                const planBadge = d.plan_tier === 'essentiel' ? '<span style="color:#34d399; font-weight:700;">🟢 Essentiel (49€)</span>' : (d.plan_tier === 'pro' ? '<span style="color:#38bdf8; font-weight:700;">🔵 Pro (129€)</span>' : '<span style="color:#c084fc; font-weight:700;">🟣 Multi-sites (249€)</span>');
+                const vertLabel = d.vertical_preset === 'cafe_bar' ? '☕ Bar/Café' : (d.vertical_preset === 'bistro' ? '🍽️ Bistro' : (d.vertical_preset === 'gastro' ? '👑 Gastro' : '🌯 Fast Casual'));
+                const statusClass = d.subscription_status === 'active' ? 'status-active' : (d.subscription_status === 'trial' ? 'status-trial' : 'status-overdue');
+                const statusText = d.subscription_status === 'active' ? 'ABONNÉ ACTIF' : (d.subscription_status === 'trial' ? 'ESSAI 14J' : d.subscription_status.toUpperCase());
+
+                return `
+                    <tr>
+                        <td>
+                            <strong style="font-size:14px; color:#fff;">${d.restaurant_name}</strong>
+                            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Contact: ${d.contact_email || 'N/A'} | ${d.contact_phone || ''}</div>
+                        </td>
+                        <td>
+                            <div style="font-family:monospace; color:var(--primary); font-size:12px;">${d.subdomain}.onrender.com</div>
+                            <div style="font-size:11px; color:var(--text-muted);">${d.custom_domain ? `🔗 ${d.custom_domain}` : 'Domaine par défaut'}</div>
+                        </td>
+                        <td>
+                            <div>${planBadge}</div>
+                            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Verticale : ${vertLabel}</div>
+                        </td>
+                        <td>
+                            <span class="badge-status ${statusClass}">${statusText}</span>
+                            <div style="font-size:12px; font-weight:700; color:#fff; margin-top:4px;">${((d.monthly_fee_cents||0)/100).toFixed(2)} € / mois</div>
+                        </td>
+                        <td>
+                            ${d.subscription_status === 'trial' && d.trial_ends_at ? `
+                                <div style="font-size:11px; color:#38bdf8;"><i class="fa-solid fa-clock"></i> Fin essai : ${new Date(d.trial_ends_at).toLocaleDateString()}</div>
+                                <button onclick="extendTrial('${d.id}')" class="action-btn secondary" style="font-size:10px; padding:2px 6px; margin-top:4px;">+ 14 jours</button>
+                            ` : `
+                                <div style="font-size:11px; color:var(--text-muted);"><i class="fa-solid fa-rotate"></i> Renouvellement : ${d.subscription_renews_at ? new Date(d.subscription_renews_at).toLocaleDateString() : 'Auto'}</div>
+                                <button onclick="renewSub('${d.id}')" class="action-btn secondary" style="font-size:10px; padding:2px 6px; margin-top:4px;">Renouveler</button>
+                            `}
+                        </td>
+                        <td>
+                            <div style="display:flex; gap:6px;">
+                                <button onclick="openEditModal('${d.id}')" class="action-btn secondary" style="font-size:11px; padding:4px 8px;" title="Configurer">
+                                    <i class="fa-solid fa-sliders"></i>
+                                </button>
+                                <a href="http://${d.subdomain}.onrender.com/index.html?table=01" target="_blank" class="action-btn secondary" style="font-size:11px; padding:4px 8px; text-decoration:none;" title="Tester PWA">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterDeployments() {
+            const query = document.getElementById('search-deployments').value.toLowerCase();
+            const plan = document.getElementById('filter-plan').value;
+
+            const filtered = allDeployments.filter(d => {
+                const matchQuery = d.restaurant_name.toLowerCase().includes(query) || d.subdomain.toLowerCase().includes(query);
+                const matchPlan = plan === 'all' || d.plan_tier === plan;
+                return matchQuery && matchPlan;
+            });
+            renderDeployments(filtered);
+        }
+
+        async function extendTrial(id) {
+            try {
+                await fetch(`/api/admin/deployments/${id}/extend-trial`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ days: 14 })
+                });
+                fetchDeployments();
+            } catch (err) { console.error(err); }
+        }
+
+        async function renewSub(id) {
+            try {
+                await fetch(`/api/admin/deployments/${id}/renew`, { method: 'POST' });
+                fetchDeployments();
+            } catch (err) { console.error(err); }
+        }
+
+        function openCreateDeploymentModal() {
+            const container = document.getElementById('deployment-modal-container');
+            container.innerHTML = `
+                <div class="table-mgmt-modal-overlay" onclick="closeModal(event)">
+                    <div class="table-mgmt-modal" onclick="event.stopPropagation()" style="max-width:550px;">
+                        <h3 style="font-size:18px; font-weight:800; margin-bottom:16px;">
+                            <i class="fa-solid fa-plus" style="color:var(--primary);"></i> Nouveau Déploiement Client
+                        </h3>
+                        <form onsubmit="submitCreateDeployment(event)">
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:11px; color:var(--text-muted);">Nom de l'Établissement</label>
+                                <input type="text" id="new-dep-name" required placeholder="Ex: Brasserie Saint-Germain" style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px;">
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Sous-domaine Tenant</label>
+                                    <input type="text" id="new-dep-sub" required placeholder="saint-germain" style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px;">
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Domaine Personnalisé (Optionnel)</label>
+                                    <input type="text" id="new-dep-domain" placeholder="qr.saintgermain.fr" style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px;">
+                                </div>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Offre de Tarification Core</label>
+                                    <select id="new-dep-plan" class="glass-select" style="width:100%;">
+                                        <option value="essentiel">Essentiel (49 €/m)</option>
+                                        <option value="pro" selected>Pro (129 €/m)</option>
+                                        <option value="multi_sites">Chaînes & Multi-sites (249 €/m)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Verticale Métier</label>
+                                    <select id="new-dep-vert" class="glass-select" style="width:100%;">
+                                        <option value="cafe_bar">☕ Café, Bar & Comptoir</option>
+                                        <option value="bistro" selected>🍽️ Bistro & Brasserie</option>
+                                        <option value="gastro">👑 Gastronomique & Fine Dining</option>
+                                        <option value="fast_casual">🌯 Fast Casual & Food Court</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Statut Initial</label>
+                                    <select id="new-dep-status" class="glass-select" style="width:100%;">
+                                        <option value="trial">Offre d'essai (14 jours)</option>
+                                        <option value="active">Abonnement Actif</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">E-mail Contact Gérant</label>
+                                    <input type="email" id="new-dep-email" placeholder="gerant@saintgermain.fr" style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px;">
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:8px; margin-top:16px;">
+                                <button type="submit" class="action-btn" style="flex:1;">Provisionner & Déployer</button>
+                                <button type="button" class="action-btn secondary" onclick="closeModal()">Annuler</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function submitCreateDeployment(e) {
+            e.preventDefault();
+            const restaurant_name = document.getElementById('new-dep-name').value;
+            const subdomain = document.getElementById('new-dep-sub').value;
+            const custom_domain = document.getElementById('new-dep-domain').value;
+            const plan_tier = document.getElementById('new-dep-plan').value;
+            const vertical_preset = document.getElementById('new-dep-vert').value;
+            const subscription_status = document.getElementById('new-dep-status').value;
+            const contact_email = document.getElementById('new-dep-email').value;
+
+            const feeMap = { essentiel: 4900, pro: 12900, multi_sites: 24900 };
+
+            try {
+                await fetch('/api/admin/deployments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        restaurant_name, subdomain, custom_domain, plan_tier, vertical_preset,
+                        subscription_status, monthly_fee_cents: feeMap[plan_tier] || 12900, contact_email
+                    })
+                });
+                closeModal();
+                fetchDeployments();
+            } catch (err) { console.error(err); }
+        }
+
+        function openEditModal(id) {
+            const d = allDeployments.find(item => item.id === id);
+            if (!d) return;
+
+            const container = document.getElementById('deployment-modal-container');
+            container.innerHTML = `
+                <div class="table-mgmt-modal-overlay" onclick="closeModal(event)">
+                    <div class="table-mgmt-modal" onclick="event.stopPropagation()" style="max-width:550px;">
+                        <h3 style="font-size:18px; font-weight:800; margin-bottom:16px;">
+                            <i class="fa-solid fa-sliders" style="color:var(--primary);"></i> Configurer : ${d.restaurant_name}
+                        </h3>
+                        <form onsubmit="submitUpdateDeployment(event, '${d.id}')">
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Formule Core</label>
+                                    <select id="edit-plan" class="glass-select" style="width:100%;">
+                                        <option value="essentiel" ${d.plan_tier==='essentiel'?'selected':''}>Essentiel (49€)</option>
+                                        <option value="pro" ${d.plan_tier==='pro'?'selected':''}>Pro (129€)</option>
+                                        <option value="multi_sites" ${d.plan_tier==='multi_sites'?'selected':''}>Chaînes & Multi-sites (249€)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Verticale</label>
+                                    <select id="edit-vert" class="glass-select" style="width:100%;">
+                                        <option value="cafe_bar" ${d.vertical_preset==='cafe_bar'?'selected':''}>☕ Café/Bar</option>
+                                        <option value="bistro" ${d.vertical_preset==='bistro'?'selected':''}>🍽️ Bistro</option>
+                                        <option value="gastro" ${d.vertical_preset==='gastro'?'selected':''}>👑 Gastro</option>
+                                        <option value="fast_casual" ${d.vertical_preset==='fast_casual'?'selected':''}>🌯 Fast Casual</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Statut Abonnement</label>
+                                    <select id="edit-status" class="glass-select" style="width:100%;">
+                                        <option value="trial" ${d.subscription_status==='trial'?'selected':''}>Essai</option>
+                                        <option value="active" ${d.subscription_status==='active'?'selected':''}>Actif</option>
+                                        <option value="overdue" ${d.subscription_status==='overdue'?'selected':''}>Impayé</option>
+                                        <option value="cancelled" ${d.subscription_status==='cancelled'?'selected':''}>Résilié</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Statut Infrastructure</label>
+                                    <select id="edit-infra" class="glass-select" style="width:100%;">
+                                        <option value="active" ${d.infra_status==='active'?'selected':''}>Actif (En ligne)</option>
+                                        <option value="maintenance" ${d.infra_status==='maintenance'?'selected':''}>Maintenance</option>
+                                        <option value="suspended" ${d.infra_status==='suspended'?'selected':''}>Suspendu</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:11px; color:var(--text-muted);">Clé API Secrète Client</label>
+                                <input type="text" readonly value="${d.api_key || 'cb_live_default'}" style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:var(--primary); font-family:monospace; border-radius:6px; font-size:11px;">
+                            </div>
+                            <div style="display:flex; gap:8px; margin-top:16px;">
+                                <button type="submit" class="action-btn" style="flex:1;">Enregistrer Modifications</button>
+                                <button type="button" class="action-btn secondary" onclick="closeModal()">Fermer</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function submitUpdateDeployment(e, id) {
+            e.preventDefault();
+            const plan_tier = document.getElementById('edit-plan').value;
+            const vertical_preset = document.getElementById('edit-vert').value;
+            const subscription_status = document.getElementById('edit-status').value;
+            const infra_status = document.getElementById('edit-infra').value;
+
+            const feeMap = { essentiel: 4900, pro: 12900, multi_sites: 24900 };
+
+            try {
+                await fetch(`/api/admin/deployments/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plan_tier, vertical_preset, subscription_status, infra_status,
+                        monthly_fee_cents: feeMap[plan_tier] || 12900
+                    })
+                });
+                closeModal();
+                fetchDeployments();
+            } catch (err) { console.error(err); }
+        }
+
+        function closeModal(e) {
+            if (e && e.target !== e.currentTarget && !e.target.classList.contains('secondary')) return;
+            const container = document.getElementById('deployment-modal-container');
+            if (container) container.innerHTML = '';
+        }
+
+        // Chargement initial
+        fetchDeployments();
+    </script>
+</body>
+</html>

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ciao Byebye — Espace Commercial & Lead Intelligence B2B</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background-color: #0b0c10;
+            color: #f1f5f9;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .crm-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        .crm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 20px 24px;
+            background: rgba(18, 18, 24, 0.8);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            backdrop-filter: blur(12px);
+            margin-bottom: 24px;
+        }
+        .search-bar-panel {
+            background: rgba(18, 18, 24, 0.7);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+        .leads-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+            gap: 20px;
+        }
+        .lead-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+        .lead-card:hover {
+            border-color: rgba(245, 158, 11, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        .lead-card.high-priority {
+            border-left: 4px solid #10b981;
+        }
+        .badge-pos {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+        .pos-none { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .pos-caisse { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
+        .pos-pdf { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .pos-competitor { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+        .status-pill {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .lead-hook-box {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px dashed rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #fde68a;
+        }
+        .complaints-box {
+            background: rgba(239, 68, 68, 0.08);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-top: 8px;
+            font-size: 11px;
+            color: #fca5a5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="crm-container">
+        <!-- Header -->
+        <header class="crm-header">
+            <div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:24px; font-weight:900; color:var(--primary);"><i class="fa-solid fa-bullseye"></i> Espace Commercial & B2B Lead Gen</span>
+                    <span style="background:rgba(16,185,129,0.2); color:#34d399; font-size:10px; font-weight:800; padding:2px 8px; border-radius:10px; border:1px solid #10b981;">HUB SPOT CRM SYNC</span>
+                </div>
+                <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">Prospection ciblée géolocalisée, enrichissement automatique des établissements et argumentaires de vente Ciao Byebye sur-mesure.</p>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <a href="/admin-hq.html" class="action-btn secondary" style="text-decoration:none; font-size:12px; padding:8px 14px;">
+                    <i class="fa-solid fa-server"></i> SuperAdmin HQ
+                </a>
+                <a href="/dashboard.html" class="action-btn secondary" style="text-decoration:none; font-size:12px; padding:8px 14px;">
+                    <i class="fa-solid fa-utensils"></i> Tableau de Bord Restaurant
+                </a>
+                <button class="action-btn" onclick="openAddLeadModal()" style="font-size:12px; padding:8px 16px;">
+                    <i class="fa-solid fa-plus"></i> Ajouter un Prospect
+                </button>
+            </div>
+        </header>
+
+        <!-- Search & Filter Bar -->
+        <div class="search-bar-panel">
+            <div style="flex:2; min-width:220px;">
+                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;"><i class="fa-solid fa-location-dot"></i> Ville / Territoire</label>
+                <select id="filter-city" onchange="fetchLeads()" class="glass-select" style="width:100%; font-size:13px;">
+                    <option value="all">📍 Toutes les villes</option>
+                    <option value="Paris">Paris (Île-de-France)</option>
+                    <option value="Lyon">Lyon (Auvergne-Rhône-Alpes)</option>
+                    <option value="Marseille">Marseille (PACA)</option>
+                    <option value="Bordeaux">Bordeaux (Nouvelle-Aquitaine)</option>
+                    <option value="Lille">Lille (Hauts-de-France)</option>
+                </select>
+            </div>
+
+            <div style="flex:1.5; min-width:180px;">
+                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;"><i class="fa-solid fa-utensils"></i> Type d'Établissement</label>
+                <select id="filter-activity" onchange="fetchLeads()" class="glass-select" style="width:100%; font-size:13px;">
+                    <option value="all">Tous les types</option>
+                    <option value="cafe_bar">☕ Café & Bar</option>
+                    <option value="bistro">🍽️ Bistro & Brasserie</option>
+                    <option value="pizzeria">🍕 Pizzeria / Italien</option>
+                    <option value="fast_casual">🌯 Street Food / Fast Casual</option>
+                    <option value="gastro">👑 Gastronomique</option>
+                </select>
+            </div>
+
+            <div style="flex:1.5; min-width:160px;">
+                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;"><i class="fa-solid fa-signal"></i> Statut Pipeline</label>
+                <select id="filter-status" onchange="fetchLeads()" class="glass-select" style="width:100%; font-size:13px;">
+                    <option value="all">Tous les statuts</option>
+                    <option value="nouveau">Nouveau</option>
+                    <option value="a_contacter">À Contacter</option>
+                    <option value="rdv_demo">RDV Démo Planifié</option>
+                    <option value="essai_lance">Essai 14j Lancé</option>
+                    <option value="converti">Gagné / Converti</option>
+                </select>
+            </div>
+
+            <div style="flex:2; min-width:200px;">
+                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;"><i class="fa-solid fa-magnifying-glass"></i> Recherche Libre</label>
+                <input type="text" id="filter-search" oninput="fetchLeads()" placeholder="Nom, mot-clé, plainte..." style="width:100%; padding:8px 12px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:8px; font-size:13px;">
+            </div>
+        </div>
+
+        <!-- Leads Grid -->
+        <div id="leads-container" class="leads-grid">
+            <!-- Rempli par JavaScript -->
+        </div>
+    </div>
+
+    <!-- Modale Prospect -->
+    <div id="lead-modal-container"></div>
+
+    <script>
+        let leadsList = [];
+
+        async function fetchLeads() {
+            const city = document.getElementById('filter-city').value;
+            const activity = document.getElementById('filter-activity').value;
+            const status = document.getElementById('filter-status').value;
+            const search = document.getElementById('filter-search').value;
+
+            const url = new URL('/api/crm/leads', window.location.origin);
+            if (city !== 'all') url.searchParams.append('city', city);
+            if (activity !== 'all') url.searchParams.append('activity_type', activity);
+            if (status !== 'all') url.searchParams.append('status', status);
+            if (search) url.searchParams.append('search', search);
+
+            try {
+                const res = await fetch(url);
+                leadsList = await res.json();
+                renderLeads(leadsList);
+            } catch (err) {
+                console.error('Erreur chargement leads:', err);
+            }
+        }
+
+        function renderLeads(leads) {
+            const container = document.getElementById('leads-container');
+            if (!container) return;
+
+            if (leads.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align:center; padding:50px; background:rgba(18,18,24,0.5); border-radius:12px; border:1px solid var(--glass-border);">
+                        <i class="fa-solid fa-search" style="font-size:32px; color:var(--text-muted); margin-bottom:12px;"></i>
+                        <p style="color:var(--text-muted);">Aucun prospect ne correspond aux critères sélectionnés.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = leads.map(lead => {
+                const isHighPriority = lead.current_pos_solution === 'aucune' || lead.current_pos_solution === 'menu_pdf_statique' || lead.footfall_level === 'eleve';
+                
+                let posBadge = '';
+                if (lead.current_pos_solution === 'aucune') posBadge = '<span class="badge-pos pos-none">⭐ Aucune Solution QR (Opportunité Max)</span>';
+                else if (lead.current_pos_solution === 'menu_pdf_statique') posBadge = '<span class="badge-pos pos-pdf">⚠️ PDF Statique (Cible Idéale)</span>';
+                else if (lead.current_pos_solution === 'caisse_seule') posBadge = '<span class="badge-pos pos-caisse">💼 Caisse Seule</span>';
+                else posBadge = '<span class="badge-pos pos-competitor">🔄 Concurrent en place</span>';
+
+                const statusColorMap = {
+                    nouveau: '#94a3b8',
+                    a_contacter: '#fbbf24',
+                    rdv_demo: '#38bdf8',
+                    essai_lance: '#c084fc',
+                    converti: '#34d399',
+                    perdu: '#f87171'
+                };
+
+                const statusLabelMap = {
+                    nouveau: 'Nouveau Lead',
+                    a_contacter: 'À Contacter',
+                    rdv_demo: 'RDV Démo',
+                    essai_lance: 'Essai 14j Lancé',
+                    converti: 'Gagné (Client)',
+                    perdu: 'Non intéressé'
+                };
+
+                return `
+                    <div class="lead-card ${isHighPriority ? 'high-priority' : ''}">
+                        <div>
+                            <!-- Header de la carte -->
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                                <div>
+                                    <strong style="font-size:17px; color:#fff;">${lead.business_name}</strong>
+                                    <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                                        <i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> ${lead.address}
+                                    </div>
+                                </div>
+                                <select onchange="updateLeadStatus('${lead.id}', this.value)" class="glass-select" style="font-size:11px; font-weight:700; color:${statusColorMap[lead.lead_status] || '#fff'}; border-color:${statusColorMap[lead.lead_status] || 'var(--glass-border)'};">
+                                    <option value="nouveau" ${lead.lead_status==='nouveau'?'selected':''}>Nouveau Lead</option>
+                                    <option value="a_contacter" ${lead.lead_status==='a_contacter'?'selected':''}>À Contacter</option>
+                                    <option value="rdv_demo" ${lead.lead_status==='rdv_demo'?'selected':''}>RDV Démo</option>
+                                    <option value="essai_lance" ${lead.lead_status==='essai_lance'?'selected':''}>Essai 14j Lancé</option>
+                                    <option value="converti" ${lead.lead_status==='converti'?'selected':''}>Gagné (Client)</option>
+                                    <option value="perdu" ${lead.lead_status==='perdu'?'selected':''}>Non intéressé</option>
+                                </select>
+                            </div>
+
+                            <!-- Métriques Clés -->
+                            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin: 12px 0; background:rgba(255,255,255,0.02); padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.04);">
+                                <div>
+                                    <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">CA Estimé</div>
+                                    <div style="font-size:13px; font-weight:800; color:#34d399;">${lead.estimated_revenue_eur ? `${(lead.estimated_revenue_eur/1000).toFixed(0)} k€/an` : 'N/C'}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Capacité</div>
+                                    <div style="font-size:13px; font-weight:800; color:#fff;">${lead.estimated_covers || '--'} places</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Note Web</div>
+                                    <div style="font-size:13px; font-weight:800; color:#fbbf24;">⭐ ${lead.web_rating || '4.0'} (${lead.web_reviews_count || 0})</div>
+                                </div>
+                            </div>
+
+                            <!-- Solution existante -->
+                            <div style="margin-bottom:8px;">
+                                ${posBadge}
+                            </div>
+
+                            <!-- Analyse des réclamations web -->
+                            ${lead.customer_complaints ? `
+                                <div class="complaints-box">
+                                    <strong><i class="fa-solid fa-triangle-exclamation"></i> Pain Point / Avis négatifs détectés :</strong><br>
+                                    ${lead.customer_complaints}
+                                </div>
+                            ` : ''}
+
+                            <!-- Argumentaire de Vente Auto-généré -->
+                            ${lead.sales_pitch_hook ? `
+                                <div class="lead-hook-box">
+                                    <strong><i class="fa-solid fa-lightbulb" style="color:var(--primary);"></i> Argumentaire Vente Recommandé :</strong><br>
+                                    ${lead.sales_pitch_hook}
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Contact & Actions CRM -->
+                        <div style="margin-top:16px; pt:12px; border-top:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                            <div style="font-size:11px; color:var(--text-muted);">
+                                ${lead.contact_name ? `<strong>${lead.contact_name}</strong> | ` : ''}${lead.contact_phone ? `📞 <a href="tel:${lead.contact_phone}" style="color:var(--primary); text-decoration:none;">${lead.contact_phone}</a>` : 'Numéro N/C'}
+                            </div>
+                            <div style="display:flex; gap:6px;">
+                                ${lead.hubspot_synced ? `
+                                    <span style="font-size:11px; color:#34d399; font-weight:700; display:flex; align-items:center; gap:4px;">
+                                        <i class="fa-solid fa-check"></i> HubSpot
+                                    </span>
+                                ` : `
+                                    <button onclick="syncToHubspot('${lead.id}')" class="action-btn secondary" style="font-size:11px; padding:4px 10px;" title="Synchroniser vers HubSpot">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i> Sync HubSpot
+                                    </button>
+                                `}
+                                <button onclick="openEditLeadModal('${lead.id}')" class="action-btn secondary" style="font-size:11px; padding:4px 8px;" title="Modifier">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function updateLeadStatus(id, newStatus) {
+            try {
+                await fetch(`/api/crm/leads/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lead_status: newStatus })
+                });
+                fetchLeads();
+            } catch (err) { console.error(err); }
+        }
+
+        async function syncToHubspot(id) {
+            try {
+                const res = await fetch(`/api/crm/leads/${id}/sync-hubspot`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
+                    fetchLeads();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erreur synchronisation HubSpot');
+            }
+        }
+
+        function openAddLeadModal() {
+            const container = document.getElementById('lead-modal-container');
+            container.innerHTML = `
+                <div class="table-mgmt-modal-overlay" onclick="closeLeadModal(event)">
+                    <div class="table-mgmt-modal" onclick="event.stopPropagation()" style="max-width:550px;">
+                        <h3 style="font-size:18px; font-weight:800; margin-bottom:16px;">
+                            <i class="fa-solid fa-plus" style="color:var(--primary);"></i> Ajouter un Prospect Établissement
+                        </h3>
+                        <form onsubmit="submitAddLead(event)">
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:11px; color:var(--text-muted);">Nom de l'Établissement</label>
+                                <input type="text" id="lead-name" required placeholder="Ex: Brasserie Leffe" style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px;">
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Ville</label>
+                                    <input type="text" id="lead-city" required placeholder="Ex: Paris" style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px;">
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Type d'Activité</label>
+                                    <select id="lead-activity" class="glass-select" style="width:100%;">
+                                        <option value="bistro">🍽️ Bistro & Brasserie</option>
+                                        <option value="cafe_bar">☕ Café & Bar</option>
+                                        <option value="pizzeria">🍕 Pizzeria</option>
+                                        <option value="fast_casual">🌯 Fast Casual</option>
+                                        <option value="gastro">👑 Gastronomique</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:11px; color:var(--text-muted);">Adresse Complète</label>
+                                <input type="text" id="lead-address" required placeholder="Ex: 12 Rue de la Paix, 75002 Paris" style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px;">
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Solution Actuelle</label>
+                                    <select id="lead-pos" class="glass-select" style="width:100%;">
+                                        <option value="aucune">Aucune solution QR (Max)</option>
+                                        <option value="menu_pdf_statique">Menu PDF Statique</option>
+                                        <option value="caisse_seule">Caisse Enregistreuse Seule</option>
+                                        <option value="concurrent">Concurrent</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">CA Estimé (€/an)</label>
+                                    <input type="number" id="lead-revenue" placeholder="Ex: 500000" style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px;">
+                                </div>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Nom du Contact / Gérant</label>
+                                    <input type="text" id="lead-contact-name" placeholder="Ex: Marc Vasseur" style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px;">
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; color:var(--text-muted);">Téléphone</label>
+                                    <input type="text" id="lead-phone" placeholder="01 42..." style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px;">
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:8px; margin-top:16px;">
+                                <button type="submit" class="action-btn" style="flex:1;">Enregistrer Prospect</button>
+                                <button type="button" class="action-btn secondary" onclick="closeLeadModal()">Annuler</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function submitAddLead(e) {
+            e.preventDefault();
+            const business_name = document.getElementById('lead-name').value;
+            const city = document.getElementById('lead-city').value;
+            const activity_type = document.getElementById('lead-activity').value;
+            const address = document.getElementById('lead-address').value;
+            const current_pos_solution = document.getElementById('lead-pos').value;
+            const estimated_revenue_eur = parseInt(document.getElementById('lead-revenue').value || 450000, 10);
+            const contact_name = document.getElementById('lead-contact-name').value;
+            const contact_phone = document.getElementById('lead-phone').value;
+
+            try {
+                await fetch('/api/crm/leads', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        business_name, city, activity_type, address,
+                        current_pos_solution, estimated_revenue_eur, contact_name, contact_phone
+                    })
+                });
+                closeLeadModal();
+                fetchLeads();
+            } catch (err) { console.error(err); }
+        }
+
+        function closeLeadModal(e) {
+            if (e && e.target !== e.currentTarget && !e.target.classList.contains('secondary')) return;
+            const container = document.getElementById('lead-modal-container');
+            if (container) container.innerHTML = '';
+        }
+
+        // Chargement initial
+        fetchLeads();
+    </script>
+</body>
+</html>

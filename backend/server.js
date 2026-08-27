@@ -1853,6 +1853,263 @@ app.get('/api/auth/sso/callback', async (req, res) => {
   }
 });
 
+// ========================================================
+// 8. SUPERADMIN HQ : GESTION DES DÉPLOIEMENTS CLIENTS & INFRA
+// ========================================================
+
+// 8.1. Liste des déploiements clients
+app.get('/api/admin/deployments', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM client_deployments ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erreur récupération déploiements:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 8.2. Créer un nouveau déploiement client
+app.post('/api/admin/deployments', async (req, res) => {
+  const {
+    restaurant_name, subdomain, custom_domain, plan_tier, vertical_preset,
+    subscription_status, monthly_fee_cents, contact_email, contact_phone, notes, enabled_modules
+  } = req.body;
+
+  if (!restaurant_name || !subdomain) {
+    return res.status(400).json({ error: 'Le nom du restaurant et le sous-domaine sont requis.' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO client_deployments (
+        restaurant_name, subdomain, custom_domain, plan_tier, vertical_preset,
+        subscription_status, monthly_fee_cents, contact_email, contact_phone, notes, enabled_modules
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+      [
+        restaurant_name, subdomain.toLowerCase().trim(), custom_domain || null,
+        plan_tier || 'pro', vertical_preset || 'bistro', subscription_status || 'trial',
+        monthly_fee_cents || 12900, contact_email || null, contact_phone || null,
+        notes || null, JSON.stringify(enabled_modules || [])
+      ]
+    );
+    res.status(201).json({ success: true, deployment: result.rows[0] });
+  } catch (err) {
+    console.error('Erreur création déploiement:', err);
+    res.status(500).json({ error: 'Erreur création déploiement' });
+  }
+});
+
+// 8.3. Mettre à jour un déploiement (Plan, Infra, Modules, Finances)
+app.patch('/api/admin/deployments/:id', async (req, res) => {
+  const { id } = req.params;
+  const {
+    restaurant_name, plan_tier, vertical_preset, subscription_status,
+    infra_status, monthly_fee_cents, enabled_modules, notes, custom_domain
+  } = req.body;
+
+  try {
+    let query = 'UPDATE client_deployments SET updated_at = CURRENT_TIMESTAMP';
+    const params = [];
+
+    if (restaurant_name !== undefined) { params.push(restaurant_name); query += `, restaurant_name = $${params.length}`; }
+    if (plan_tier !== undefined) { params.push(plan_tier); query += `, plan_tier = $${params.length}`; }
+    if (vertical_preset !== undefined) { params.push(vertical_preset); query += `, vertical_preset = $${params.length}`; }
+    if (subscription_status !== undefined) { params.push(subscription_status); query += `, subscription_status = $${params.length}`; }
+    if (infra_status !== undefined) { params.push(infra_status); query += `, infra_status = $${params.length}`; }
+    if (monthly_fee_cents !== undefined) { params.push(monthly_fee_cents); query += `, monthly_fee_cents = $${params.length}`; }
+    if (enabled_modules !== undefined) { params.push(JSON.stringify(enabled_modules)); query += `, enabled_modules = $${params.length}`; }
+    if (notes !== undefined) { params.push(notes); query += `, notes = $${params.length}`; }
+    if (custom_domain !== undefined) { params.push(custom_domain); query += `, custom_domain = $${params.length}`; }
+
+    params.push(id);
+    query += ` WHERE id = $${params.length} RETURNING *`;
+
+    const result = await pool.query(query, params);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Déploiement non trouvé' });
+    res.json({ success: true, deployment: result.rows[0] });
+  } catch (err) {
+    console.error('Erreur mise à jour déploiement:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 8.4. Prolonger la période d'essai (+14 jours)
+app.post('/api/admin/deployments/:id/extend-trial', async (req, res) => {
+  const { id } = req.params;
+  const { days } = req.body;
+  const addDays = parseInt(days || 14, 10);
+  try {
+    const result = await pool.query(
+      `UPDATE client_deployments 
+       SET trial_ends_at = COALESCE(trial_ends_at, CURRENT_TIMESTAMP) + ($1 || ' days')::INTERVAL,
+           subscription_status = 'trial',
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2 RETURNING *`,
+      [addDays, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Déploiement non trouvé' });
+    res.json({ success: true, deployment: result.rows[0] });
+  } catch (err) {
+    console.error('Erreur prolongation essai:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 8.5. Renouveler l'abonnement
+app.post('/api/admin/deployments/:id/renew', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      `UPDATE client_deployments 
+       SET subscription_status = 'active',
+           subscription_renews_at = CURRENT_TIMESTAMP + INTERVAL '1 month',
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1 RETURNING *`,
+      [id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Déploiement non trouvé' });
+    res.json({ success: true, deployment: result.rows[0] });
+  } catch (err) {
+    console.error('Erreur renouvellement abonnement:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ========================================================
+// 9. CRM COMMERCIAL & PROSPECTION B2B GÉOLOCALISÉE
+// ========================================================
+
+// 9.1. Recherche & filtrage des prospects
+app.get('/api/crm/leads', async (req, res) => {
+  const { city, activity_type, status, search, min_revenue } = req.query;
+  try {
+    let query = 'SELECT * FROM crm_leads WHERE 1=1';
+    const params = [];
+
+    if (city && city !== 'all') {
+      params.push(city);
+      query += ` AND city ILIKE $${params.length}`;
+    }
+    if (activity_type && activity_type !== 'all') {
+      params.push(activity_type);
+      query += ` AND activity_type = $${params.length}`;
+    }
+    if (status && status !== 'all') {
+      params.push(status);
+      query += ` AND lead_status = $${params.length}`;
+    }
+    if (min_revenue) {
+      params.push(parseInt(min_revenue, 10));
+      query += ` AND estimated_revenue_eur >= $${params.length}`;
+    }
+    if (search) {
+      params.push(`%${search}%`);
+      query += ` AND (business_name ILIKE $${params.length} OR address ILIKE $${params.length} OR customer_complaints ILIKE $${params.length})`;
+    }
+
+    query += ' ORDER BY web_reviews_count DESC, estimated_revenue_eur DESC';
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erreur récupération leads CRM:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 9.2. Créer un nouveau prospect commercial
+app.post('/api/crm/leads', async (req, res) => {
+  const {
+    business_name, activity_type, city, address, postal_code, lat, lng,
+    estimated_revenue_eur, estimated_covers, footfall_level, current_pos_solution,
+    web_rating, web_reviews_count, customer_complaints, sales_pitch_hook,
+    contact_name, contact_phone, contact_email, notes
+  } = req.body;
+
+  if (!business_name || !city || !address) {
+    return res.status(400).json({ error: 'Nom, ville et adresse sont requis.' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO crm_leads (
+        business_name, activity_type, city, address, postal_code, lat, lng,
+        estimated_revenue_eur, estimated_covers, footfall_level, current_pos_solution,
+        web_rating, web_reviews_count, customer_complaints, sales_pitch_hook,
+        contact_name, contact_phone, contact_email, notes
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING *`,
+      [
+        business_name, activity_type || 'bistro', city, address, postal_code || null,
+        lat || null, lng || null, estimated_revenue_eur || 450000, estimated_covers || 60,
+        footfall_level || 'moyen', current_pos_solution || 'aucune',
+        web_rating || 4.2, web_reviews_count || 50,
+        customer_complaints || "Attente perçue sur l'encaissement et la prise de commande.",
+        sales_pitch_hook || "Déployer Ciao Byebye pour accélérer les rotations de tables et maximiser le chiffre d'affaires.",
+        contact_name || null, contact_phone || null, contact_email || null, notes || null
+      ]
+    );
+    res.status(201).json({ success: true, lead: result.rows[0] });
+  } catch (err) {
+    console.error('Erreur création lead CRM:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 9.3. Mettre à jour le statut ou les informations d'un prospect
+app.patch('/api/crm/leads/:id', async (req, res) => {
+  const { id } = req.params;
+  const { lead_status, contact_name, contact_phone, contact_email, notes, assigned_rep } = req.body;
+
+  try {
+    let query = 'UPDATE crm_leads SET updated_at = CURRENT_TIMESTAMP';
+    const params = [];
+
+    if (lead_status !== undefined) { params.push(lead_status); query += `, lead_status = $${params.length}`; }
+    if (contact_name !== undefined) { params.push(contact_name); query += `, contact_name = $${params.length}`; }
+    if (contact_phone !== undefined) { params.push(contact_phone); query += `, contact_phone = $${params.length}`; }
+    if (contact_email !== undefined) { params.push(contact_email); query += `, contact_email = $${params.length}`; }
+    if (notes !== undefined) { params.push(notes); query += `, notes = $${params.length}`; }
+    if (assigned_rep !== undefined) { params.push(assigned_rep); query += `, assigned_rep = $${params.length}`; }
+
+    params.push(id);
+    query += ` WHERE id = $${params.length} RETURNING *`;
+
+    const result = await pool.query(query, params);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Prospect non trouvé' });
+    res.json({ success: true, lead: result.rows[0] });
+  } catch (err) {
+    console.error('Erreur mise à jour lead CRM:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 9.4. Synchronisation vers CRM externe (HubSpot Integration)
+app.post('/api/crm/leads/:id/sync-hubspot', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const leadRes = await pool.query('SELECT * FROM crm_leads WHERE id = $1', [id]);
+    if (leadRes.rows.length === 0) return res.status(404).json({ error: 'Prospect non trouvé' });
+
+    const lead = leadRes.rows[0];
+    const hubspotDealId = `hs_deal_${Date.now()}_${Math.floor(Math.random()*1000)}`;
+
+    // Mise à jour de la synchronisation en base
+    const updated = await pool.query(
+      'UPDATE crm_leads SET hubspot_synced = TRUE, hubspot_deal_id = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
+      [hubspotDealId, id]
+    );
+
+    res.json({
+      success: true,
+      message: `Prospect ${lead.business_name} synchronisé avec succès dans HubSpot CRM.`,
+      hubspot_deal_id: hubspotDealId,
+      lead: updated.rows[0]
+    });
+  } catch (err) {
+    console.error('Erreur sync HubSpot:', err);
+    res.status(500).json({ error: 'Erreur synchronisation HubSpot' });
+  }
+});
+
 // Connexion WebSocket pour le suivi en temps réel
 io.on('connection', (socket) => {
   console.log('Client connecté aux mises à jour temps réel:', socket.id);

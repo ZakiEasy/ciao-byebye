@@ -632,6 +632,77 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         const bumpData = await bumpRes.json();
         assert.strictEqual(bumpData.success, true);
     });
+
+    test('29. GET & POST /api/admin/deployments - should manage client tenant infrastructures', async () => {
+        // Liste des déploiements
+        const listRes = await fetch(`${BASE_URL}/api/admin/deployments`);
+        assert.strictEqual(listRes.status, 200);
+        const deployments = await listRes.json();
+        assert.ok(Array.isArray(deployments));
+        assert.ok(deployments.length > 0);
+
+        // Création d'un nouveau déploiement
+        const sub = `test-dep-${Date.now()}`;
+        const createRes = await fetch(`${BASE_URL}/api/admin/deployments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                restaurant_name: 'Brasserie Test Automate',
+                subdomain: sub,
+                plan_tier: 'pro',
+                vertical_preset: 'bistro',
+                subscription_status: 'trial',
+                monthly_fee_cents: 12900,
+                contact_email: 'test@ciao-byebye.fr'
+            })
+        });
+        assert.strictEqual(createRes.status, 201);
+        const createData = await createRes.json();
+        assert.strictEqual(createData.success, true);
+        assert.strictEqual(createData.deployment.subdomain, sub);
+
+        // Prolonger l'essai
+        const extendRes = await fetch(`${BASE_URL}/api/admin/deployments/${createData.deployment.id}/extend-trial`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ days: 14 })
+        });
+        assert.strictEqual(extendRes.status, 200);
+        const extendData = await extendRes.json();
+        assert.strictEqual(extendData.success, true);
+    });
+
+    test('30. GET, POST & PATCH /api/crm/leads - should manage B2B sales prospect intelligence & HubSpot sync', async () => {
+        // Recherche des prospects filtrés
+        const leadsRes = await fetch(`${BASE_URL}/api/crm/leads?city=Paris`);
+        assert.strictEqual(leadsRes.status, 200);
+        const leads = await leadsRes.json();
+        assert.ok(Array.isArray(leads));
+        assert.ok(leads.length > 0);
+
+        const targetLead = leads[0];
+
+        // Mettre à jour le statut du lead vers rdv_demo
+        const patchRes = await fetch(`${BASE_URL}/api/crm/leads/${targetLead.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lead_status: 'rdv_demo', notes: 'Démo planifiée pour lundi 15h' })
+        });
+        assert.strictEqual(patchRes.status, 200);
+        const patchData = await patchRes.json();
+        assert.strictEqual(patchData.success, true);
+        assert.strictEqual(patchData.lead.lead_status, 'rdv_demo');
+
+        // Synchronisation HubSpot CRM
+        const syncRes = await fetch(`${BASE_URL}/api/crm/leads/${targetLead.id}/sync-hubspot`, {
+            method: 'POST'
+        });
+        assert.strictEqual(syncRes.status, 200);
+        const syncData = await syncRes.json();
+        assert.strictEqual(syncData.success, true);
+        assert.strictEqual(syncData.lead.hubspot_synced, true);
+        assert.ok(syncData.hubspot_deal_id);
+    });
 });
 
 

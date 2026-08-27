@@ -556,16 +556,25 @@
                 <button class="action-btn secondary" id="tab-btn-inventory" onclick="switchMainTab('inventory')" style="padding:6px 12px; font-size:12px;">
                     <i class="fa-solid fa-boxes-stacked"></i> Stocks & BOM
                 </button>
-                <button class="action-btn secondary" id="tab-btn-modules" onclick="switchMainTab('modules')" style="padding:6px 12px; font-size:12px;">
-                    <i class="fa-solid fa-toggle-on"></i> Modules & Offres
-                </button>
                 <button class="action-btn secondary" id="tab-btn-menu" onclick="switchMainTab('menu')" style="padding:6px 12px; font-size:12px;">
                     <i class="fa-solid fa-utensils"></i> Menu
+                </button>
+                <button class="action-btn secondary" id="tab-btn-modules" onclick="switchMainTab('modules')" style="padding:6px 12px; font-size:12px; display:none;">
+                    <i class="fa-solid fa-toggle-on"></i> Modules & Offres
                 </button>
             </nav>
         </div>
 
         <div class="stats-container">
+            <!-- SuperAdmin & CRM Quick Links (visible pour admin HQ) -->
+            <div id="hq-admin-links" style="display:flex; align-items:center; gap:6px;">
+                <a href="/admin-hq.html" class="action-btn secondary" style="text-decoration:none; font-size:11px; padding:6px 10px; color:#f87171; border-color:rgba(239,68,68,0.4);" title="SuperAdmin HQ">
+                    <i class="fa-solid fa-server"></i> HQ Admin
+                </a>
+                <a href="/sales-crm.html" class="action-btn secondary" style="text-decoration:none; font-size:11px; padding:6px 10px; color:#34d399; border-color:rgba(16,185,129,0.4);" title="Espace Commercial CRM">
+                    <i class="fa-solid fa-bullseye"></i> CRM Vente
+                </a>
+            </div>
             <!-- Lang, Currency & Fullscreen Selectors -->
             <div class="i18n-selectors" style="display:flex; align-items:center; gap:6px;">
                 <select id="kds-lang-select" onchange="changeKdsLanguage(this.value)" class="glass-select" aria-label="Langue">
@@ -1718,7 +1727,7 @@
                                 const barClass = isZero ? 'low' : (isLow ? 'medium' : 'high');
 
                                 return `
-                                    <div class="stock-card ${isZero ? 'style="border-color:#ef4444;"' : ''}">
+                                    <div class="stock-card" ${isZero ? 'style="border-color:#ef4444;"' : ''}>
                                         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                                             <div>
                                                 <strong style="font-size:14px; color:#fff;">${ing.name}</strong>
@@ -1751,7 +1760,145 @@
                                         </div>
                                     </div>
                                 `;
+                            }).join('')}
+                        </div>
+                    ` : (inventoryActiveSubTab === 'recipes' ? `
+                        <div class="stock-grid">
+                            ${inventoryRecipes.map(rec => `
+                                <div class="stock-card">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <strong style="font-size:15px; color:#fff;">${rec.product_name}</strong>
+                                        <span style="font-size:12px; color:var(--primary); font-weight:700;">${(rec.price_cents/100).toFixed(2)} €</span>
+                                    </div>
+                                    <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">Catégorie: ${rec.category}</div>
+                                    <div style="font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:6px;">Composition fiche technique (BOM) :</div>
+                                    <div style="display:flex; flex-direction:column; gap:4px;">
+                                        ${rec.bom && rec.bom.length > 0 ? rec.bom.map(b => `
+                                            <div style="display:flex; justify-content:space-between; font-size:11px; padding:3px 6px; background:rgba(255,255,255,0.03); border-radius:4px;">
+                                                <span>${b.ingredient_name}</span>
+                                                <strong style="color:var(--text-main);">${b.quantity} ${b.unit}</strong>
+                                            </div>
+                                        `).join('') : '<div style="font-size:11px; color:var(--text-muted); font-style:italic;">Aucun ingrédient renseigné.</div>'}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                                <span style="font-size:14px; font-weight:700; color:#fff;">Historique des Déclarations de Pertes</span>
+                                <button class="action-btn" onclick="openWasteModal()" style="font-size:12px; padding:6px 12px;">
+                                    <i class="fa-solid fa-plus"></i> Déclarer une Perte
+                                </button>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:8px;">
+                                ${inventoryLogs.map(log => `
+                                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:8px;">
+                                        <div>
+                                            <strong style="font-size:13px; color:#f87171;">${log.quantity_change} ${log.unit || ''} ${log.ingredient_name || ''}</strong>
+                                            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Motif : ${log.reason} | Note : ${log.notes || 'N/A'}</div>
+                                        </div>
+                                        <div style="font-size:11px; color:var(--text-muted);">
+                                            ${new Date(log.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `)}
+                </div>
             `;
+        }
+
+        function setInventorySubTab(subTab) {
+            inventoryActiveSubTab = subTab;
+            renderInventoryView();
+        }
+
+        async function adjustStock(ingId, delta) {
+            const ing = inventoryIngredients.find(i => i.id === ingId);
+            if (!ing) return;
+            const newStock = Math.max(0, parseFloat(ing.current_stock) + delta);
+            try {
+                await fetch(`/api/inventory/ingredients/${ingId}/stock`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_stock: newStock })
+                });
+                renderInventoryView();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function toggle86(ingId, is86) {
+            try {
+                await fetch(`/api/inventory/ingredients/${ingId}/stock`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_86: is86 })
+                });
+                renderInventoryView();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function openWasteModal() {
+            const container = document.getElementById('table-modal-container');
+            if (!container) return;
+            container.innerHTML = `
+                <div class="table-mgmt-modal-overlay" onclick="closeTableModal(event)">
+                    <div class="table-mgmt-modal" onclick="event.stopPropagation()">
+                        <h3 style="font-size:18px; font-weight:800; margin-bottom:16px;">
+                            <i class="fa-solid fa-trash-can" style="color:#ef4444;"></i> Déclarer une Perte Cuisine
+                        </h3>
+                        <form onsubmit="submitWasteForm(event)">
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:11px; color:var(--text-muted);">Ingrédient</label>
+                                <select id="waste-ing-id" class="glass-select" style="width:100%;" required>
+                                    ${inventoryIngredients.map(i => `<option value="${i.id}">${i.name} (${i.unit})</option>`).join('')}
+                                </select>
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:11px; color:var(--text-muted);">Quantité Perdue</label>
+                                <input type="number" step="0.1" id="waste-qty" required placeholder="Ex: 2" style="width:100%; padding:8px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:#fff; border-radius:6px;">
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:11px; color:var(--text-muted);">Motif</label>
+                                <select id="waste-reason" class="glass-select" style="width:100%;">
+                                    <option value="Erreur de cuisson">Erreur de cuisson</option>
+                                    <option value="Casse / Assiette tombée">Casse / Assiette tombée</option>
+                                    <option value="Avarie / DLC">Avarie / DLC</option>
+                                    <option value="Erreur allergie">Erreur allergie</option>
+                                </select>
+                            </div>
+                            <div style="display:flex; gap:8px; margin-top:16px;">
+                                <button type="submit" class="action-btn" style="flex:1; background:#ef4444; color:#fff;">Enregistrer la Perte</button>
+                                <button type="button" class="action-btn secondary" onclick="closeTableModal()">Annuler</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function submitWasteForm(e) {
+            e.preventDefault();
+            const ingredient_id = document.getElementById('waste-ing-id').value;
+            const quantity = parseFloat(document.getElementById('waste-qty').value);
+            const reason = document.getElementById('waste-reason').value;
+            try {
+                await fetch('/api/inventory/waste', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ingredient_id, quantity, reason, staff_email: currentUserEmail })
+                });
+                closeTableModal();
+                renderInventoryView();
+            } catch (err) {
+                console.error(err);
+            }
         }
 
         async function assignTableToStaff(tableNum, email) {
