@@ -10,11 +10,11 @@
 
 ### 1.2. Chiffres Clés du Projet (Objectif 36 Mois)
 - **Restaurants abonnés en Année 3** : **800 établissements**
-- **MRR (Revenu Récurrent Mensuel) en Mois 36** : **96 000 € HT / mois**
-- **Chiffre d'Affaires Annuel (Année 3)** : **980 000 € HT**
-- **EBITDA (Marge brute d'exploitation A3)** : **412 000 € (42%)**
-- **Seuil de rentabilité (Break-Even)** : **Mois 9** (dès 35 restaurants abonnés)
-- **Ratio LTV / CAC** : **20.1x**
+- **MRR (Revenu Récurrent Mensuel) en Mois 36** : **80 000 € HT / mois**
+- **Chiffre d'Affaires Annuel (Année 3)** : **875 000 € HT**
+- **EBITDA (Marge brute d'exploitation A3)** : **360 000 € (41%)**
+- **Seuil de rentabilité (Break-Even)** : **Mois 9** (dès 38 restaurants abonnés)
+- **Ratio LTV / CAC** : **18.8x**
 
 ---
 
@@ -42,7 +42,7 @@
 │           └──► [ SOM - Marché Cible Ciao Byebye à 3 Ans ]              │
 │                12 000 Établissements urbains & touristiques            │
 │                Objectif Pénétration Ciao Byebye : 800 Clients (6.6%)   │
-│                Chiffre d'Affaires Cible : 1.0 M€ / an                  │
+│                Chiffre d'Affaires Cible : ~900 k€ / an                 │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -67,7 +67,7 @@ Contrairement aux menus QR passifs (PDF illisibles) ou aux systèmes de caisse t
 | **KDS Tactile Cuisine Multi-postes** | Option chère (>1500€) | Non | Non | **Oui (Inclus en temps réel)** |
 | **Stocks & Ruptures 86 Automatiques** | Non | Non | Non | **Oui (Fiches Recettes BOM)** |
 | **Montres Connectées Serveurs** | Non | Non | Non | **Oui (Vibrations d'alerte)** |
-| **Tarif Mensuel Moyen** | 89 € - 180 € | 15 € - 30 € | 49 € + commissions | **49 € à 129 € HT (Sans comm.)** |
+| **Tarif Mensuel Moyen** | 89 € - 180 € | 15 € - 30 € | 49 € + commissions | **49 € à 99 € HT (Sans comm.)** |
 
 ---
 
@@ -76,8 +76,8 @@ Contrairement aux menus QR passifs (PDF illisibles) ou aux systèmes de caisse t
 ### 4.1. Sources de Revenus
 1. **Abonnements SaaS Récurrents (MRR)** :
    - **Formule Essentiel** : `49 € HT / mois`
-   - **Formule Pro** : `129 € HT / mois` *(90% du mix produit)*
-   - **Formule Chaînes & Multi-sites** : `249 € HT / mois`
+   - **Formule Pro** : `99 € HT / mois` *(75% du mix produit)*
+   - **Formule Chaînes & Multi-sites** : `199 € HT / mois`
 2. **Ventes de Matériel & Packs Physiques** :
    - Pack 10 Chevalets QR Code design : `190 € HT` (Marge 65%).
    - Pack Tablette KDS tactile & Montre connectée : `380 € HT` (Marge 40%).
@@ -87,13 +87,13 @@ Contrairement aux menus QR passifs (PDF illisibles) ou aux systèmes de caisse t
 
 | Indicateur Économique | Valeur Cible | Explication & Justification |
 | :--- | :---: | :--- |
-| **ARPU (Revenu Moyen Mensuel)** | **115 € HT** | Pondération des formules (10% Essentiel, 80% Pro, 10% Chaînes). |
-| **CAC (Coût d'Acquisition Client)** | **280 € HT** | Coût commercial terrain + budget digital par signature. |
+| **ARPU (Revenu Moyen Mensuel)** | **100 € HT** | Pondération des formules (15% Essentiel, 75% Pro, 10% Chaînes). |
+| **CAC (Coût d'Acquisition Client)** | **260 € HT** | Coût commercial terrain + budget digital par signature (closing accéléré à 99€). |
 | **Churn Mensuel (Taux d'attrition)** | **1.8% / mois** | Très forte rétention grâce à l'intégration KDS et habitudes d'équipe. |
 | **Durée de Vie Client (Lifetime)** | **55 Mois (~4.5 ans)** | $1 / 0.018 = 55.5$ mois. |
-| **LTV (Lifetime Value)** | **5 622 € HT** | $115 \text{ €} \times 55.5 \times 88\% \text{ marge brute}$. |
-| **Ratio LTV / CAC** | **20.1x** | Bien supérieur au standard SaaS d'excellence (> 3.0x). |
-| **Période de Récupération du CAC** | **2.5 Mois** | Rentabilisation quasi-immédiate du coût commercial. |
+| **LTV (Lifetime Value)** | **4 884 € HT** | $100 \text{ €} \times 55.5 \times 88\% \text{ marge brute}$. |
+| **Ratio LTV / CAC** | **18.8x** | Bien supérieur au standard SaaS d'excellence (> 3.0x). |
+| **Période de Récupération du CAC** | **2.6 Mois** | Rentabilisation quasi-immédiate du coût commercial. |
 
 ---
 
@@ -104,29 +104,29 @@ Contrairement aux menus QR passifs (PDF illisibles) ou aux systèmes de caisse t
 | En Euros HT | **ANNÉE 1** | **ANNÉE 2** | **ANNÉE 3** |
 | :--- | :---: | :---: | :---: |
 | **Nombre de Restaurants Abonnés (Fin d'Année)** | **50** | **250** | **800** |
-| **MRR de Clôture (Fin d'Année)** | **5 800 €** | **29 000 €** | **96 000 €** |
+| **MRR de Clôture (Fin d'Année)** | **5 000 €** | **25 000 €** | **80 000 €** |
 | | | | |
-| **Chiffre d'Affaires SaaS Récurrent** | 38 500 € | 208 000 € | 785 000 € |
+| **Chiffre d'Affaires SaaS Récurrent** | 33 000 € | 175 000 € | 680 000 € |
 | **Chiffre d'Affaires Matériel & Onboarding** | 13 500 € | 57 000 € | 195 000 € |
-| **TOTAL CHIFFRE D'AFFAIRES (CA)** | **52 000 €** | **265 000 €** | **980 000 €** |
+| **TOTAL CHIFFRE D'AFFAIRES (CA)** | **46 500 €** | **232 000 €** | **875 000 €** |
 | | | | |
 | **Coût des Ventes Matériel (COGS)** | -5 500 € | -24 000 € | -82 000 € |
-| **Hébergement Cloud & Serveurs (Supabase/Render)** | -2 400 € | -8 500 € | -26 000 € |
-| **MARGE BRUTE** | **44 100 € (85%)** | **232 500 € (88%)** | **872 000 € (89%)** |
+| **Hébergement Cloud & Serveurs (Supabase/Render)** | -2 400 € | -8 000 € | -24 000 € |
+| **MARGE BRUTE** | **38 600 € (83%)** | **200 000 € (86%)** | **769 000 € (88%)** |
 | | | | |
-| **Masse Salariale (Commerciaux, Dév, Support)** | -32 000 € | -115 000 € | -340 000 € |
-| **Marketing, Déplacements & Acquisition** | -8 000 € | -28 000 € | -75 000 € |
-| **Frais Généraux & Administratifs** | -3 500 € | -12 000 € | -45 000 € |
+| **Masse Salariale (Commerciaux, Dév, Support)** | -28 000 € | -105 000 € | -310 000 € |
+| **Marketing, Déplacements & Acquisition** | -7 500 € | -25 000 € | -65 000 € |
+| **Frais Généraux & Administratifs** | -3 000 € | -10 000 € | -34 000 € |
 | | | | |
-| **EBITDA (Résultat d'Exploitation)** | **+600 €** | **+77 500 €** | **+412 000 €** |
-| **Marge d'EBITDA (%)** | **1.2%** | **29.2%** | **42.0%** |
+| **EBITDA (Résultat d'Exploitation)** | **+100 €** | **+60 000 €** | **+360 000 €** |
+| **Marge d'EBITDA (%)** | **0.2%** | **25.8%** | **41.1%** |
 
 ---
 
 ### 5.2. Analyse du Point Mort (Break-Even Point)
-- **Charges fixes mensuelles initiales** : ~3 800 € / mois (Cloud, bureau, base commerciale).
-- **Marge brute unitaire par restaurant Pro** : ~115 € HT / mois.
-- **Seuil d'équilibre** : $\frac{3800}{115} \approx 33$ restaurants abonnés.
+- **Charges fixes mensuelles initiales** : ~3 500 € / mois (Cloud, bureau, base commerciale).
+- **Marge brute unitaire par restaurant Pro** : ~88 € HT / mois (sur abonnement 99 €).
+- **Seuil d'équilibre** : $\frac{3500}{88} \approx 38$ restaurants abonnés.
 - **Calendrier du Break-Even** : Atteint au **Mois 9** du déploiement commercial.
 
 ---

@@ -123,15 +123,15 @@
 - **Exemple Restaurant 80 Couverts/jour - Ticket moyen 25 €** :
   - Chiffre d'Affaires annuel de base : `600 000 €`
   - Up-selling Ciao Byebye (+18%) : `+108 000 € / an`
-  - Coût abonnement Pro Ciao Byebye : `1 548 € / an` (129 €/m)
-  - **Gain Net pour le Restaurateur : `+106 452 € / an` (ROI > 68x !)**
+  - Coût abonnement Pro Ciao Byebye : `1 188 € / an` (99 €/m)
+  - **Gain Net pour le Restaurateur : `+106 812 € / an` (ROI > 90x !)**
 
 ---
 
 ### 📌 SLIDE 13 : Les Offres Tarifaires Claires
 - **Essentiel (`49 € HT/m`)** : Idéal petits cafés, bars de quartier.
-- **Pro (`129 € HT/m`)** *(90% des ventes)* : KDS cuisine, plan 2D, stocks BOM, montres serveurs.
-- **Chaînes & Multi-sites (`249 € HT/m`)** : SuperAdmin HQ, synchronisation de réseau.
+- **Pro (`99 € HT/m`)** *(90% des ventes)* : KDS cuisine, plan 2D, stocks BOM, montres serveurs.
+- **Chaînes & Multi-sites (`199 € HT/m`)** : SuperAdmin HQ, synchronisation de réseau.
 
 ---
 
@@ -164,9 +164,9 @@
 - **Réponse Commerciale** :  
   > *"Notre écran KDS a été conçu avec des chefs étoilés et des cuisiniers de brasserie : un code couleur ultra-simple (vert/orange/rouge), de gros boutons tactiles et des alertes sonores. En 10 minutes chrono, vos cuisiniers l'adoptent et ne veulent plus jamais revenir aux tickets papier perdus dans le gras de cuisson."*
 
-### Objection 4 : *« 129 € par mois, c'est une dépense supplémentaire. »*
+### Objection 4 : *« 99 € par mois, c'est une dépense supplémentaire. »*
 - **Réponse Commerciale** :  
-  > *"Ramené au jour, cela représente seulement 4,30 € par jour. Il suffit qu'un seul convive prenne un dessert ou un verre de vin supplémentaire par service grâce aux suggestions Ciao Byebye pour que votre abonnement soit intégralement autofinancé !"*
+  > *"Ramené au jour, cela représente seulement 3,30 € par jour. Il suffit qu'un seul convive prenne un dessert ou un verre de vin supplémentaire par service grâce aux suggestions Ciao Byebye pour que votre abonnement soit intégralement autofinancé !"*
 
 ### Objection 5 : *« Et si des clients veulent payer en espèces ? »*
 - **Réponse Commerciale** :  

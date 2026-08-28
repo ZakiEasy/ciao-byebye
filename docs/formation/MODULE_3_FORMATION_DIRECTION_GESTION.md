@@ -23,7 +23,7 @@ Le modèle tarifaire repose sur 3 offres simples et évolutives, configurables d
 ```
 ┌─────────────────────────┐   ┌─────────────────────────┐   ┌─────────────────────────┐
 │     🟢 ESSENTIEL        │   │        🔵 PRO           │   │ 🟣 CHAÎNES & MULTI-SITES│
-│     49 € HT / mois      │   │     129 € HT / mois     │   │ 249 € HT / mois / site  │
+│     49 € HT / mois      │   │     99 € HT / mois      │   │ 199 € HT / mois / site  │
 ├─────────────────────────┤   ├─────────────────────────┤   ├─────────────────────────┤
 │ • Commande & Paiement QR│   │ • TOUT ESSENTIEL INCLUS │   │ • TOUT LE PRO INCLUS    │
 │ • Paiement CB & Espèces │   │ • Plan de Tables 2D     │   │ • KDS Multi-Postes      │

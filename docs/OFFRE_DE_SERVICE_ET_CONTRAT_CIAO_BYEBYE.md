@@ -12,7 +12,7 @@
 
 ## 2. Grille des Formules d'Abonnement SaaS
 
-| Modules & Fonctionnalités | **ESSENTIEL**<br>`49 € HT / mois` | **PRO**<br>`129 € HT / mois` *(Recommandé)* | **CHAÎNES & MULTI-SITES**<br>`249 € HT / mois` |
+| Modules & Fonctionnalités | **ESSENTIEL**<br>`49 € HT / mois` | **PRO**<br>`99 € HT / mois` *(Recommandé)* | **CHAÎNES & MULTI-SITES**<br>`199 € HT / mois` |
 | :--- | :---: | :---: | :---: |
 | **Période d'Essai Gratuit** | **1 Mois (30 jours)** | **1 Mois (30 jours)** | **1 Mois (30 jours)** |
 | **Engagement** | Sans engagement | Sans engagement | Sans engagement (ou annuel -15%) |
