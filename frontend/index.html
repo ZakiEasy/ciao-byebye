@@ -74,7 +74,12 @@
                     </select>
                 </div>
                 
-                <div class="table-badge">
+                <!-- Walkthrough / Tour Button -->
+                <button class="glass-btn-tour" id="btn-start-client-tour" onclick="startClientWalkthrough()" title="Découvrir le fonctionnement du menu">
+                    <i class="fa-solid fa-graduation-cap"></i> <span data-i18n="tour_btn_text">Visite Guidée</span>
+                </button>
+
+                <div class="table-badge" id="header-table-badge">
                     <i class="fa-solid fa-chair"></i> <span data-i18n="table_prefix">Table</span> <span id="table-number">05</span>
                 </div>
 
@@ -315,18 +320,40 @@
             <button class="close-payment-btn" onclick="closePayment()" aria-label="Fermer"><i class="fa-solid fa-times"></i></button>
         </div>
         <div class="payment-body">
+            <!-- Bill Splitting / Partage d'addition -->
+            <div class="bill-split-container" id="bill-split-container">
+                <div class="split-header-row">
+                    <span class="split-title"><i class="fa-solid fa-users-viewfinder" style="color:#38bdf8;"></i> <span data-i18n="split_bill_title">Diviser l'addition :</span></span>
+                    <span class="split-badge" id="split-summary-badge">Addition Complète (1 pers.)</span>
+                </div>
+                <div class="split-options-grid">
+                    <button type="button" class="split-btn active" data-split="1" onclick="setBillSplit(1, this)">Seul (1)</button>
+                    <button type="button" class="split-btn" data-split="2" onclick="setBillSplit(2, this)">½ (2)</button>
+                    <button type="button" class="split-btn" data-split="3" onclick="setBillSplit(3, this)">⅓ (3)</button>
+                    <button type="button" class="split-btn" data-split="4" onclick="setBillSplit(4, this)">¼ (4)</button>
+                    <button type="button" class="split-btn" data-split="custom" id="split-custom-toggle" onclick="toggleCustomSplitInput()">Autre</button>
+                </div>
+                <div class="custom-split-input-wrapper" id="custom-split-input-wrapper" style="display:none;">
+                    <label for="custom-split-people" data-i18n="custom_split_label">Nombre de convives :</label>
+                    <input type="number" id="custom-split-people" min="1" max="20" value="5" oninput="handleCustomSplitInput(this.value)">
+                </div>
+            </div>
+
             <!-- Payment Method Tabs -->
-            <div class="payment-method-tabs">
+            <div class="payment-method-tabs" id="payment-method-tabs">
                 <button type="button" class="pay-tab-btn active" id="tab-pay-card" onclick="setPaymentMethod('carte')">
                     <i class="fa-solid fa-credit-card"></i> <span data-i18n="tab_card">Carte / Apple Pay</span>
                 </button>
+                <button type="button" class="pay-tab-btn" id="tab-pay-ticket-resto" onclick="setPaymentMethod('titre_restaurant')">
+                    <i class="fa-solid fa-ticket"></i> <span data-i18n="tab_ticket_resto">Titre-Resto</span>
+                </button>
                 <button type="button" class="pay-tab-btn" id="tab-pay-cash" onclick="setPaymentMethod('especes')">
-                    <i class="fa-solid fa-money-bill-wave"></i> <span data-i18n="tab_cash">Espèces en Caisse</span>
+                    <i class="fa-solid fa-money-bill-wave"></i> <span data-i18n="tab_cash">Espèces</span>
                 </button>
             </div>
 
             <!-- Tip / Pourboire Section -->
-            <div class="tip-selection-container">
+            <div class="tip-selection-container" id="tip-selection-container">
                 <div class="tip-header-row">
                     <span class="tip-title"><i class="fa-solid fa-heart" style="color:#f43f5e;"></i> <span data-i18n="tip_label">Ajouter un pourboire pour l'équipe :</span></span>
                     <span class="tip-amount-display" id="tip-amount-display">+0.00 €</span>
@@ -345,7 +372,10 @@
                 </div>
             </div>
 
-            <div class="total-to-pay"><span data-i18n="amount_to_pay">Montant à régler :</span> <span id="payment-amount">0.00 €</span></div>
+            <div class="total-to-pay" id="total-to-pay-container">
+                <span data-i18n="amount_to_pay">Montant de votre part :</span> <span id="payment-amount">0.00 €</span>
+                <div id="full-order-total-hint" style="font-size:11px; color:var(--text-muted); margin-top:2px;">(Total addition : <span id="full-order-amount">0.00 €</span>)</div>
+            </div>
             
             <!-- Simulated Credit Card & Digital Wallet Inputs (Card View) -->
             <div id="card-payment-view">
@@ -371,6 +401,33 @@
                 <div class="quick-pay-btns">
                     <button class="apple-pay-btn"><i class="fa-brands fa-apple-pay"></i> Apple Pay</button>
                     <button class="google-pay-btn"><i class="fa-brands fa-google-pay"></i> Google Pay</button>
+                </div>
+            </div>
+
+            <!-- Titres-Restaurant View -->
+            <div id="ticket-resto-payment-view" class="ticket-resto-payment-info" style="display: none;">
+                <div class="ticket-resto-badges">
+                    <span class="resto-badge">💳 Conecs</span>
+                    <span class="resto-badge">Swile</span>
+                    <span class="resto-badge">Edenred</span>
+                    <span class="resto-badge">Pluxee / Sodexo</span>
+                    <span class="resto-badge">Bimpli</span>
+                    <span class="resto-badge">Papier</span>
+                </div>
+                <div class="resto-cap-alert">
+                    <i class="fa-solid fa-shield-halved"></i> <span>Plafond légal : <strong>25,00 € max / jour</strong></span>
+                </div>
+                <div class="ticket-resto-breakdown">
+                    <div class="input-group" style="margin-bottom:8px;">
+                        <label for="ticket-resto-amount" data-i18n="ticket_resto_input_label">Montant débité en Titre-Restaurant :</label>
+                        <div class="custom-tip-input-wrapper" style="display:flex; align-items:center; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:0 8px;">
+                            <div class="currency-symbol" style="color:#34d399; font-weight:700; margin-right:6px;">€</div>
+                            <input type="number" id="ticket-resto-amount" min="1" max="25" step="0.5" style="background:transparent; border:none; color:#fff; font-weight:700; width:100%; outline:none;" oninput="updateTicketRestoComplement(this.value)">
+                        </div>
+                    </div>
+                    <div id="ticket-resto-complement-row" style="font-size:12px; color:#cbd5e1; background:rgba(255,255,255,0.04); padding:8px; border-radius:6px;">
+                        Complément restant à régler : <strong id="ticket-resto-complement-amount" style="color:#38bdf8;">0.00 €</strong> (par Carte ou Espèces)
+                    </div>
                 </div>
             </div>
 
@@ -470,6 +527,48 @@
             <button class="btn-submit-review" id="btn-submit-review" onclick="submitCustomerReview()">
                 <i class="fa-solid fa-paper-plane"></i> <span data-i18n="btn_submit_review">Envoyer mon avis</span>
             </button>
+        </div>
+    </div>
+
+    <!-- Review External Sync / Google TripAdvisor Booster Modal -->
+    <div class="review-sync-modal-overlay" id="review-sync-modal-overlay" onclick="closeReviewSyncModal()"></div>
+    <div class="review-sync-modal glass" id="review-sync-modal">
+        <div class="review-sync-header">
+            <h3>🌟 <span data-i18n="sync_modal_title">Merci pour votre recommandation !</span></h3>
+            <button class="close-review-btn" onclick="closeReviewSyncModal()"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="review-sync-body">
+            <p class="sync-desc" data-i18n="sync_modal_desc">Votre avis à 5 étoiles compte énormément pour nous ! Soutenez notre équipe en le publiant en 1 clic sur votre plateforme préférée :</p>
+            <div class="external-review-platforms">
+                <a href="https://search.google.com/local/writereview?placeid=ChIJN1t_tDeuEmsRUsoyG83frY4" id="sync-link-google" target="_blank" class="platform-btn google-review-btn">
+                    <i class="fa-brands fa-google"></i> <span>Publier sur Google Avis (5★)</span>
+                </a>
+                <a href="https://www.tripadvisor.fr/UserReviewEdit" id="sync-link-tripadvisor" target="_blank" class="platform-btn tripadvisor-btn">
+                    <i class="fa-solid fa-owl"></i> <span>Publier sur TripAdvisor</span>
+                </a>
+                <a href="https://fr.trustpilot.com/evaluate" id="sync-link-trustpilot" target="_blank" class="platform-btn trustpilot-btn">
+                    <i class="fa-solid fa-star"></i> <span>Publier sur Trustpilot</span>
+                </a>
+            </div>
+            <button class="btn-ghost" style="width:100%; margin-top:16px; font-size:12px; padding:8px;" onclick="closeReviewSyncModal()" data-i18n="btn_finish">C'est fait, merci !</button>
+        </div>
+    </div>
+
+    <!-- Interactive In-App Walkthrough Tour Overlay -->
+    <div class="walkthrough-overlay" id="walkthrough-overlay" style="display:none;">
+        <div class="walkthrough-highlight-box" id="walkthrough-highlight-box"></div>
+        <div class="walkthrough-card glass" id="walkthrough-card">
+            <div class="walkthrough-header">
+                <span class="walkthrough-step-badge" id="walkthrough-step-badge">Étape 1 / 5</span>
+                <button class="walkthrough-close-btn" onclick="stopClientWalkthrough()" aria-label="Quitter"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <h4 class="walkthrough-title" id="walkthrough-title">Titre de l'étape</h4>
+            <p class="walkthrough-desc" id="walkthrough-desc">Description explicative...</p>
+            <div class="walkthrough-actions">
+                <button class="walkthrough-prev-btn" id="walkthrough-prev-btn" onclick="prevClientWalkthroughStep()">Précédent</button>
+                <div class="walkthrough-dots" id="walkthrough-dots"></div>
+                <button class="walkthrough-next-btn btn-primary" id="walkthrough-next-btn" onclick="nextClientWalkthroughStep()">Suivant</button>
+            </div>
         </div>
     </div>
 

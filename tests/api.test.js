@@ -881,7 +881,78 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         assert.ok(getData.stats.totalReviews >= 1);
         assert.ok(parseFloat(getData.stats.averageRating) >= 1.0);
     });
+
+    test('37. POST /api/orders/mock-create - should record split bill count and ticket restaurant payment', async () => {
+        const splitOrderRes = await fetch(`${BASE_URL}/api/orders/mock-create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: '08',
+                clientName: 'Groupe Amis (Part 1/3)',
+                paymentMethod: 'titre_restaurant',
+                splitCount: 3,
+                splitPartIndex: 1,
+                ticketRestoAmountCents: 2500, // 25.00 € (Legal cap)
+                tipAmountCents: 200,
+                items: [
+                    { name: 'Côte de Bœuf Maturée', price: 60.00, quantity: 1 },
+                    { name: 'Bouteille Saint-Émilion', price: 45.00, quantity: 1 }
+                ]
+            })
+        });
+
+        assert.strictEqual(splitOrderRes.status, 200);
+        const splitData = await splitOrderRes.json();
+        assert.strictEqual(splitData.success, true);
+        assert.strictEqual(splitData.splitCount, 3);
+        assert.strictEqual(splitData.splitPartIndex, 1);
+        assert.strictEqual(splitData.ticketRestoAmountCents, 2500);
+        assert.strictEqual(splitData.paymentMethod, 'titre_restaurant');
+    });
+
+    test('38. GET & POST /api/settings/reviews-sync - should manage multi-platform review sync (Google, TripAdvisor, Trustpilot)', async () => {
+        // 1. Update review sync settings
+        const postSettingsRes = await fetch(`${BASE_URL}/api/settings/reviews-sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                googleReviewUrl: 'https://search.google.com/local/writereview?placeid=ChIJN1t_tDeuEmsRUsoyG83frY4',
+                tripadvisorUrl: 'https://www.tripadvisor.fr/UserReviewEdit-Atelier-Chris',
+                trustpilotUrl: 'https://fr.trustpilot.com/evaluate/atelier-chris.fr',
+                autoRedirectPositive: 1
+            })
+        });
+
+        assert.strictEqual(postSettingsRes.status, 200);
+        const postSettingsData = await postSettingsRes.json();
+        assert.strictEqual(postSettingsData.success, true);
+
+        // 2. Fetch review sync settings
+        const getSettingsRes = await fetch(`${BASE_URL}/api/settings/reviews-sync`);
+        assert.strictEqual(getSettingsRes.status, 200);
+        const getSettingsData = await getSettingsRes.json();
+        assert.strictEqual(getSettingsData.success, true);
+        assert.strictEqual(getSettingsData.settings.google_review_url, 'https://search.google.com/local/writereview?placeid=ChIJN1t_tDeuEmsRUsoyG83frY4');
+        assert.strictEqual(getSettingsData.settings.tripadvisor_url, 'https://www.tripadvisor.fr/UserReviewEdit-Atelier-Chris');
+
+        // 3. Submit a 5-star review and check that externalSync booster is returned
+        const reviewBoosterRes = await fetch(`${BASE_URL}/api/reviews`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: '12',
+                clientName: 'Sophie Ambassadrice',
+                rating: 5,
+                tags: ['⚡ Service ultra rapide', '🍲 Plats savoureux', '✨ Ambiance au top'],
+                comment: 'Incroyable restaurant, je recommande sur Google et TripAdvisor !'
+            })
+        });
+
+        assert.strictEqual(reviewBoosterRes.status, 201);
+        const boosterData = await reviewBoosterRes.json();
+        assert.strictEqual(boosterData.success, true);
+        assert.ok(boosterData.externalSync);
+        assert.strictEqual(boosterData.externalSync.eligibleForExternalRedirect, true);
+        assert.strictEqual(boosterData.externalSync.googleReviewUrl, 'https://search.google.com/local/writereview?placeid=ChIJN1t_tDeuEmsRUsoyG83frY4');
+    });
 });
-
-
-

@@ -138,6 +138,24 @@ async function initDatabase() {
 
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'stripe';
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS tip_amount_cents INT DEFAULT 0;
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS split_count INT DEFAULT 1;
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS split_part_index INT DEFAULT 1;
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS ticket_resto_amount_cents INT DEFAULT 0;
+
+      CREATE TABLE IF NOT EXISTS restaurant_settings (
+        id VARCHAR(50) PRIMARY KEY DEFAULT 'default',
+        google_review_url TEXT DEFAULT 'https://search.google.com/local/writereview?placeid=ChIJN1t_tDeuEmsRUsoyG83frY4',
+        tripadvisor_url TEXT DEFAULT 'https://www.tripadvisor.fr/UserReviewEdit',
+        trustpilot_url TEXT DEFAULT 'https://fr.trustpilot.com/evaluate',
+        thefork_url TEXT DEFAULT '',
+        auto_redirect_positive_reviews BOOLEAN DEFAULT true,
+        min_rating_for_redirect INT DEFAULT 4,
+        ticket_restaurant_enabled BOOLEAN DEFAULT true,
+        ticket_restaurant_max_daily_cents INT DEFAULT 2500,
+        bill_splitting_enabled BOOLEAN DEFAULT true,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT INTO restaurant_settings (id) VALUES ('default') ON CONFLICT (id) DO NOTHING;
 
       CREATE TABLE IF NOT EXISTS order_reviews (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -604,9 +622,11 @@ async function deductBOMStock(clientOrPool, productId, quantity = 1, modifiers =
 
 // 4. Créer une commande directe (Client PWA & Simulation) avec Sièges, Suites, Allergies & Décompte BOM
 app.post('/api/orders/mock-create', async (req, res) => {
-  const { tableNumber, clientName, items, paymentMethod, seatNumber } = req.body;
+  const { tableNumber, clientName, items, paymentMethod, seatNumber, splitCount, splitPartIndex, ticketRestoAmountCents } = req.body;
   const isCash = paymentMethod === 'especes';
+  const isTicketResto = paymentMethod === 'titre_restaurant';
   const paymentStatus = isCash ? 'a_payer_en_caisse' : 'complete';
+  const recordedMethod = isCash ? 'especes' : (isTicketResto ? 'titre_restaurant' : 'carte');
   
   try {
     const orderItems = Array.isArray(items) ? items : [];
@@ -674,12 +694,21 @@ app.post('/api/orders/mock-create', async (req, res) => {
       safeTipCents = Math.round(tip * 100);
     }
 
+    const safeSplitCount = parseInt(splitCount, 10) > 0 ? parseInt(splitCount, 10) : 1;
+    const safeSplitPart = parseInt(splitPartIndex, 10) > 0 ? parseInt(splitPartIndex, 10) : 1;
+    const safeTicketRestoCents = parseInt(ticketRestoAmountCents, 10) > 0 ? parseInt(ticketRestoAmountCents, 10) : 0;
+
     const finalTotalAmountCents = priceSumCents + safeTipCents;
 
     const orderResult = await pool.query(
-      `INSERT INTO orders (session_id, total_amount_cents, tip_amount_cents, payment_status, payment_method, order_status, client_name)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-      [sessionId, finalTotalAmountCents, safeTipCents, paymentStatus, isCash ? 'especes' : 'carte', 'en_cuisine', safeClientName]
+      `INSERT INTO orders (
+        session_id, total_amount_cents, tip_amount_cents, payment_status, payment_method, 
+        order_status, client_name, split_count, split_part_index, ticket_resto_amount_cents
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+      [
+        sessionId, finalTotalAmountCents, safeTipCents, paymentStatus, recordedMethod, 
+        'en_cuisine', safeClientName, safeSplitCount, safeSplitPart, safeTicketRestoCents
+      ]
     );
     const orderId = orderResult.rows[0].id;
     
@@ -735,6 +764,15 @@ app.post('/api/orders/mock-create', async (req, res) => {
     const queueResult = await pool.query("SELECT COUNT(*) as count FROM orders WHERE order_status = 'en_cuisine'");
     const queuePos = parseInt(queueResult.rows[0].count || 1);
 
+    let methodLabel = '[PAYÉ STRIPE]';
+    if (isCash) methodLabel = '[À ENCAISSER EN ESPÈCES]';
+    else if (isTicketResto) methodLabel = `[TITRE-RESTO: ${(safeTicketRestoCents/100).toFixed(2)} €]`;
+
+    let splitLabel = '';
+    if (safeSplitCount > 1) {
+      splitLabel = ` (Part ${safeSplitPart}/${safeSplitCount})`;
+    }
+
     io.emit('new_order', {
       orderId,
       tableNumber: paddedNum,
@@ -743,9 +781,12 @@ app.post('/api/orders/mock-create', async (req, res) => {
       queuePos,
       totalAmountCents: finalTotalAmountCents,
       tipAmountCents: safeTipCents,
+      splitCount: safeSplitCount,
+      splitPartIndex: safeSplitPart,
+      ticketRestoAmountCents: safeTicketRestoCents,
       paymentStatus,
-      paymentMethod: isCash ? 'especes' : 'carte',
-      message: `Nouvelle commande de ${safeClientName} (Table ${paddedNum}) ${isCash ? '[À ENCAISSER EN ESPÈCES]' : '[PAYÉ STRIPE]'}${safeTipCents > 0 ? ` (Pourboire: ${(safeTipCents/100).toFixed(2)} €)` : ''}`
+      paymentMethod: recordedMethod,
+      message: `Nouvelle commande de ${safeClientName} (Table ${paddedNum})${splitLabel} ${methodLabel}${safeTipCents > 0 ? ` (Pourboire: ${(safeTipCents/100).toFixed(2)} €)` : ''}`
     });
 
     io.emit('table_layout_updated', { tableNumber: paddedNum, serviceStatus: 'en_preparation' });
@@ -756,8 +797,11 @@ app.post('/api/orders/mock-create', async (req, res) => {
       queuePos, 
       totalAmountCents: finalTotalAmountCents, 
       tipAmountCents: safeTipCents,
+      splitCount: safeSplitCount,
+      splitPartIndex: safeSplitPart,
+      ticketRestoAmountCents: safeTicketRestoCents,
       paymentStatus, 
-      paymentMethod: isCash ? 'especes' : 'carte' 
+      paymentMethod: recordedMethod
     });
   } catch (error) {
     console.error('Erreur mock order create:', error);
@@ -766,8 +810,83 @@ app.post('/api/orders/mock-create', async (req, res) => {
 });
 
 // ========================================================
-// 4.0. AVIS ET COMMENTAIRES CLIENTS (RATINGS & REVIEWS)
+// 4.0. AVIS, COMMENTAIRES & SYNCHRONISATION MULTI-PLATEFORMES
 // ========================================================
+
+// Récupérer les paramètres d'e-réputation et de synchronisation des avis
+app.get('/api/settings/reviews-sync', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM restaurant_settings WHERE id = $1 LIMIT 1', ['default']);
+    let row;
+    if (result.rows.length === 0) {
+      const inserted = await pool.query('INSERT INTO restaurant_settings (id) VALUES ($1) RETURNING *', ['default']);
+      row = inserted.rows[0];
+    } else {
+      row = result.rows[0];
+    }
+    res.json({ success: true, settings: row, ...row });
+  } catch (err) {
+    console.error('Erreur lecture configuration avis:', err);
+    res.status(500).json({ error: 'Erreur lors de la récupération des paramètres' });
+  }
+});
+
+// Mettre à jour les paramètres de synchronisation des avis (Google, TripAdvisor, Trustpilot, Plafonds)
+app.post('/api/settings/reviews-sync', async (req, res) => {
+  try {
+    const google_review_url = req.body.googleReviewUrl || req.body.google_review_url;
+    const tripadvisor_url = req.body.tripadvisorUrl || req.body.tripadvisor_url;
+    const trustpilot_url = req.body.trustpilotUrl || req.body.trustpilot_url;
+    const thefork_url = req.body.theforkUrl || req.body.thefork_url;
+    const auto_redirect = req.body.autoRedirectPositive !== undefined ? req.body.autoRedirectPositive : req.body.auto_redirect_positive_reviews;
+    const min_rating = req.body.minRatingForRedirect !== undefined ? req.body.minRatingForRedirect : req.body.min_rating_for_redirect;
+    const ticket_enabled = req.body.ticketRestaurantEnabled !== undefined ? req.body.ticketRestaurantEnabled : req.body.ticket_restaurant_enabled;
+    const ticket_cap = req.body.ticketRestaurantMaxDailyCents !== undefined ? req.body.ticketRestaurantMaxDailyCents : req.body.ticket_restaurant_max_daily_cents;
+    const split_enabled = req.body.billSplittingEnabled !== undefined ? req.body.billSplittingEnabled : req.body.bill_splitting_enabled;
+
+    const result = await pool.query(
+      `INSERT INTO restaurant_settings (
+        id, google_review_url, tripadvisor_url, trustpilot_url, thefork_url,
+        auto_redirect_positive_reviews, min_rating_for_redirect,
+        ticket_restaurant_enabled, ticket_restaurant_max_daily_cents,
+        bill_splitting_enabled, updated_at
+       ) VALUES ('default', $1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
+       ON CONFLICT (id) DO UPDATE SET
+        google_review_url = COALESCE($1, restaurant_settings.google_review_url),
+        tripadvisor_url = COALESCE($2, restaurant_settings.tripadvisor_url),
+        trustpilot_url = COALESCE($3, restaurant_settings.trustpilot_url),
+        thefork_url = COALESCE($4, restaurant_settings.thefork_url),
+        auto_redirect_positive_reviews = COALESCE($5, restaurant_settings.auto_redirect_positive_reviews),
+        min_rating_for_redirect = COALESCE($6, restaurant_settings.min_rating_for_redirect),
+        ticket_restaurant_enabled = COALESCE($7, restaurant_settings.ticket_restaurant_enabled),
+        ticket_restaurant_max_daily_cents = COALESCE($8, restaurant_settings.ticket_restaurant_max_daily_cents),
+        bill_splitting_enabled = COALESCE($9, restaurant_settings.bill_splitting_enabled),
+        updated_at = CURRENT_TIMESTAMP
+       RETURNING *`,
+      [
+        google_review_url, tripadvisor_url, trustpilot_url, thefork_url,
+        auto_redirect !== undefined ? Boolean(auto_redirect) : null,
+        min_rating !== undefined ? parseInt(min_rating, 10) : null,
+        ticket_enabled !== undefined ? Boolean(ticket_enabled) : null,
+        ticket_cap !== undefined ? parseInt(ticket_cap, 10) : null,
+        split_enabled !== undefined ? Boolean(split_enabled) : null
+      ]
+    );
+
+    const updated = result.rows[0];
+    io.emit('settings_updated', updated);
+
+    res.json({
+      success: true,
+      message: 'Paramètres d\'e-réputation et de paiements mis à jour avec succès',
+      settings: updated,
+      ...updated
+    });
+  } catch (err) {
+    console.error('Erreur mise à jour configuration avis:', err);
+    res.status(500).json({ error: 'Erreur lors de la mise à jour des paramètres' });
+  }
+});
 
 // Enregistrer une note / avis client
 app.post('/api/reviews', async (req, res) => {
@@ -794,13 +913,26 @@ app.post('/api/reviews', async (req, res) => {
 
     const newReview = result.rows[0];
 
+    // Récupérer les URLs de synchronisation externe pour la réponse
+    const settingsRes = await pool.query('SELECT google_review_url, tripadvisor_url, trustpilot_url, auto_redirect_positive_reviews, min_rating_for_redirect FROM restaurant_settings WHERE id = $1', ['default']);
+    const settings = settingsRes.rows[0] || {};
+
     // Diffusion temps réel sur les écrans KDS et dashboard manager
-    io.emit('new_customer_review', newReview);
+    io.emit('new_customer_review', {
+      ...newReview,
+      isAlert: numRating <= 2
+    });
 
     res.status(201).json({
       success: true,
       message: 'Merci pour votre retour d\'expérience !',
-      review: newReview
+      review: newReview,
+      externalSync: {
+        eligibleForExternalRedirect: (settings.auto_redirect_positive_reviews !== false) && (numRating >= (settings.min_rating_for_redirect || 4)),
+        googleReviewUrl: settings.google_review_url,
+        tripadvisorUrl: settings.tripadvisor_url,
+        trustpilotUrl: settings.trustpilot_url
+      }
     });
   } catch (error) {
     console.error('Erreur enregistrement avis client:', error);

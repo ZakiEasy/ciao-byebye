@@ -3663,4 +3663,440 @@ input:checked + .switch-slider:before {
     box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
 }
 
+/* ========================================================
+   1. VISITE GUIDÉE & WALKTHROUGH TOUR ENGINE
+   ======================================================== */
+.glass-btn-tour {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: var(--radius-sm, 8px);
+    color: #38bdf8;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.glass-btn-tour:hover {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: #38bdf8;
+    transform: translateY(-1px);
+}
+
+.walkthrough-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    transition: opacity 0.3s ease;
+}
+
+.walkthrough-highlight-box {
+    position: absolute;
+    border: 3px solid #38bdf8;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75), 0 0 25px rgba(56, 189, 248, 0.6);
+    border-radius: 12px;
+    pointer-events: none;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 10000;
+}
+
+.walkthrough-card {
+    position: relative;
+    max-width: 440px;
+    width: 100%;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(56, 189, 248, 0.2);
+    z-index: 10001;
+    animation: tourCardSlideIn 0.3s ease;
+}
+
+@keyframes tourCardSlideIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.walkthrough-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.walkthrough-step-badge {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.walkthrough-close-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted, #9ca3af);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.walkthrough-close-btn:hover {
+    color: #fff;
+}
+
+.walkthrough-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.walkthrough-desc {
+    font-size: 13px;
+    color: #cbd5e1;
+    line-height: 1.5;
+    margin: 0 0 20px 0;
+}
+
+.walkthrough-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.walkthrough-prev-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #cbd5e1;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.walkthrough-prev-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.walkthrough-dots {
+    display: flex;
+    gap: 6px;
+}
+
+.walkthrough-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease;
+}
+
+.walkthrough-dot.active {
+    background: #38bdf8;
+    width: 16px;
+    border-radius: 4px;
+}
+
+.walkthrough-next-btn {
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 8px;
+}
+
+/* ========================================================
+   2. DIVISION D'ADDITION (BILL SPLITTING)
+   ======================================================== */
+.bill-split-container {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm, 8px);
+    padding: 12px 14px;
+    margin-bottom: 14px;
+}
+
+.split-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.split-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.split-badge {
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    color: #38bdf8;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.split-options-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+
+.split-btn {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    color: #cbd5e1;
+    padding: 7px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.split-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.split-btn.active {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: #38bdf8;
+    color: #38bdf8;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+.custom-split-input-wrapper {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.custom-split-input-wrapper label {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.custom-split-input-wrapper input {
+    width: 70px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    color: #fff;
+    padding: 6px 10px;
+    text-align: center;
+    font-weight: 700;
+    outline: none;
+}
+
+/* ========================================================
+   3. TITRES-RESTAURANT (SWILE, EDENRED, CONECS...)
+   ======================================================== */
+.ticket-resto-payment-info {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm, 8px);
+    padding: 14px;
+    margin-bottom: 16px;
+}
+
+.ticket-resto-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.resto-badge {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #cbd5e1;
+}
+
+.resto-cap-alert {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 11px;
+    color: #34d399;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.ticket-resto-breakdown {
+    text-align: left;
+}
+
+.ticket-resto-breakdown .input-group label {
+    font-size: 12px;
+    color: #cbd5e1;
+    margin-bottom: 6px;
+    display: block;
+}
+
+/* ========================================================
+   4. HUB D'E-RÉPUTATION & BOOSTER D'AVIS GOOGLE/TRIPADVISOR
+   ======================================================== */
+.review-sync-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 250;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.review-sync-modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.review-sync-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    width: calc(100% - 40px);
+    max-width: 440px;
+    border-radius: var(--radius-md, 16px);
+    z-index: 251;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.7), 0 0 35px rgba(245, 158, 11, 0.2);
+}
+
+.review-sync-modal.active {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.review-sync-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.review-sync-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: #fbbf24;
+}
+
+.review-sync-body {
+    padding: 20px;
+    text-align: center;
+}
+
+.sync-desc {
+    font-size: 13px;
+    color: #cbd5e1;
+    line-height: 1.5;
+    margin: 0 0 16px 0;
+}
+
+.external-review-platforms {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.platform-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.google-review-btn {
+    background: #ffffff;
+    color: #1f2937;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.google-review-btn:hover {
+    background: #f3f4f6;
+    transform: translateY(-1px);
+}
+
+.tripadvisor-btn {
+    background: #00af87;
+    color: #ffffff;
+}
+
+.tripadvisor-btn:hover {
+    background: #009674;
+    transform: translateY(-1px);
+}
+
+.trustpilot-btn {
+    background: #00b67a;
+    color: #ffffff;
+}
+
+.trustpilot-btn:hover {
+    background: #009e6a;
+    transform: translateY(-1px);
+}
+
 

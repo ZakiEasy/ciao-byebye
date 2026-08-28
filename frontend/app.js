@@ -393,25 +393,36 @@ function formatPrice(euroAmount) {
 function setPaymentMethod(method) {
     selectedPaymentMethod = method;
     const tabCard = document.getElementById('tab-pay-card');
+    const tabResto = document.getElementById('tab-pay-ticket-resto');
     const tabCash = document.getElementById('tab-pay-cash');
     const cardView = document.getElementById('card-payment-view');
+    const restoView = document.getElementById('ticket-resto-payment-view');
     const cashView = document.getElementById('cash-payment-view');
     const btnText = document.getElementById('confirm-payment-btn-text');
     const t = translations[currentLang] || translations.fr;
 
+    if (tabCard) tabCard.classList.remove('active');
+    if (tabResto) tabResto.classList.remove('active');
+    if (tabCash) tabCash.classList.remove('active');
+    if (cardView) cardView.style.display = 'none';
+    if (restoView) restoView.style.display = 'none';
+    if (cashView) cashView.style.display = 'none';
+
     if (method === 'especes') {
         if (tabCash) tabCash.classList.add('active');
-        if (tabCard) tabCard.classList.remove('active');
         if (cashView) cashView.style.display = 'block';
-        if (cardView) cardView.style.display = 'none';
-        if (btnText) btnText.innerText = t.btn_confirm_cash;
+        if (btnText) btnText.innerText = t.btn_confirm_cash || 'Valider la commande (Espèces en Caisse)';
+    } else if (method === 'titre_restaurant') {
+        if (tabResto) tabResto.classList.add('active');
+        if (restoView) restoView.style.display = 'block';
+        if (btnText) btnText.innerText = t.btn_confirm_ticket_resto || 'Confirmer le règlement Titre-Resto';
     } else {
         if (tabCard) tabCard.classList.add('active');
-        if (tabCash) tabCash.classList.remove('active');
         if (cardView) cardView.style.display = 'block';
-        if (cashView) cashView.style.display = 'none';
-        if (btnText) btnText.innerText = t.btn_confirm_payment;
+        if (btnText) btnText.innerText = t.btn_confirm_payment || 'Confirmer le paiement';
     }
+
+    updatePaymentTotalDisplay();
 }
 
 // Change Language
@@ -1496,8 +1507,15 @@ function toggleCart() {
 
 let currentTipPercent = 0;
 let currentTipCustomAmount = 0;
+let currentSplitCount = 1;
+let currentSplitPart = 1;
+let currentTicketRestoAmount = 0;
 let currentReviewRating = 5;
 let currentReviewTags = new Set(['⚡ Service ultra rapide', '🍲 Plats savoureux']);
+
+// ========================================================
+// 1. GESTION DES POURBOIRES (TIPS)
+// ========================================================
 
 function selectTip(percent, btnEl) {
     currentTipPercent = percent;
@@ -1551,10 +1569,90 @@ function getCalculatedTipAmount(subtotal) {
     return 0;
 }
 
+// ========================================================
+// 2. DIVISION D'ADDITION (BILL SPLITTING)
+// ========================================================
+
+function setBillSplit(count, btnEl) {
+    currentSplitCount = parseInt(count, 10) || 1;
+    currentSplitPart = 1;
+
+    document.querySelectorAll('.split-options-grid .split-btn').forEach(btn => btn.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+
+    const customWrap = document.getElementById('custom-split-input-wrapper');
+    if (customWrap) customWrap.style.display = 'none';
+
+    const badge = document.getElementById('split-summary-badge');
+    if (badge) {
+        if (currentSplitCount === 1) badge.innerText = "Addition Complète (1 pers.)";
+        else badge.innerText = `Partage 1/${currentSplitCount} (${currentSplitCount} convives)`;
+    }
+
+    updatePaymentTotalDisplay();
+}
+
+function toggleCustomSplitInput() {
+    const customWrap = document.getElementById('custom-split-input-wrapper');
+    const customToggleBtn = document.getElementById('split-custom-toggle');
+    document.querySelectorAll('.split-options-grid .split-btn').forEach(btn => btn.classList.remove('active'));
+    if (customToggleBtn) customToggleBtn.classList.add('active');
+
+    if (customWrap) {
+        customWrap.style.display = 'flex';
+        const input = document.getElementById('custom-split-people');
+        if (input) {
+            input.focus();
+            handleCustomSplitInput(input.value);
+        }
+    }
+}
+
+function handleCustomSplitInput(val) {
+    const count = parseInt(val, 10);
+    if (!isNaN(count) && count >= 1) {
+        currentSplitCount = count;
+    } else {
+        currentSplitCount = 1;
+    }
+    const badge = document.getElementById('split-summary-badge');
+    if (badge) {
+        badge.innerText = `Partage 1/${currentSplitCount} (${currentSplitCount} convives)`;
+    }
+    updatePaymentTotalDisplay();
+}
+
+// ========================================================
+// 3. TITRES-RESTAURANT & TICKETS RESTO (SWILE, EDENRED...)
+// ========================================================
+
+function updateTicketRestoComplement(val) {
+    const totalOrder = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const splitPart = totalOrder / currentSplitCount;
+    const tip = getCalculatedTipAmount(splitPart);
+    const totalToPay = splitPart + tip;
+
+    let ticketAmt = parseFloat(val);
+    if (isNaN(ticketAmt) || ticketAmt < 0) ticketAmt = 0;
+    if (ticketAmt > 25) ticketAmt = 25; // Plafond journalier légal
+    if (ticketAmt > totalToPay) ticketAmt = totalToPay;
+
+    currentTicketRestoAmount = ticketAmt;
+    const complement = Math.max(0, totalToPay - ticketAmt);
+
+    const compEl = document.getElementById('ticket-resto-complement-amount');
+    if (compEl) compEl.innerText = formatPrice(complement);
+}
+
+// ========================================================
+// 4. CALCUL DU MONTANT GLOBAL À RÉGLER
+// ========================================================
+
 function updatePaymentTotalDisplay() {
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const tip = getCalculatedTipAmount(subtotal);
-    const totalWithTip = subtotal + tip;
+    const fullSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const splitPartBase = fullSubtotal / (currentSplitCount || 1);
+    const tip = getCalculatedTipAmount(splitPartBase);
+    const partTotalWithTip = splitPartBase + tip;
     
     const tipEl = document.getElementById('tip-amount-display');
     if (tipEl) {
@@ -1562,7 +1660,28 @@ function updatePaymentTotalDisplay() {
     }
     
     if (paymentAmount) {
-        paymentAmount.innerText = formatPrice(totalWithTip);
+        paymentAmount.innerText = formatPrice(partTotalWithTip);
+    }
+
+    const fullOrderEl = document.getElementById('full-order-amount');
+    if (fullOrderEl) {
+        fullOrderEl.innerText = formatPrice(fullSubtotal);
+    }
+
+    const hintEl = document.getElementById('full-order-total-hint');
+    if (hintEl) {
+        hintEl.style.display = currentSplitCount > 1 ? 'block' : 'none';
+    }
+
+    // Mise à jour de la vue Titre-Restaurant
+    const ticketInput = document.getElementById('ticket-resto-amount');
+    if (ticketInput) {
+        const defaultTicket = Math.min(partTotalWithTip, 25.0);
+        if (!ticketInput.value || parseFloat(ticketInput.value) > partTotalWithTip) {
+            ticketInput.value = defaultTicket.toFixed(2);
+            currentTicketRestoAmount = defaultTicket;
+        }
+        updateTicketRestoComplement(ticketInput.value);
     }
 }
 
@@ -1605,9 +1724,11 @@ async function simulatePaymentSuccess() {
     const tableNumEl = document.getElementById('table-number');
     const tableNumber = tableNumEl ? tableNumEl.innerText.trim() : '05';
 
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const tipAmount = getCalculatedTipAmount(subtotal);
+    const fullSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const splitPartBase = fullSubtotal / (currentSplitCount || 1);
+    const tipAmount = getCalculatedTipAmount(splitPartBase);
     const tipAmountCents = Math.round(tipAmount * 100);
+    const ticketRestoCents = selectedPaymentMethod === 'titre_restaurant' ? Math.round(currentTicketRestoAmount * 100) : 0;
 
     try {
         const response = await fetch('/api/orders/mock-create', {
@@ -1618,6 +1739,9 @@ async function simulatePaymentSuccess() {
                 clientName,
                 paymentMethod: selectedPaymentMethod,
                 tipAmountCents: tipAmountCents,
+                splitCount: currentSplitCount,
+                splitPartIndex: currentSplitPart,
+                ticketRestoAmountCents: ticketRestoCents,
                 items: cart.map(item => ({
                     id: item.id,
                     name: item.name,
@@ -1650,6 +1774,8 @@ async function simulatePaymentSuccess() {
             status: 'en_cuisine',
             paymentStatus: data.paymentStatus || (selectedPaymentMethod === 'especes' ? 'a_payer_en_caisse' : 'complete'),
             paymentMethod: selectedPaymentMethod,
+            splitCount: currentSplitCount,
+            splitPartIndex: currentSplitPart,
             createdAt: Date.now()
         });
 
@@ -1671,7 +1797,7 @@ async function simulatePaymentSuccess() {
 }
 
 // ========================================================
-// CUSTOMER REVIEW & RATING CLIENT LOGIC
+// 5. AVIS CLIENTS & SMART REPUTATION BOOSTER (GOOGLE / TRIPADVISOR)
 // ========================================================
 
 function openReviewModal() {
@@ -1694,6 +1820,35 @@ function openReviewModal() {
 function closeReviewModal() {
     const modal = document.getElementById('review-modal');
     const overlay = document.getElementById('review-modal-overlay');
+    if (modal && overlay) {
+        modal.classList.remove('active');
+        overlay.classList.remove('active');
+    }
+}
+
+function openReviewSyncModal(syncData) {
+    const modal = document.getElementById('review-sync-modal');
+    const overlay = document.getElementById('review-sync-modal-overlay');
+    
+    if (syncData) {
+        const googleLink = document.getElementById('sync-link-google');
+        const tripLink = document.getElementById('sync-link-tripadvisor');
+        const trustLink = document.getElementById('sync-link-trustpilot');
+        
+        if (googleLink && syncData.googleReviewUrl) googleLink.href = syncData.googleReviewUrl;
+        if (tripLink && syncData.tripadvisorUrl) tripLink.href = syncData.tripadvisorUrl;
+        if (trustLink && syncData.trustpilotUrl) trustLink.href = syncData.trustpilotUrl;
+    }
+    
+    if (modal && overlay) {
+        modal.classList.add('active');
+        overlay.classList.add('active');
+    }
+}
+
+function closeReviewSyncModal() {
+    const modal = document.getElementById('review-sync-modal');
+    const overlay = document.getElementById('review-sync-modal-overlay');
     if (modal && overlay) {
         modal.classList.remove('active');
         overlay.classList.remove('active');
@@ -1768,6 +1923,7 @@ async function submitCustomerReview() {
             throw new Error('Erreur lors de l\'enregistrement');
         }
         
+        const data = await res.json();
         closeReviewModal();
         
         const banner = document.getElementById('order-review-banner');
@@ -1778,6 +1934,13 @@ async function submitCustomerReview() {
                 </div>
             `;
         }
+
+        // Si la note est 4 ou 5 étoiles et que la synchronisation externe est active -> Ouvrir le Smart Booster Google/TripAdvisor
+        if (data.externalSync && data.externalSync.eligibleForExternalRedirect) {
+            setTimeout(() => {
+                openReviewSyncModal(data.externalSync);
+            }, 400);
+        }
     } catch (err) {
         console.error('Erreur soumission avis:', err);
         alert('Erreur lors de l\'envoi de votre avis. Veuillez réessayer.');
@@ -1787,6 +1950,110 @@ async function submitCustomerReview() {
             submitBtn.disabled = false;
         }
     }
+}
+
+// ========================================================
+// 6. VISITE GUIDÉE & WALKTHROUGH TOUR ENGINE (CLIENT PWA)
+// ========================================================
+
+let clientWalkthroughStep = 0;
+const clientWalkthroughSteps = [
+    {
+        target: '.category-chips-nav',
+        title: "1. Navigation & Filtres de Carte",
+        desc: "Parcourez facilement toutes les catégories du restaurant : Boissons, Entrées, Plats, Vins et Desserts en 1 clic."
+    },
+    {
+        target: '#menu-container',
+        title: "2. Personnalisation & Ingrédients",
+        desc: "Cliquez sur n'importe quel plat pour le personnaliser : retirez un ingrédient, signalez une allergie ou choisissez votre cuisson !"
+    },
+    {
+        target: '#cart-btn',
+        title: "3. Panier & Numérotation des Sièges",
+        desc: "Retrouvez vos articles choisis et attribuez chaque plat à un convive précis (Place 1, Place 2...) pour un service fluide."
+    },
+    {
+        target: '#payment-modal',
+        title: "4. Division d'Addition & Moyens de Paiement",
+        desc: "Réglez l'addition seul ou divisez-la équitablement (1/2, 1/3, 1/4...). Vous pouvez payer par CB, Titre-Restaurant (Swile, Edenred, Conecs) ou Espèces !"
+    },
+    {
+        target: '#header-table-badge',
+        title: "5. Suivi Cuisine en Direct & E-Réputation",
+        desc: "Suivez l'avancement de votre commande en direct et partagez votre avis en 5 étoiles sur Google Avis pour soutenir l'établissement !"
+    }
+];
+
+function startClientWalkthrough() {
+    clientWalkthroughStep = 0;
+    const overlay = document.getElementById('walkthrough-overlay');
+    if (overlay) overlay.style.display = 'flex';
+    renderClientWalkthroughStep();
+}
+
+function renderClientWalkthroughStep() {
+    const step = clientWalkthroughSteps[clientWalkthroughStep];
+    if (!step) {
+        stopClientWalkthrough();
+        return;
+    }
+
+    const titleEl = document.getElementById('walkthrough-title');
+    const descEl = document.getElementById('walkthrough-desc');
+    const badgeEl = document.getElementById('walkthrough-step-badge');
+    const prevBtn = document.getElementById('walkthrough-prev-btn');
+    const nextBtn = document.getElementById('walkthrough-next-btn');
+    const dotsEl = document.getElementById('walkthrough-dots');
+    const box = document.getElementById('walkthrough-highlight-box');
+
+    if (titleEl) titleEl.innerText = step.title;
+    if (descEl) descEl.innerText = step.desc;
+    if (badgeEl) badgeEl.innerText = `Étape ${clientWalkthroughStep + 1} / ${clientWalkthroughSteps.length}`;
+    if (prevBtn) prevBtn.disabled = (clientWalkthroughStep === 0);
+    if (nextBtn) nextBtn.innerText = (clientWalkthroughStep === clientWalkthroughSteps.length - 1) ? 'Terminer 🎉' : 'Suivant →';
+
+    if (dotsEl) {
+        dotsEl.innerHTML = clientWalkthroughSteps.map((_, i) => 
+            `<div class="walkthrough-dot ${i === clientWalkthroughStep ? 'active' : ''}"></div>`
+        ).join('');
+    }
+
+    // Positionner la boîte de surbrillance
+    const targetEl = document.querySelector(step.target);
+    if (targetEl && box) {
+        const rect = targetEl.getBoundingClientRect();
+        box.style.display = 'block';
+        box.style.top = `${Math.max(0, rect.top - 8 + window.scrollY)}px`;
+        box.style.left = `${Math.max(0, rect.left - 8)}px`;
+        box.style.width = `${rect.width + 16}px`;
+        box.style.height = `${rect.height + 16}px`;
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (box) {
+        box.style.display = 'none';
+    }
+}
+
+function nextClientWalkthroughStep() {
+    if (clientWalkthroughStep < clientWalkthroughSteps.length - 1) {
+        clientWalkthroughStep++;
+        renderClientWalkthroughStep();
+    } else {
+        stopClientWalkthrough();
+    }
+}
+
+function prevClientWalkthroughStep() {
+    if (clientWalkthroughStep > 0) {
+        clientWalkthroughStep--;
+        renderClientWalkthroughStep();
+    }
+}
+
+function stopClientWalkthrough() {
+    const overlay = document.getElementById('walkthrough-overlay');
+    if (overlay) overlay.style.display = 'none';
+    localStorage.setItem('ciao_client_tour_seen', 'true');
 }
 
 // WebSockets listener for real-time order status tracking
