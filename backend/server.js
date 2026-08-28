@@ -137,6 +137,18 @@ async function initDatabase() {
       );
 
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'stripe';
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS tip_amount_cents INT DEFAULT 0;
+
+      CREATE TABLE IF NOT EXISTS order_reviews (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        order_id UUID REFERENCES orders(id) ON DELETE SET NULL,
+        table_number VARCHAR(10),
+        client_name VARCHAR(100),
+        rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+        tags TEXT[] DEFAULT '{}',
+        comment TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
 
       CREATE TABLE IF NOT EXISTS order_items (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -654,10 +666,20 @@ app.post('/api/orders/mock-create', async (req, res) => {
 
     const safeClientName = (clientName && typeof clientName === 'string' ? clientName.trim() : '') || 'Alex';
 
+    const { tipAmountCents, tip } = req.body || {};
+    let safeTipCents = 0;
+    if (typeof tipAmountCents === 'number' && tipAmountCents > 0) {
+      safeTipCents = Math.round(tipAmountCents);
+    } else if (typeof tip === 'number' && tip > 0) {
+      safeTipCents = Math.round(tip * 100);
+    }
+
+    const finalTotalAmountCents = priceSumCents + safeTipCents;
+
     const orderResult = await pool.query(
-      `INSERT INTO orders (session_id, total_amount_cents, payment_status, payment_method, order_status, client_name)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-      [sessionId, priceSumCents, paymentStatus, isCash ? 'especes' : 'carte', 'en_cuisine', safeClientName]
+      `INSERT INTO orders (session_id, total_amount_cents, tip_amount_cents, payment_status, payment_method, order_status, client_name)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+      [sessionId, finalTotalAmountCents, safeTipCents, paymentStatus, isCash ? 'especes' : 'carte', 'en_cuisine', safeClientName]
     );
     const orderId = orderResult.rows[0].id;
     
@@ -719,17 +741,105 @@ app.post('/api/orders/mock-create', async (req, res) => {
       clientName: safeClientName,
       items: orderItems,
       queuePos,
+      totalAmountCents: finalTotalAmountCents,
+      tipAmountCents: safeTipCents,
       paymentStatus,
       paymentMethod: isCash ? 'especes' : 'carte',
-      message: `Nouvelle commande de ${safeClientName} (Table ${paddedNum}) ${isCash ? '[À ENCAISSER EN ESPÈCES]' : '[PAYÉ STRIPE]'}`
+      message: `Nouvelle commande de ${safeClientName} (Table ${paddedNum}) ${isCash ? '[À ENCAISSER EN ESPÈCES]' : '[PAYÉ STRIPE]'}${safeTipCents > 0 ? ` (Pourboire: ${(safeTipCents/100).toFixed(2)} €)` : ''}`
     });
 
     io.emit('table_layout_updated', { tableNumber: paddedNum, serviceStatus: 'en_preparation' });
     
-    res.json({ success: true, orderId, queuePos, paymentStatus, paymentMethod: isCash ? 'especes' : 'carte' });
+    res.json({ 
+      success: true, 
+      orderId, 
+      queuePos, 
+      totalAmountCents: finalTotalAmountCents, 
+      tipAmountCents: safeTipCents,
+      paymentStatus, 
+      paymentMethod: isCash ? 'especes' : 'carte' 
+    });
   } catch (error) {
     console.error('Erreur mock order create:', error);
     res.status(500).json({ error: error.message || 'Erreur serveur lors de la commande' });
+  }
+});
+
+// ========================================================
+// 4.0. AVIS ET COMMENTAIRES CLIENTS (RATINGS & REVIEWS)
+// ========================================================
+
+// Enregistrer une note / avis client
+app.post('/api/reviews', async (req, res) => {
+  try {
+    const { orderId, tableNumber, clientName, rating, tags, comment } = req.body;
+    const numRating = parseInt(rating, 10);
+    if (!numRating || numRating < 1 || numRating > 5) {
+      return res.status(400).json({ error: 'La note doit être comprise entre 1 et 5 étoiles.' });
+    }
+
+    const safeTags = Array.isArray(tags) ? tags : [];
+    const safeComment = comment ? String(comment).trim() : '';
+    const safeTable = String(tableNumber || '05').trim();
+    const safeClient = (clientName && typeof clientName === 'string' ? clientName.trim() : '') || 'Client';
+
+    const validOrderId = (orderId && isUUID(orderId)) ? orderId : null;
+
+    const result = await pool.query(
+      `INSERT INTO order_reviews (order_id, table_number, client_name, rating, tags, comment)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, order_id, table_number, client_name, rating, tags, comment, created_at`,
+      [validOrderId, safeTable, safeClient, numRating, safeTags, safeComment]
+    );
+
+    const newReview = result.rows[0];
+
+    // Diffusion temps réel sur les écrans KDS et dashboard manager
+    io.emit('new_customer_review', newReview);
+
+    res.status(201).json({
+      success: true,
+      message: 'Merci pour votre retour d\'expérience !',
+      review: newReview
+    });
+  } catch (error) {
+    console.error('Erreur enregistrement avis client:', error);
+    res.status(500).json({ error: 'Erreur interne lors de l\'enregistrement de votre avis' });
+  }
+});
+
+// Lister les avis et statistiques de satisfaction pour le restaurant
+app.get('/api/reviews', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, order_id, table_number, client_name, rating, tags, comment, created_at
+       FROM order_reviews
+       ORDER BY created_at DESC
+       LIMIT 50`
+    );
+
+    const statsResult = await pool.query(
+      `SELECT 
+         COUNT(*) as total_reviews,
+         COALESCE(AVG(rating), 5.0) as average_rating,
+         COUNT(*) FILTER (WHERE rating >= 4) as positive_reviews,
+         COUNT(*) FILTER (WHERE rating <= 2) as alert_reviews
+       FROM order_reviews`
+    );
+
+    const row = statsResult.rows[0] || {};
+    res.json({
+      reviews: result.rows,
+      stats: {
+        totalReviews: parseInt(row.total_reviews || 0, 10),
+        averageRating: parseFloat(row.average_rating || 5.0).toFixed(1),
+        positiveReviews: parseInt(row.positive_reviews || 0, 10),
+        alertReviews: parseInt(row.alert_reviews || 0, 10)
+      }
+    });
+  } catch (error) {
+    console.error('Erreur lecture avis clients:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des avis' });
   }
 });
 

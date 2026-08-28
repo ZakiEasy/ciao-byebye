@@ -560,6 +560,9 @@
                 <button class="action-btn secondary" id="tab-btn-menu" onclick="switchMainTab('menu')" style="padding:6px 12px; font-size:12px;">
                     <i class="fa-solid fa-utensils"></i> Menu
                 </button>
+                <button class="action-btn secondary" id="tab-btn-reviews" onclick="switchMainTab('reviews')" style="padding:6px 12px; font-size:12px;">
+                    <i class="fa-solid fa-star" style="color:#f59e0b;"></i> Avis & Retours
+                </button>
                 <button class="action-btn secondary" id="tab-btn-modules" onclick="switchMainTab('modules')" style="padding:6px 12px; font-size:12px; display:none;">
                     <i class="fa-solid fa-toggle-on"></i> Modules & Offres
                 </button>
@@ -980,7 +983,7 @@
             activeMainTab = tab;
             showMenuManagement = (tab === 'menu');
             
-            ['kds', 'floorplan', 'inventory', 'modules', 'menu'].forEach(tName => {
+            ['kds', 'floorplan', 'inventory', 'modules', 'menu', 'reviews'].forEach(tName => {
                 const btn = document.getElementById(`tab-btn-${tName}`);
                 if (btn) {
                     if (tName === tab) {
@@ -1000,6 +1003,8 @@
                 renderModulesView();
             } else if (tab === 'menu') {
                 renderMenuManagement();
+            } else if (tab === 'reviews') {
+                renderCustomerReviewsView();
             } else {
                 fetchOrders();
             }
@@ -3399,6 +3404,133 @@
                     renderModulesView();
                 }
             });
+
+            socket.on('new_customer_review', (review) => {
+                const stars = '⭐'.repeat(review.rating || 5);
+                showKdsToast(`🌟 Nouvel avis Table ${review.table_number || ''} : ${stars} de ${review.client_name || 'Client'}`);
+                if (activeMainTab === 'reviews') {
+                    renderCustomerReviewsView();
+                }
+            });
+        }
+
+        async function renderCustomerReviewsView() {
+            const container = document.getElementById('dashboard-main-content');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1; height: 100%; display: flex; flex-direction: column; overflow: hidden; padding: 10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+                        <div>
+                            <h2 style="font-size:22px; font-weight:800; display:flex; align-items:center; gap:10px;">
+                                <i class="fa-solid fa-star" style="color:#f59e0b;"></i> Retours & Avis Clients en Direct
+                            </h2>
+                            <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">Suivi de la satisfaction convives et alertes qualité en temps réel.</p>
+                        </div>
+                        <button class="action-btn secondary" onclick="renderCustomerReviewsView()" style="font-size:12px; padding:6px 14px;">
+                            <i class="fa-solid fa-rotate"></i> Actualiser
+                        </button>
+                    </div>
+
+                    <div id="reviews-stats-cards" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:20px;">
+                        <div class="glass-panel" style="padding:16px; border-radius:16px; text-align:center;">
+                            <div style="font-size:12px; color:var(--text-muted); font-weight:600;">NOTE MOYENNE</div>
+                            <div style="font-size:28px; font-weight:900; color:#f59e0b; margin-top:4px;" id="stat-avg-rating">4.8 / 5</div>
+                            <div style="font-size:11px; color:#10b981; margin-top:2px;">⭐ Excellent niveau</div>
+                        </div>
+                        <div class="glass-panel" style="padding:16px; border-radius:16px; text-align:center;">
+                            <div style="font-size:12px; color:var(--text-muted); font-weight:600;">TOTAL AVIS RECUEILLIS</div>
+                            <div style="font-size:28px; font-weight:900; color:#fff; margin-top:4px;" id="stat-total-reviews">--</div>
+                            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Taux de retour: ~42%</div>
+                        </div>
+                        <div class="glass-panel" style="padding:16px; border-radius:16px; text-align:center;">
+                            <div style="font-size:12px; color:var(--text-muted); font-weight:600;">AVIS TRÈS POSITIFS (4-5★)</div>
+                            <div style="font-size:28px; font-weight:900; color:#10b981; margin-top:4px;" id="stat-positive-reviews">--</div>
+                            <div style="font-size:11px; color:#10b981; margin-top:2px;">Clients ambassadeurs</div>
+                        </div>
+                        <div class="glass-panel" style="padding:16px; border-radius:16px; text-align:center;">
+                            <div style="font-size:12px; color:var(--text-muted); font-weight:600;">POINTS D'ATTENTION (≤2★)</div>
+                            <div style="font-size:28px; font-weight:900; color:#ef4444; margin-top:4px;" id="stat-alert-reviews">0</div>
+                            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Alertes traitées</div>
+                        </div>
+                    </div>
+
+                    <div style="flex:1; overflow-y:auto; padding-right:6px;" id="reviews-list-container">
+                        <div style="text-align:center; padding:40px; color:var(--text-muted);">
+                            <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                            <p style="margin-top:10px;">Chargement des avis...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            try {
+                const res = await fetch('/api/reviews');
+                if (!res.ok) throw new Error('Erreur API avis');
+                const data = await res.json();
+
+                const stats = data.stats || {};
+                document.getElementById('stat-avg-rating').innerText = `${stats.averageRating || '5.0'} / 5`;
+                document.getElementById('stat-total-reviews').innerText = stats.totalReviews || '0';
+                document.getElementById('stat-positive-reviews').innerText = stats.positiveReviews || '0';
+                document.getElementById('stat-alert-reviews').innerText = stats.alertReviews || '0';
+
+                const listEl = document.getElementById('reviews-list-container');
+                const reviews = data.reviews || [];
+
+                if (reviews.length === 0) {
+                    listEl.innerHTML = `
+                        <div class="glass-panel" style="padding:40px; text-align:center; border-radius:16px;">
+                            <i class="fa-solid fa-star-half-stroke" style="font-size:40px; color:rgba(255,255,255,0.2); margin-bottom:12px;"></i>
+                            <h3 style="font-size:16px; color:#fff;">Aucun avis pour le moment</h3>
+                            <p style="font-size:13px; color:var(--text-muted); margin-top:6px;">Les avis laissés par vos clients sur leur smartphone apparaîtront ici instantanément.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                listEl.innerHTML = `
+                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap:16px;">
+                        ${reviews.map(r => {
+                            const dateStr = new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' (' + new Date(r.created_at).toLocaleDateString() + ')';
+                            const starIcons = Array(5).fill(0).map((_, i) => 
+                                `<i class="fa-solid fa-star" style="color: ${i < r.rating ? '#f59e0b' : 'rgba(255,255,255,0.15)'}; font-size:14px;"></i>`
+                            ).join('');
+                            const tags = Array.isArray(r.tags) ? r.tags : [];
+
+                            return `
+                                <div class="glass-panel" style="padding:18px; border-radius:16px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.02); display:flex; flex-direction:column; gap:10px;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <span style="background:rgba(245,158,11,0.15); color:#f59e0b; padding:3px 8px; border-radius:6px; font-weight:800; font-size:11px;">Table ${r.table_number || '05'}</span>
+                                            <strong style="color:#fff; font-size:14px;">${r.client_name || 'Client'}</strong>
+                                        </div>
+                                        <span style="font-size:11px; color:var(--text-muted);">${dateStr}</span>
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:4px;">
+                                        ${starIcons}
+                                        <span style="font-size:12px; font-weight:700; color:#f59e0b; margin-left:6px;">${r.rating}/5</span>
+                                    </div>
+                                    ${tags.length > 0 ? `
+                                        <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                                            ${tags.map(t => `<span style="font-size:10px; background:rgba(255,255,255,0.06); color:#cbd5e1; padding:2px 8px; border-radius:12px;">${t}</span>`).join('')}
+                                        </div>
+                                    ` : ''}
+                                    ${r.comment ? `
+                                        <div style="background:rgba(0,0,0,0.3); padding:10px 12px; border-radius:8px; font-size:12px; color:#e2e8f0; font-style:italic; line-height:1.4;">
+                                            "${r.comment}"
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+
+            } catch (e) {
+                console.error('Erreur chargement avis:', e);
+                container.innerHTML = `<div style="padding:20px; color:#ef4444;">Erreur lors de la récupération des avis.</div>`;
+            }
         }
     </script>
 </body>

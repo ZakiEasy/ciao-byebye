@@ -325,6 +325,26 @@
                 </button>
             </div>
 
+            <!-- Tip / Pourboire Section -->
+            <div class="tip-selection-container">
+                <div class="tip-header-row">
+                    <span class="tip-title"><i class="fa-solid fa-heart" style="color:#f43f5e;"></i> <span data-i18n="tip_label">Ajouter un pourboire pour l'équipe :</span></span>
+                    <span class="tip-amount-display" id="tip-amount-display">+0.00 €</span>
+                </div>
+                <div class="tip-options-grid">
+                    <button type="button" class="tip-btn active" data-tip="0" onclick="selectTip(0, this)">0%</button>
+                    <button type="button" class="tip-btn" data-tip="5" onclick="selectTip(5, this)">5%</button>
+                    <button type="button" class="tip-btn" data-tip="10" onclick="selectTip(10, this)">10%</button>
+                    <button type="button" class="tip-btn" data-tip="15" onclick="selectTip(15, this)">15%</button>
+                    <button type="button" class="tip-btn" data-tip="20" onclick="selectTip(20, this)">20%</button>
+                    <button type="button" class="tip-btn tip-custom-btn" id="tip-custom-toggle" onclick="toggleCustomTipInput()">Autre</button>
+                </div>
+                <div class="custom-tip-input-wrapper" id="custom-tip-input-wrapper" style="display:none;">
+                    <div class="currency-symbol">€</div>
+                    <input type="number" id="custom-tip-input" min="0" step="0.5" placeholder="Montant libre (ex: 2.50)" oninput="handleCustomTipInput(this.value)">
+                </div>
+            </div>
+
             <div class="total-to-pay"><span data-i18n="amount_to_pay">Montant à régler :</span> <span id="payment-amount">0.00 €</span></div>
             
             <!-- Simulated Credit Card & Digital Wallet Inputs (Card View) -->
@@ -400,7 +420,57 @@
             </div>
         </div>
 
+        <!-- Customer Feedback & Rating Banner in Tracker -->
+        <div class="order-review-banner" id="order-review-banner">
+            <div class="review-banner-text">
+                <strong><i class="fa-solid fa-star" style="color:#f59e0b;"></i> <span data-i18n="review_banner_title">Votre avis compte !</span></strong>
+                <p data-i18n="review_banner_desc">Notez votre expérience en 2 clics pour nous aider à nous améliorer.</p>
+            </div>
+            <button class="btn-open-review" onclick="openReviewModal()"><i class="fa-solid fa-pen-to-square"></i> <span data-i18n="btn_leave_review">Laisser un avis</span></button>
+        </div>
+
         <button class="back-to-menu-btn" onclick="closeSuccessModal()" data-i18n="btn_minimize_tracker">Réduire & Continuer à Parcourir</button>
+    </div>
+
+    <!-- Customer Review & Rating Modal -->
+    <div class="review-modal-overlay" id="review-modal-overlay" onclick="closeReviewModal()"></div>
+    <div class="review-modal glass" id="review-modal">
+        <div class="review-modal-header">
+            <h3><i class="fa-solid fa-star" style="color:#f59e0b;"></i> <span data-i18n="review_modal_title">Donnez votre avis</span></h3>
+            <button class="close-review-btn" onclick="closeReviewModal()" aria-label="Fermer"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="review-modal-body">
+            <p class="review-subtitle"><span data-i18n="review_subtitle">Comment s'est passée votre commande à la Table</span> <strong id="review-table-number">05</strong> ?</p>
+            
+            <!-- Star Rating (1 to 5) -->
+            <div class="star-rating-selector" id="star-rating-selector">
+                <i class="fa-solid fa-star star-item" data-rating="1" onclick="setReviewRating(1)"></i>
+                <i class="fa-solid fa-star star-item" data-rating="2" onclick="setReviewRating(2)"></i>
+                <i class="fa-solid fa-star star-item" data-rating="3" onclick="setReviewRating(3)"></i>
+                <i class="fa-solid fa-star star-item" data-rating="4" onclick="setReviewRating(4)"></i>
+                <i class="fa-solid fa-star star-item active" data-rating="5" onclick="setReviewRating(5)"></i>
+            </div>
+            <div class="rating-label-text" id="rating-label-text">Excellent ! (5/5)</div>
+
+            <!-- Quick Feedback Tags -->
+            <div class="review-tags-grid" id="review-tags-grid">
+                <span class="review-tag-chip active" onclick="toggleReviewTag(this, '⚡ Service ultra rapide')">⚡ Service ultra rapide</span>
+                <span class="review-tag-chip active" onclick="toggleReviewTag(this, '🍲 Plats savoureux')">🍲 Plats savoureux</span>
+                <span class="review-tag-chip" onclick="toggleReviewTag(this, '✨ Ambiance au top')">✨ Ambiance au top</span>
+                <span class="review-tag-chip" onclick="toggleReviewTag(this, '👍 Personnel agréable')">👍 Personnel agréable</span>
+                <span class="review-tag-chip" onclick="toggleReviewTag(this, '👌 Commande fluide')">👌 Commande fluide</span>
+            </div>
+
+            <!-- Comment input -->
+            <div class="review-comment-wrapper">
+                <label for="review-comment-text" data-i18n="review_comment_label">Un message pour l'équipe (facultatif) :</label>
+                <textarea id="review-comment-text" rows="3" placeholder="Partagez vos impressions ou remarques avec le chef et le service..."></textarea>
+            </div>
+
+            <button class="btn-submit-review" id="btn-submit-review" onclick="submitCustomerReview()">
+                <i class="fa-solid fa-paper-plane"></i> <span data-i18n="btn_submit_review">Envoyer mon avis</span>
+            </button>
+        </div>
     </div>
 
     <!-- Socket.io client -->

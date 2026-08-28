@@ -1494,10 +1494,81 @@ function toggleCart() {
     cartPanelOverlay.classList.toggle('active');
 }
 
+let currentTipPercent = 0;
+let currentTipCustomAmount = 0;
+let currentReviewRating = 5;
+let currentReviewTags = new Set(['⚡ Service ultra rapide', '🍲 Plats savoureux']);
+
+function selectTip(percent, btnEl) {
+    currentTipPercent = percent;
+    currentTipCustomAmount = 0;
+    
+    document.querySelectorAll('.tip-options-grid .tip-btn').forEach(btn => btn.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+    
+    const customWrap = document.getElementById('custom-tip-input-wrapper');
+    if (customWrap) customWrap.style.display = 'none';
+    const customInput = document.getElementById('custom-tip-input');
+    if (customInput) customInput.value = '';
+    
+    updatePaymentTotalDisplay();
+}
+
+function toggleCustomTipInput() {
+    const customWrap = document.getElementById('custom-tip-input-wrapper');
+    const customToggleBtn = document.getElementById('tip-custom-toggle');
+    document.querySelectorAll('.tip-options-grid .tip-btn').forEach(btn => btn.classList.remove('active'));
+    if (customToggleBtn) customToggleBtn.classList.add('active');
+    
+    if (customWrap) {
+        customWrap.style.display = 'flex';
+        const customInput = document.getElementById('custom-tip-input');
+        if (customInput) {
+            customInput.focus();
+            handleCustomTipInput(customInput.value);
+        }
+    }
+}
+
+function handleCustomTipInput(val) {
+    const amount = parseFloat(val);
+    if (!isNaN(amount) && amount >= 0) {
+        currentTipCustomAmount = amount;
+        currentTipPercent = 0;
+    } else {
+        currentTipCustomAmount = 0;
+    }
+    updatePaymentTotalDisplay();
+}
+
+function getCalculatedTipAmount(subtotal) {
+    if (currentTipCustomAmount > 0) {
+        return currentTipCustomAmount;
+    }
+    if (currentTipPercent > 0) {
+        return (subtotal * currentTipPercent) / 100;
+    }
+    return 0;
+}
+
+function updatePaymentTotalDisplay() {
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const tip = getCalculatedTipAmount(subtotal);
+    const totalWithTip = subtotal + tip;
+    
+    const tipEl = document.getElementById('tip-amount-display');
+    if (tipEl) {
+        tipEl.innerText = tip > 0 ? `+${formatPrice(tip)}` : '+0.00 €';
+    }
+    
+    if (paymentAmount) {
+        paymentAmount.innerText = formatPrice(totalWithTip);
+    }
+}
+
 function proceedToPayment() {
     if (cart.length === 0) return;
-    const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    paymentAmount.innerText = formatPrice(totalPrice);
+    updatePaymentTotalDisplay();
     
     cartPanel.classList.remove('active');
     cartPanelOverlay.classList.remove('active');
@@ -1534,6 +1605,10 @@ async function simulatePaymentSuccess() {
     const tableNumEl = document.getElementById('table-number');
     const tableNumber = tableNumEl ? tableNumEl.innerText.trim() : '05';
 
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const tipAmount = getCalculatedTipAmount(subtotal);
+    const tipAmountCents = Math.round(tipAmount * 100);
+
     try {
         const response = await fetch('/api/orders/mock-create', {
             method: 'POST',
@@ -1542,6 +1617,7 @@ async function simulatePaymentSuccess() {
                 tableNumber,
                 clientName,
                 paymentMethod: selectedPaymentMethod,
+                tipAmountCents: tipAmountCents,
                 items: cart.map(item => ({
                     id: item.id,
                     name: item.name,
@@ -1590,6 +1666,125 @@ async function simulatePaymentSuccess() {
         if (confirmBtn) {
             confirmBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> <span id="confirm-payment-btn-text">${selectedPaymentMethod === 'especes' ? t.btn_confirm_cash : t.btn_confirm_payment}</span>`;
             confirmBtn.disabled = false;
+        }
+    }
+}
+
+// ========================================================
+// CUSTOMER REVIEW & RATING CLIENT LOGIC
+// ========================================================
+
+function openReviewModal() {
+    const active = getActiveOrder();
+    const tableEl = document.getElementById('review-table-number');
+    if (tableEl) {
+        tableEl.innerText = active && active.tableNumber ? active.tableNumber : (document.getElementById('table-number') ? document.getElementById('table-number').innerText.trim() : '05');
+    }
+    
+    setReviewRating(5);
+    
+    const modal = document.getElementById('review-modal');
+    const overlay = document.getElementById('review-modal-overlay');
+    if (modal && overlay) {
+        modal.classList.add('active');
+        overlay.classList.add('active');
+    }
+}
+
+function closeReviewModal() {
+    const modal = document.getElementById('review-modal');
+    const overlay = document.getElementById('review-modal-overlay');
+    if (modal && overlay) {
+        modal.classList.remove('active');
+        overlay.classList.remove('active');
+    }
+}
+
+function setReviewRating(rating) {
+    currentReviewRating = rating;
+    const stars = document.querySelectorAll('#star-rating-selector .star-item');
+    stars.forEach(star => {
+        const r = parseInt(star.getAttribute('data-rating'), 10);
+        if (r <= rating) {
+            star.classList.add('active');
+        } else {
+            star.classList.remove('active');
+        }
+    });
+    
+    const labelEl = document.getElementById('rating-label-text');
+    if (labelEl) {
+        const labels = {
+            1: "Décevant (1/5)",
+            2: "Peut mieux faire (2/5)",
+            3: "Correct (3/5)",
+            4: "Très bon ! (4/5)",
+            5: "Excellent ! (5/5)"
+        };
+        labelEl.innerText = labels[rating] || `${rating}/5`;
+    }
+}
+
+function toggleReviewTag(el, tag) {
+    if (currentReviewTags.has(tag)) {
+        currentReviewTags.delete(tag);
+        if (el) el.classList.remove('active');
+    } else {
+        currentReviewTags.add(tag);
+        if (el) el.classList.add('active');
+    }
+}
+
+async function submitCustomerReview() {
+    const submitBtn = document.getElementById('btn-submit-review');
+    const commentEl = document.getElementById('review-comment-text');
+    const comment = commentEl ? commentEl.value.trim() : '';
+    const active = getActiveOrder();
+    
+    const tableNumber = active && active.tableNumber ? active.tableNumber : (document.getElementById('table-number') ? document.getElementById('table-number').innerText.trim() : '05');
+    const clientName = active && active.clientName ? active.clientName : (clientNameInput && clientNameInput.value ? clientNameInput.value.trim() : 'Alex');
+    const orderId = active && active.orderId ? active.orderId : null;
+    
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Envoi en cours...';
+        submitBtn.disabled = true;
+    }
+    
+    try {
+        const res = await fetch('/api/reviews', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                orderId,
+                tableNumber,
+                clientName,
+                rating: currentReviewRating,
+                tags: Array.from(currentReviewTags),
+                comment
+            })
+        });
+        
+        if (!res.ok) {
+            throw new Error('Erreur lors de l\'enregistrement');
+        }
+        
+        closeReviewModal();
+        
+        const banner = document.getElementById('order-review-banner');
+        if (banner) {
+            banner.innerHTML = `
+                <div style="color:#10b981; font-weight:700; font-size:13px; text-align:center; padding:6px 0;">
+                    <i class="fa-solid fa-circle-check"></i> Merci beaucoup pour votre avis !
+                </div>
+            `;
+        }
+    } catch (err) {
+        console.error('Erreur soumission avis:', err);
+        alert('Erreur lors de l\'envoi de votre avis. Veuillez réessayer.');
+    } finally {
+        if (submitBtn) {
+            submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Envoyer mon avis';
+            submitBtn.disabled = false;
         }
     }
 }

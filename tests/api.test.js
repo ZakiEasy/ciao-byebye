@@ -830,6 +830,57 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         });
         assert.strictEqual(resEmpty.status, 400);
     });
+
+    test('35. POST /api/orders/mock-create - should record tip amount and calculate total with tip', async () => {
+        const resWithTip = await fetch(`${BASE_URL}/api/orders/mock-create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: '05',
+                clientName: 'Client Généreux',
+                paymentMethod: 'carte',
+                tipAmountCents: 350, // 3.50 € tip
+                items: [
+                    { name: 'Burger Signature', price: 16.00, quantity: 1 }
+                ]
+            })
+        });
+        assert.strictEqual(resWithTip.status, 200);
+        const data = await resWithTip.json();
+        assert.strictEqual(data.success, true);
+        assert.strictEqual(data.tipAmountCents, 350);
+        assert.strictEqual(data.totalAmountCents, 1950); // 1600 + 350
+    });
+
+    test('36. POST /api/reviews & GET /api/reviews - should submit customer review and calculate stats', async () => {
+        // 1. Submit review
+        const submitRes = await fetch(`${BASE_URL}/api/reviews`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: '05',
+                clientName: 'Julien Testeur',
+                rating: 5,
+                tags: ['⚡ Service ultra rapide', '🍲 Plats savoureux'],
+                comment: 'Expérience remarquable, commande fluide et burger excellent !'
+            })
+        });
+        assert.strictEqual(submitRes.status, 201);
+        const submitData = await submitRes.json();
+        assert.strictEqual(submitData.success, true);
+        assert.strictEqual(submitData.review.rating, 5);
+        assert.strictEqual(submitData.review.client_name, 'Julien Testeur');
+
+        // 2. Fetch reviews and stats
+        const getRes = await fetch(`${BASE_URL}/api/reviews`);
+        assert.strictEqual(getRes.status, 200);
+        const getData = await getRes.json();
+        assert.ok(Array.isArray(getData.reviews));
+        assert.ok(getData.reviews.some(r => r.client_name === 'Julien Testeur'));
+        assert.ok(getData.stats);
+        assert.ok(getData.stats.totalReviews >= 1);
+        assert.ok(parseFloat(getData.stats.averageRating) >= 1.0);
+    });
 });
 
 
