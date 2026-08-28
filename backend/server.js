@@ -14,14 +14,28 @@ const io = new Server(server, {
   }
 });
 
-// Connexion à la base de données PostgreSQL (avec fallback Supabase si variable non définie ou obsolète sur Render)
-const DEFAULT_SUPABASE_URL = 'postgresql://postgres:eOxUv9ON54dNvOMr@db.wsaufyznxhezyrqsmtvz.supabase.co:5432/postgres';
+// Connexion à la base de données PostgreSQL (IPv4 Pooler Supavisor compatible Render / Supabase)
+const DEFAULT_SUPABASE_URL = 'postgresql://postgres.wsaufyznxhezyrqsmtvz:eOxUv9ON54dNvOMr@aws-0-eu-central-1.pooler.supabase.com:6543/postgres';
 
 let rawDbUrl = process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL || DEFAULT_SUPABASE_URL;
-// Si la variable DATABASE_URL pointe sur une ancienne base interne Render 'dpg-...' inexistante ou résolue en erreur DNS
+
+// 1. Si la variable DATABASE_URL pointe sur une ancienne base interne Render 'dpg-...'
 if (rawDbUrl.includes('dpg-')) {
-  console.warn('⚠️ DATABASE_URL contient un hostname interne Render obsolète (dpg-...). Redirection automatique vers Supabase.');
-  rawDbUrl = process.env.SUPABASE_DATABASE_URL || DEFAULT_SUPABASE_URL;
+  console.warn('⚠️ DATABASE_URL contient un hostname interne Render obsolète (dpg-...). Redirection automatique vers Supabase IPv4 Pooler.');
+  rawDbUrl = DEFAULT_SUPABASE_URL;
+}
+
+// 2. Si l'URL utilise le domaine direct Supabase 'db.<ref>.supabase.co' (IPv6 seulement, incompatible avec l'environnement Render IPv4)
+if (rawDbUrl.includes('db.') && rawDbUrl.includes('.supabase.co')) {
+  console.warn('⚠️ Transformation automatique de l\'URL Supabase IPv6 vers le Connection Pooler IPv4...');
+  const match = rawDbUrl.match(/postgres(?:ql)?:\/\/([^:]+):([^@]+)@db\.([a-zA-Z0-9]+)\.supabase\.co/);
+  if (match) {
+    const [, user, pass, projectRef] = match;
+    const poolerUser = user.includes('.') ? user : `${user}.${projectRef}`;
+    rawDbUrl = `postgresql://${poolerUser}:${pass}@aws-0-eu-central-1.pooler.supabase.com:6543/postgres`;
+  } else {
+    rawDbUrl = DEFAULT_SUPABASE_URL;
+  }
 }
 
 const dbConnectionString = rawDbUrl;
