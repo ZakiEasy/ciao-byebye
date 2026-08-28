@@ -955,4 +955,114 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         assert.strictEqual(boosterData.externalSync.eligibleForExternalRedirect, true);
         assert.strictEqual(boosterData.externalSync.googleReviewUrl, 'https://search.google.com/local/writereview?placeid=ChIJN1t_tDeuEmsRUsoyG83frY4');
     });
+
+    test('39. GET /api/pos/integrations - should list 25+ supported POS software providers', async () => {
+        const res = await fetch(`${BASE_URL}/api/pos/integrations`);
+        assert.strictEqual(res.status, 200);
+        const data = await res.json();
+        assert.strictEqual(data.success, true);
+        assert.strictEqual(data.totalProviders >= 25, true);
+
+        const providers = data.integrations.map(p => p.provider);
+        assert.ok(providers.includes('l_addition') || providers.includes('laddition'));
+        assert.ok(providers.includes('lightspeed'));
+        assert.ok(providers.includes('zelty'));
+        assert.ok(providers.includes('innovorder'));
+        assert.ok(providers.includes('square'));
+        assert.ok(providers.includes('sumup'));
+        assert.ok(providers.includes('loyverse'));
+        assert.ok(providers.includes('zettle'));
+    });
+
+    test('40. POST /api/pos/integrations/:provider/connect & test-connection - should configure POS and perform ping test', async () => {
+        // Connect L'Addition
+        const connectRes = await fetch(`${BASE_URL}/api/pos/integrations/laddition/connect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                apiKey: 'lad_live_test_api_key_8921',
+                storeId: 'bistro_paris_05',
+                autoSendOrders: true,
+                autoCloseTicket: true,
+                autoSyncMenu: true
+            })
+        });
+
+        assert.strictEqual(connectRes.status, 200);
+        const connectData = await connectRes.json();
+        assert.strictEqual(connectData.success, true);
+        assert.strictEqual(connectData.pos.status, 'connected');
+        assert.strictEqual(connectData.pos.store_id, 'bistro_paris_05');
+
+        // Ping test
+        const testRes = await fetch(`${BASE_URL}/api/pos/integrations/laddition/test-connection`, {
+            method: 'POST'
+        });
+        assert.strictEqual(testRes.status, 200);
+        const testData = await testRes.json();
+        assert.strictEqual(testData.success, true);
+        assert.strictEqual(testData.status, 'connected');
+        assert.ok(testData.latencyMs > 0);
+    });
+
+    test('41. POST /api/pos/integrations/:provider/sync-menu & POS order auto-dispatch', async () => {
+        // Sync menu
+        const syncRes = await fetch(`${BASE_URL}/api/pos/integrations/laddition/sync-menu`, {
+            method: 'POST'
+        });
+        assert.strictEqual(syncRes.status, 200);
+        const syncData = await syncRes.json();
+        assert.strictEqual(syncData.success, true);
+        assert.ok(syncData.syncedCount > 0);
+
+        // Place an order and verify POS dispatch event
+        const orderRes = await fetch(`${BASE_URL}/api/orders/mock-create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sessionId: 'pos-test-session-' + Date.now(),
+                tableNumber: '05',
+                clientName: 'Client POS Sync',
+                paymentMethod: 'stripe',
+                tipAmountCents: 200,
+                items: [
+                    { productId: 'f87964b1-7bfa-4c4f-9e79-5ad693be7da7', quantity: 1, priceCents: 1550, seatNumber: 1 }
+                ]
+            })
+        });
+
+        assert.strictEqual(orderRes.status, 200);
+        const orderData = await orderRes.json();
+        assert.strictEqual(orderData.success, true);
+    });
+
+    test('42. GET /api/pos/logs & POST /api/pos/webhooks/:provider - should audit logs and receive external POS webhooks', async () => {
+        // Post webhook from external POS
+        const webhookRes = await fetch(`${BASE_URL}/api/pos/webhooks/zelty`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                event: 'ticket_closed_on_terminal',
+                tableNumber: '08',
+                amount: 45.50,
+                paymentType: 'CB_EMV'
+            })
+        });
+
+        assert.strictEqual(webhookRes.status, 200);
+        const webhookData = await webhookRes.json();
+        assert.strictEqual(webhookData.received, true);
+        assert.strictEqual(webhookData.provider, 'zelty');
+
+        // Fetch logs
+        const logsRes = await fetch(`${BASE_URL}/api/pos/logs`);
+        assert.strictEqual(logsRes.status, 200);
+        const logsData = await logsRes.json();
+        assert.strictEqual(logsData.success, true);
+        assert.ok(logsData.logs.length > 0);
+        
+        const providersInLogs = logsData.logs.map(l => l.provider);
+        assert.ok(providersInLogs.includes('laddition') || providersInLogs.includes('zelty'));
+    });
 });
+

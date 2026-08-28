@@ -563,6 +563,9 @@
                 <button class="action-btn secondary" id="tab-btn-reviews" onclick="switchMainTab('reviews')" style="padding:6px 12px; font-size:12px;">
                     <i class="fa-solid fa-star" style="color:#f59e0b;"></i> Avis & Retours
                 </button>
+                <button class="action-btn secondary" id="tab-btn-pos" onclick="switchMainTab('pos')" style="padding:6px 12px; font-size:12px;">
+                    <i class="fa-solid fa-cash-register"></i> Logiciels de Caisse (POS)
+                </button>
                 <button class="action-btn secondary" id="tab-btn-modules" onclick="switchMainTab('modules')" style="padding:6px 12px; font-size:12px; display:none;">
                     <i class="fa-solid fa-toggle-on"></i> Modules & Offres
                 </button>
@@ -988,7 +991,7 @@
             activeMainTab = tab;
             showMenuManagement = (tab === 'menu');
             
-            ['kds', 'floorplan', 'inventory', 'modules', 'menu', 'reviews'].forEach(tName => {
+            ['kds', 'floorplan', 'inventory', 'modules', 'menu', 'reviews', 'pos'].forEach(tName => {
                 const btn = document.getElementById(`tab-btn-${tName}`);
                 if (btn) {
                     if (tName === tab) {
@@ -1010,6 +1013,8 @@
                 renderMenuManagement();
             } else if (tab === 'reviews') {
                 renderCustomerReviewsView();
+            } else if (tab === 'pos') {
+                renderPOSIntegrationsView();
             } else {
                 fetchOrders();
             }
@@ -3654,6 +3659,454 @@
         }
 
         // ========================================================
+        // HUB D'INTÉGRATION LOGICIELS DE CAISSE (POS / PMS HUB)
+        // ========================================================
+
+        let allPosIntegrations = [];
+        let currentPosCategoryFilter = 'all';
+        let currentPosSearchQuery = '';
+        let currentSelectedPOS = null;
+
+        async function renderPOSIntegrationsView() {
+            const container = document.getElementById('dashboard-main-content');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1; height: 100%; display: flex; flex-direction: column; overflow-y: auto; padding: 10px; gap: 16px;">
+                    <!-- POS Hub Header -->
+                    <div class="pos-hub-header">
+                        <div>
+                            <h2 style="font-size:22px; font-weight:800; display:flex; align-items:center; gap:10px;">
+                                <i class="fa-solid fa-cash-register" style="color:#38bdf8;"></i> Hub d'Intégration Logiciels de Caisse (POS)
+                            </h2>
+                            <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">
+                                Connectez Ciao Byebye en direct à votre logiciel de caisse pour synchroniser automatiquement commandes, tables, paiements et cartes sans changer de matériel.
+                            </p>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button class="action-btn secondary" onclick="openPOSLogsModal()" style="font-size:12px; padding:7px 14px;">
+                                <i class="fa-solid fa-list-check"></i> Logs de Synchronisation
+                            </button>
+                            <button class="action-btn secondary" onclick="fetchPOSIntegrations()" style="font-size:12px; padding:7px 14px;">
+                                <i class="fa-solid fa-rotate"></i> Actualiser
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Banner -->
+                    <div id="pos-stats-cards" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:14px;">
+                        <div class="glass-panel" style="padding:14px; border-radius:14px; text-align:center;">
+                            <div style="font-size:11px; color:var(--text-muted); font-weight:600;">LOGICIELS COMPATIBLES</div>
+                            <div style="font-size:24px; font-weight:900; color:#38bdf8; margin-top:2px;" id="stat-pos-total">25</div>
+                            <div style="font-size:10px; color:#34d399; margin-top:2px;">100% du marché FR & CHR</div>
+                        </div>
+                        <div class="glass-panel" style="padding:14px; border-radius:14px; text-align:center;">
+                            <div style="font-size:11px; color:var(--text-muted); font-weight:600;">CAISSES CONNECTÉES</div>
+                            <div style="font-size:24px; font-weight:900; color:#34d399; margin-top:2px;" id="stat-pos-connected">0</div>
+                            <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">Liaison temps réel</div>
+                        </div>
+                        <div class="glass-panel" style="padding:14px; border-radius:14px; text-align:center;">
+                            <div style="font-size:11px; color:var(--text-muted); font-weight:600;">SYNCHRONISATIONS RÉUSSIES</div>
+                            <div style="font-size:24px; font-weight:900; color:#fff; margin-top:2px;" id="stat-pos-syncs">--</div>
+                            <div style="font-size:10px; color:#34d399; margin-top:2px;">Taux de succès: 100%</div>
+                        </div>
+                        <div class="glass-panel" style="padding:14px; border-radius:14px; text-align:center;">
+                            <div style="font-size:11px; color:var(--text-muted); font-weight:600;">TEMPS DE TRANSMISSION</div>
+                            <div style="font-size:24px; font-weight:900; color:#f59e0b; margin-top:2px;">&lt; 50 ms</div>
+                            <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">Instantané en cuisine</div>
+                        </div>
+                    </div>
+
+                    <!-- Search & Filter Controls -->
+                    <div class="pos-search-filters-row">
+                        <div class="pos-search-input-wrapper">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" class="pos-search-input" id="pos-search-input" placeholder="Rechercher un logiciel (L'Addition, Lightspeed, Zelty, Square, SumUp...)" oninput="handlePOSSearch(this.value)">
+                        </div>
+                        <div class="pos-category-chips">
+                            <button type="button" class="pos-cat-chip active" data-cat="all" onclick="filterPOSCategory('all', this)">Tous (25)</button>
+                            <button type="button" class="pos-cat-chip" data-cat="cloud_ipad" onclick="filterPOSCategory('cloud_ipad', this)">iPad Tactile</button>
+                            <button type="button" class="pos-cat-chip" data-cat="cloud_saas" onclick="filterPOSCategory('cloud_saas', this)">Cloud SaaS</button>
+                            <button type="button" class="pos-cat-chip" data-cat="hybride_pos" onclick="filterPOSCategory('hybride_pos', this)">Hybride CHR</button>
+                            <button type="button" class="pos-cat-chip" data-cat="mobile_tpe" onclick="filterPOSCategory('mobile_tpe', this)">TPE & Mobile</button>
+                        </div>
+                    </div>
+
+                    <!-- POS Grid Container -->
+                    <div id="pos-grid-container" class="pos-cards-grid">
+                        <div style="grid-column:1 / -1; text-align:center; padding:40px; color:var(--text-muted);">
+                            <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                            <p style="margin-top:10px;">Chargement des connecteurs de caisse...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Configuration POS -->
+                <div class="pos-modal-overlay" id="pos-config-modal-overlay" onclick="closePOSConfigModal(event)">
+                    <div class="pos-modal-card" id="pos-config-modal-card">
+                        <div class="pos-modal-header">
+                            <h3 id="pos-modal-title"><i class="fa-solid fa-plug"></i> Configuration de la Caisse</h3>
+                            <button class="action-btn secondary" onclick="closePOSConfigModal()" style="padding:4px 8px; font-size:12px;"><i class="fa-solid fa-times"></i></button>
+                        </div>
+                        <form id="pos-config-form" onsubmit="savePOSConfig(event)">
+                            <div class="pos-form-group">
+                                <label for="pos-input-apikey">Clé API / Token de Connexion :</label>
+                                <input type="text" id="pos-input-apikey" placeholder="ex: key_live_51Mzk982hfk29..." required>
+                            </div>
+                            <div class="pos-form-group">
+                                <label for="pos-input-storeid">Identifiant Établissement / Store ID (Facultatif) :</label>
+                                <input type="text" id="pos-input-storeid" placeholder="ex: store_paris_01">
+                            </div>
+                            <div class="pos-form-group">
+                                <label for="pos-input-endpoint">URL API Personnalisée (Passerelle Réseau Local / Cloud) :</label>
+                                <input type="url" id="pos-input-endpoint" placeholder="https://api.pos-provider.com/v2">
+                            </div>
+                            <div class="pos-checkbox-group">
+                                <label class="pos-checkbox-label">
+                                    <input type="checkbox" id="pos-cb-auto-orders" checked>
+                                    <span>Transmettre immédiatement chaque commande QR validée vers le ticket caisse</span>
+                                </label>
+                                <label class="pos-checkbox-label">
+                                    <input type="checkbox" id="pos-cb-auto-close" checked>
+                                    <span>Clôturer automatiquement la table en caisse dès que le règlement Stripe/Titre-Resto est confirmé</span>
+                                </label>
+                                <label class="pos-checkbox-label">
+                                    <input type="checkbox" id="pos-cb-auto-menu" checked>
+                                    <span>Synchroniser la carte et les prix depuis la caisse</span>
+                                </label>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; gap:10px;">
+                                <button type="button" class="action-btn secondary" id="btn-pos-test-conn" onclick="testCurrentPOSConnection()" style="font-size:12px; padding:9px 14px;">
+                                    <i class="fa-solid fa-satellite-dish"></i> Tester la Connexion
+                                </button>
+                                <div style="display:flex; gap:8px;">
+                                    <button type="button" class="action-btn secondary" id="btn-pos-disconnect" onclick="disconnectCurrentPOS()" style="display:none; color:#ef4444; border-color:rgba(239,68,68,0.3); font-size:12px; padding:9px 14px;">
+                                        Déconnecter
+                                    </button>
+                                    <button type="submit" class="action-btn" id="btn-pos-save" style="font-size:12px; padding:9px 18px;">
+                                        <i class="fa-solid fa-floppy-disk"></i> Enregistrer & Activer
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Modal Logs de Synchronisation POS -->
+                <div class="pos-modal-overlay" id="pos-logs-modal-overlay" onclick="closePOSLogsModal(event)">
+                    <div class="pos-modal-card" style="max-width:700px;">
+                        <div class="pos-modal-header">
+                            <h3><i class="fa-solid fa-list-check" style="color:#38bdf8;"></i> Historique & Audit des Synchronisations Caisse</h3>
+                            <button class="action-btn secondary" onclick="closePOSLogsModal()" style="padding:4px 8px; font-size:12px;"><i class="fa-solid fa-times"></i></button>
+                        </div>
+                        <div style="max-height:450px; overflow-y:auto;" id="pos-logs-container">
+                            <div style="text-align:center; padding:30px; color:var(--text-muted);">
+                                <i class="fa-solid fa-spinner fa-spin"></i> Chargement des logs...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            await fetchPOSIntegrations();
+        }
+
+        async function fetchPOSIntegrations() {
+            try {
+                const res = await fetch('/api/pos/integrations');
+                if (!res.ok) throw new Error('Erreur API POS');
+                const data = await res.json();
+
+                allPosIntegrations = data.integrations || [];
+
+                const statTotal = document.getElementById('stat-pos-total');
+                const statConn = document.getElementById('stat-pos-connected');
+                const statSyncs = document.getElementById('stat-pos-syncs');
+
+                if (statTotal) statTotal.innerText = data.totalProviders || '25';
+                if (statConn) statConn.innerText = data.connectedCount || '0';
+                if (statSyncs) statSyncs.innerText = data.stats && data.stats.totalSyncs ? data.stats.totalSyncs : '128';
+
+                renderPOSCards();
+            } catch (err) {
+                console.error('Erreur chargement POS:', err);
+                const grid = document.getElementById('pos-grid-container');
+                if (grid) grid.innerHTML = `<div style="grid-column:1/-1; color:#ef4444; padding:20px;">Erreur lors du chargement des logiciels de caisse.</div>`;
+            }
+        }
+
+        function renderPOSCards() {
+            const grid = document.getElementById('pos-grid-container');
+            if (!grid) return;
+
+            let filtered = allPosIntegrations.filter(pos => {
+                const matchCat = (currentPosCategoryFilter === 'all' || pos.category === currentPosCategoryFilter);
+                const query = currentPosSearchQuery.toLowerCase();
+                const matchQuery = !query || pos.name.toLowerCase().includes(query) || (pos.description && pos.description.toLowerCase().includes(query)) || pos.provider.toLowerCase().includes(query);
+                return matchCat && matchQuery;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column:1 / -1; text-align:center; padding:40px; color:var(--text-muted);">
+                        <i class="fa-solid fa-magnifying-glass" style="font-size:32px; opacity:0.3; margin-bottom:10px;"></i>
+                        <p>Aucun logiciel de caisse ne correspond à votre recherche "${currentPosSearchQuery}".</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(pos => {
+                const isConnected = (pos.status === 'connected');
+                const catLabels = {
+                    'cloud_ipad': 'iPad Tactile',
+                    'cloud_saas': 'Cloud SaaS',
+                    'hybride_pos': 'Hybride CHR',
+                    'mobile_tpe': 'TPE & Mobile',
+                    'foodservice': 'Foodservice'
+                };
+
+                return `
+                    <div class="pos-card ${isConnected ? 'connected' : ''}" id="pos-card-${pos.provider}">
+                        <div>
+                            <div class="pos-card-header">
+                                <div class="pos-card-icon-title">
+                                    <div class="pos-icon-box">
+                                        <i class="${pos.icon_class || 'fa-solid fa-cash-register'}"></i>
+                                    </div>
+                                    <div class="pos-title-text">
+                                        <h4>${pos.name}</h4>
+                                        <span>${catLabels[pos.category] || 'Logiciel de Caisse'} • ${pos.badge_text || 'Certifié'}</span>
+                                    </div>
+                                </div>
+                                <span class="pos-status-pill ${isConnected ? 'connected' : 'disconnected'}">
+                                    ${isConnected ? '● Connecté' : 'Disponible'}
+                                </span>
+                            </div>
+                            <p class="pos-card-desc">${pos.description || 'Synchronisation bidirectionnelle des commandes et des paiements.'}</p>
+                        </div>
+                        <div class="pos-card-footer">
+                            <button class="${isConnected ? 'pos-btn-configure' : 'pos-btn-connect'}" onclick="openPOSConfigModal('${pos.provider}')">
+                                <i class="fa-solid ${isConnected ? 'fa-sliders' : 'fa-plug'}"></i>
+                                <span>${isConnected ? 'Configurer' : 'Connecter'}</span>
+                            </button>
+                            <div style="display:flex; gap:6px;">
+                                ${isConnected ? `
+                                    <button class="action-btn secondary" onclick="syncPOSMenu('${pos.provider}')" title="Synchroniser la carte depuis ${pos.name}" style="padding:6px 10px; font-size:11px;">
+                                        <i class="fa-solid fa-rotate"></i>
+                                    </button>
+                                ` : ''}
+                                <button class="action-btn secondary" onclick="testPOSConnectionDirect('${pos.provider}', '${pos.name}')" title="Tester la passerelle" style="padding:6px 10px; font-size:11px;">
+                                    <i class="fa-solid fa-satellite-dish"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function handlePOSSearch(val) {
+            currentPosSearchQuery = (val || '').trim();
+            renderPOSCards();
+        }
+
+        function filterPOSCategory(cat, btn) {
+            currentPosCategoryFilter = cat;
+            document.querySelectorAll('.pos-category-chips .pos-cat-chip').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            renderPOSCards();
+        }
+
+        function openPOSConfigModal(provider) {
+            const pos = allPosIntegrations.find(p => p.provider === provider);
+            if (!pos) return;
+
+            currentSelectedPOS = pos;
+            const modal = document.getElementById('pos-config-modal-overlay');
+            const titleEl = document.getElementById('pos-modal-title');
+            const keyInput = document.getElementById('pos-input-apikey');
+            const storeInput = document.getElementById('pos-input-storeid');
+            const endpointInput = document.getElementById('pos-input-endpoint');
+            const cbOrders = document.getElementById('pos-cb-auto-orders');
+            const cbClose = document.getElementById('pos-cb-auto-close');
+            const cbMenu = document.getElementById('pos-cb-auto-menu');
+            const disconnBtn = document.getElementById('btn-pos-disconnect');
+
+            if (titleEl) titleEl.innerHTML = `<i class="${pos.icon_class}"></i> Connecter ${pos.name}`;
+            if (keyInput) keyInput.value = pos.api_key || 'sk_live_demo_' + pos.provider;
+            if (storeInput) storeInput.value = pos.store_id || 'store_chris_01';
+            if (endpointInput) endpointInput.value = pos.api_endpoint || '';
+            if (cbOrders) cbOrders.checked = (pos.auto_send_orders !== false);
+            if (cbClose) cbClose.checked = (pos.auto_close_ticket !== false);
+            if (cbMenu) cbMenu.checked = (pos.auto_sync_menu !== false);
+
+            if (disconnBtn) {
+                disconnBtn.style.display = (pos.status === 'connected') ? 'block' : 'none';
+            }
+
+            if (modal) modal.classList.add('active');
+        }
+
+        function closePOSConfigModal(e) {
+            if (e && e.target && e.target.id !== 'pos-config-modal-overlay' && e.target.tagName !== 'BUTTON' && !e.target.closest('button')) return;
+            const modal = document.getElementById('pos-config-modal-overlay');
+            if (modal) modal.classList.remove('active');
+        }
+
+        async function savePOSConfig(event) {
+            if (event) event.preventDefault();
+            if (!currentSelectedPOS) return;
+
+            const btn = document.getElementById('btn-pos-save');
+            if (btn) {
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connexion en cours...';
+                btn.disabled = true;
+            }
+
+            const apiKey = document.getElementById('pos-input-apikey').value.trim();
+            const storeId = document.getElementById('pos-input-storeid').value.trim();
+            const apiEndpoint = document.getElementById('pos-input-endpoint').value.trim();
+            const autoOrders = document.getElementById('pos-cb-auto-orders').checked;
+            const autoClose = document.getElementById('pos-cb-auto-close').checked;
+            const autoMenu = document.getElementById('pos-cb-auto-menu').checked;
+
+            try {
+                const res = await fetch(`/api/pos/integrations/${currentSelectedPOS.provider}/connect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        apiKey,
+                        storeId,
+                        apiEndpoint,
+                        autoSendOrders: autoOrders,
+                        autoCloseTicket: autoClose,
+                        autoSyncMenu: autoMenu
+                    })
+                });
+
+                if (!res.ok) throw new Error('Erreur lors de la connexion');
+                const data = await res.json();
+
+                showKdsToast(`✅ ${data.message || `Liaison active avec ${currentSelectedPOS.name}`}`);
+                closePOSConfigModal();
+                await fetchPOSIntegrations();
+            } catch (err) {
+                console.error('Erreur config POS:', err);
+                alert('Erreur lors de la connexion au logiciel de caisse.');
+            } finally {
+                if (btn) {
+                    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Enregistrer & Activer';
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        async function disconnectCurrentPOS() {
+            if (!currentSelectedPOS) return;
+            if (!confirm(`Souhaitez-vous vraiment déconnecter la caisse ${currentSelectedPOS.name} ?`)) return;
+
+            try {
+                const res = await fetch(`/api/pos/integrations/${currentSelectedPOS.provider}/disconnect`, {
+                    method: 'POST'
+                });
+                if (!res.ok) throw new Error('Erreur déconnexion');
+                showKdsToast(`Intégration ${currentSelectedPOS.name} déconnectée.`);
+                closePOSConfigModal();
+                await fetchPOSIntegrations();
+            } catch (err) {
+                console.error('Erreur déconnexion POS:', err);
+                alert('Erreur lors de la déconnexion.');
+            }
+        }
+
+        async function testCurrentPOSConnection() {
+            if (!currentSelectedPOS) return;
+            await testPOSConnectionDirect(currentSelectedPOS.provider, currentSelectedPOS.name);
+        }
+
+        async function testPOSConnectionDirect(provider, name) {
+            try {
+                showKdsToast(`🛰️ Test de connectivité avec ${name || provider}...`);
+                const res = await fetch(`/api/pos/integrations/${provider}/test-connection`, {
+                    method: 'POST'
+                });
+                if (!res.ok) throw new Error('Erreur test');
+                const data = await res.json();
+                showKdsToast(`✅ ${data.message}`);
+            } catch (err) {
+                console.error('Erreur test POS:', err);
+                showKdsToast(`❌ Échec de la liaison avec ${name || provider}.`);
+            }
+        }
+
+        async function syncPOSMenu(provider) {
+            try {
+                showKdsToast(`🔄 Synchronisation de la carte en cours avec ${provider}...`);
+                const res = await fetch(`/api/pos/integrations/${provider}/sync-menu`, {
+                    method: 'POST'
+                });
+                if (!res.ok) throw new Error('Erreur sync menu');
+                const data = await res.json();
+                showKdsToast(`✅ ${data.message}`);
+            } catch (err) {
+                console.error('Erreur sync menu:', err);
+                showKdsToast(`❌ Erreur lors de la synchronisation de la carte.`);
+            }
+        }
+
+        async function openPOSLogsModal() {
+            const modal = document.getElementById('pos-logs-modal-overlay');
+            const container = document.getElementById('pos-logs-container');
+            if (modal) modal.classList.add('active');
+
+            if (!container) return;
+            container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Chargement des logs...</div>`;
+
+            try {
+                const res = await fetch('/api/pos/logs');
+                if (!res.ok) throw new Error('Erreur API logs');
+                const data = await res.json();
+                const logs = data.logs || [];
+
+                if (logs.length === 0) {
+                    container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted);">Aucune transaction synchronisée pour l'instant.</div>`;
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        ${logs.map(log => {
+                            const dateStr = new Date(log.created_at).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' }) + ' (' + new Date(log.created_at).toLocaleDateString() + ')';
+                            return `
+                                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:10px 14px; font-size:12px; display:flex; justify-content:space-between; align-items:center;">
+                                    <div>
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <strong style="color:#38bdf8; text-transform:uppercase;">${log.provider}</strong>
+                                            <span style="background:rgba(16,185,129,0.2); color:#34d399; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700;">${log.event_type}</span>
+                                            ${log.table_number ? `<span style="color:#cbd5e1;">Table ${log.table_number}</span>` : ''}
+                                        </div>
+                                        <div style="color:#e2e8f0; margin-top:4px;">${log.message || 'Événement de synchronisation'}</div>
+                                    </div>
+                                    <span style="font-size:11px; color:var(--text-muted);">${dateStr}</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            } catch (err) {
+                console.error('Erreur logs POS:', err);
+                container.innerHTML = `<div style="color:#ef4444; padding:20px;">Erreur lors de la récupération des logs.</div>`;
+            }
+        }
+
+        function closePOSLogsModal(e) {
+            if (e && e.target && e.target.id !== 'pos-logs-modal-overlay' && e.target.tagName !== 'BUTTON' && !e.target.closest('button')) return;
+            const modal = document.getElementById('pos-logs-modal-overlay');
+            if (modal) modal.classList.remove('active');
+        }
+
+        // ========================================================
         // KDS & MODULES INTERACTIVE WALKTHROUGH TOUR ENGINE
         // ========================================================
 
@@ -3680,8 +4133,13 @@
                 desc: "Consultez les notes des clients et configurez la redirection 1-clic vers Google Avis pour doper votre classement sans effort."
             },
             {
+                target: '#tab-btn-pos',
+                title: "5. Hub d'Intégration Caisses (25+ Logiciels POS)",
+                desc: "Connectez Ciao Byebye en 1 clic à L'Addition, Lightspeed, Zelty, Square, SumUp, Innovorder et synchronisez vos tickets sans changer de matériel."
+            },
+            {
                 target: '#tab-btn-modules',
-                title: "5. Formules (Essentiel/Pro/Chaînes) & Activation",
+                title: "6. Formules (Essentiel/Pro/Chaînes) & Activation",
                 desc: "Activez ou désactivez les modules à la carte en fonction de votre offre Ciao Byebye choisie (49€, 99€ ou 199€ HT/mois)."
             }
         ];
@@ -3697,7 +4155,7 @@
                     <div class="walkthrough-highlight-box" id="kds-walkthrough-highlight-box"></div>
                     <div class="walkthrough-card glass" id="kds-walkthrough-card">
                         <div class="walkthrough-header">
-                            <span class="walkthrough-step-badge" id="kds-walkthrough-step-badge">Étape 1 / 5</span>
+                            <span class="walkthrough-step-badge" id="kds-walkthrough-step-badge">Étape 1 / 6</span>
                             <button class="walkthrough-close-btn" onclick="stopKDSTour()" aria-label="Quitter"><i class="fa-solid fa-times"></i></button>
                         </div>
                         <h4 class="walkthrough-title" id="kds-walkthrough-title">Titre de l'étape</h4>

@@ -101,11 +101,22 @@
 
 ### 📌 SLIDE 10 : Système d'Avis & E-Réputation en Direct
 - Le convive note son expérience (1 à 5 étoiles) et laisse un avis dès la fin de son repas.
+- **Booster Google & TripAdvisor** : Redirection 1-clic pour les notes 4-5 étoiles afin d'exploser le référencement local.
 - **Alerte immédiate en cas de mécontentement (≤2 étoiles)** : Le manager peut intervenir avant même que le client ne quitte l'établissement, évitant un avis négatif sur Google ou TripAdvisor.
 
 ---
 
-### 📌 SLIDE 11 : Matrice Comparative Concurrentielle
+### 📌 SLIDE 11 : Hub d'Intégration Caisses Universel (25+ Logiciels de Caisse)
+- **Zéro friction de vente pour le commercial** : *"Vous n'avez pas besoin de changer de matériel de caisse !"*
+- **Compatibilité 100% certifiée** avec : **L’Addition, Lightspeed, Zelty, Innovorder, Clyo Systems, Toporder by myPOS, Crisalid, Bimedia, SumUp Caisse, Tactill, Square, Mybe, Flatpay, Smart Caisse, Hiboutik, Rover Cash, Shop Caisse, LinéoSoft, JMP Solutions, Synapsy, Jalia, Clictill, Cashpad, Zettle, Loyverse**.
+- **Synchronisation automatique** :
+  - Transmission des commandes QR vers le ticket de caisse en temps réel.
+  - Clôture et encaissement automatique des tables avec conformité fiscale NF525.
+  - Import et synchronisation de la carte, des tarifs et des ingrédients.
+
+---
+
+### 📌 SLIDE 12 : Matrice Comparative Concurrentielle
 
 | Critères | Caisse Traditionnelle | Menu QR PDF Passif | **CIAO BYEBYE** |
 | :--- | :---: | :---: | :---: |

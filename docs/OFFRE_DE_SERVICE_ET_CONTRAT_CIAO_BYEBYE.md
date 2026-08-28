@@ -27,6 +27,7 @@
 | **Montre Connectée Serveur & Vibreur** | - | Inclus (Appels table & Alertes plats) | Inclus Flotte complète |
 | **Table Display TV & Borne Vidéo** | - | Inclus | Inclus (Affichage Dynamique) |
 | **Dashboard Manager & Statistiques** | Basique | Avancé (Ventes, Marges, Rangs) | SuperAdmin HQ Multi-établissements |
+| **Hub Logiciels de Caisse (25+ POS)** | Inclus (Liaison API & Webhooks) | Inclus (25+ Logiciels de Caisse) | Inclus (Liaison multi-caisses & ERP) |
 | **Support Technique** | Email 5j/7 | Téléphone & Chat 7j/7 | Dédié 24/7 + Gestionnaire de compte |
 
 ---
