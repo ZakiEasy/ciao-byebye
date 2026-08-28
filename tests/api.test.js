@@ -798,6 +798,38 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         assert.strictEqual(wasteData.success, true);
         assert.strictEqual(wasteData.log.notes, 'Test perte automatisé');
     });
+
+    test('34. POST /api/orders/mock-create - should handle non-UUID item IDs, string table formats and empty cart validation', async () => {
+        // 1. Order with non-UUID item id and single digit table
+        const resNonUuid = await fetch(`${BASE_URL}/api/orders/mock-create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: '5',
+                clientName: 'Client Fallback Test',
+                items: [
+                    { id: 'p1', name: 'Moscow Mule Premium', price: 12.50, quantity: 1, category: 'boisson' },
+                    { id: 'p2', name: 'Article Custom Dynamique', price: 9.00, quantity: 2, category: 'plat' }
+                ]
+            })
+        });
+        assert.strictEqual(resNonUuid.status, 200);
+        const dataNonUuid = await resNonUuid.json();
+        assert.strictEqual(dataNonUuid.success, true);
+        assert.ok(dataNonUuid.orderId);
+
+        // 2. Order with empty cart should return 400
+        const resEmpty = await fetch(`${BASE_URL}/api/orders/mock-create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: '05',
+                clientName: 'Client Empty',
+                items: []
+            })
+        });
+        assert.strictEqual(resEmpty.status, 400);
+    });
 });
 
 

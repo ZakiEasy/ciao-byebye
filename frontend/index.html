@@ -213,6 +213,100 @@
         </div>
     </div>
 
+    <!-- Item Customization Modal / Dialogue de Personnalisation -->
+    <div class="custom-modal-overlay" id="custom-modal-overlay" onclick="closeCustomModal()"></div>
+    <div class="custom-modal glass" id="custom-modal">
+        <div class="custom-modal-header">
+            <div class="custom-dish-summary">
+                <h3 id="custom-dish-title">Personnaliser votre plat</h3>
+                <span class="custom-dish-base-price" id="custom-dish-base-price">0.00 €</span>
+            </div>
+            <button class="close-custom-btn" onclick="closeCustomModal()" aria-label="Fermer"><i class="fa-solid fa-times"></i></button>
+        </div>
+        
+        <div class="custom-modal-body" id="custom-modal-body">
+            <!-- Ingrédients de la recette (Retirer / Remettre) -->
+            <div class="custom-section" id="section-ingredients">
+                <div class="custom-section-header">
+                    <div>
+                        <h4 data-i18n="custom_ingredients_title"><i class="fa-solid fa-seedling"></i> Ingrédients de la Recette</h4>
+                        <p class="custom-section-desc" data-i18n="custom_ingredients_subtitle">Décochez pour retirer un ingrédient</p>
+                    </div>
+                </div>
+                <div class="ingredients-toggle-list" id="custom-ingredients-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Suppléments & Extras -->
+            <div class="custom-section" id="section-extras">
+                <div class="custom-section-header">
+                    <div>
+                        <h4 data-i18n="custom_extras_title"><i class="fa-solid fa-circle-plus"></i> Suppléments & Extras</h4>
+                        <p class="custom-section-desc" data-i18n="custom_extras_subtitle">Ajoutez des suppléments gourmands</p>
+                    </div>
+                </div>
+                <div class="extras-grid" id="custom-extras-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Cuisson de la viande -->
+            <div class="custom-section" id="section-cooking">
+                <div class="custom-section-header">
+                    <h4 data-i18n="custom_cooking_title"><i class="fa-solid fa-fire"></i> Cuisson de la Viande</h4>
+                </div>
+                <div class="cooking-options" id="custom-cooking-options">
+                    <button type="button" class="cooking-btn" data-cook="Bleu" onclick="selectCooking('Bleu')">Bleu</button>
+                    <button type="button" class="cooking-btn active" data-cook="Saignant" onclick="selectCooking('Saignant')">Saignant</button>
+                    <button type="button" class="cooking-btn" data-cook="À point" onclick="selectCooking('À point')">À point</button>
+                    <button type="button" class="cooking-btn" data-cook="Bien cuit" onclick="selectCooking('Bien cuit')">Bien cuit</button>
+                </div>
+            </div>
+
+            <!-- Allergies & Régimes -->
+            <div class="custom-section" id="section-allergies">
+                <div class="custom-section-header">
+                    <h4 data-i18n="custom_allergies_title"><i class="fa-solid fa-triangle-exclamation"></i> Allergies & Intolérances</h4>
+                </div>
+                <div class="allergies-chips" id="custom-allergies-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Numéro de Siège / Convive -->
+            <div class="custom-section" id="section-seat">
+                <div class="custom-section-header">
+                    <h4 data-i18n="custom_seat_title"><i class="fa-solid fa-chair"></i> Pour quel convive ? (Siège)</h4>
+                </div>
+                <div class="seat-selector-pills" id="custom-seat-selector">
+                    <button type="button" class="seat-pill active" onclick="selectCustomSeat(1)">Siège 1</button>
+                    <button type="button" class="seat-pill" onclick="selectCustomSeat(2)">Siège 2</button>
+                    <button type="button" class="seat-pill" onclick="selectCustomSeat(3)">Siège 3</button>
+                    <button type="button" class="seat-pill" onclick="selectCustomSeat(4)">Siège 4</button>
+                </div>
+            </div>
+
+            <!-- Instructions Spéciales -->
+            <div class="custom-section">
+                <div class="custom-section-header">
+                    <h4 data-i18n="custom_notes_title"><i class="fa-solid fa-comment-dots"></i> Instructions Spéciales pour le Chef</h4>
+                </div>
+                <input type="text" class="custom-notes-input" id="custom-special-notes" placeholder="Ex: Sauce à part, servi très chaud..." maxlength="120">
+            </div>
+        </div>
+
+        <div class="custom-modal-footer">
+            <div class="custom-total-preview">
+                <span data-i18n="cart_total">Total</span> :
+                <strong id="custom-modal-total-price">0.00 €</strong>
+            </div>
+            <button class="confirm-custom-btn" id="confirm-custom-btn" onclick="saveCustomizationToCart()">
+                <i class="fa-solid fa-cart-plus"></i> <span id="confirm-custom-btn-text" data-i18n="btn_add_to_cart_custom">Ajouter au Panier</span>
+            </button>
+        </div>
+    </div>
+
     <!-- Payment Modal Mockup -->
     <div class="payment-modal-overlay" id="payment-modal-overlay"></div>
     <div class="payment-modal glass" id="payment-modal">

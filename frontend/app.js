@@ -61,7 +61,22 @@ const translations = {
         status_cooking_bar: "🔥 En cuisine (Table {table}) - File #{queue}",
         status_ready_bar: "🎉 Prête au comptoir de retrait !",
         notif_cash_paid_title: "Paiement Encaissé !",
-        notif_cash_paid_body: "Votre règlement en espèces a été validé en caisse. Bon appétit !"
+        notif_cash_paid_body: "Votre règlement en espèces a été validé en caisse. Bon appétit !",
+        btn_customize: "Personnaliser",
+        custom_modal_title: "Personnalisation du Plat",
+        custom_ingredients_title: "Ingrédients de la Recette",
+        custom_ingredients_subtitle: "Décochez pour retirer un ingrédient",
+        custom_extras_title: "Suppléments & Extras",
+        custom_extras_subtitle: "Ajoutez des suppléments gourmands",
+        custom_cooking_title: "Cuisson de la Viande",
+        custom_allergies_title: "Allergies & Intolérances",
+        custom_seat_title: "Pour quel convive ? (Siège)",
+        custom_notes_title: "Instructions Spéciales pour le Chef",
+        btn_add_to_cart_custom: "Ajouter au Panier",
+        btn_update_cart_custom: "Mettre à Jour l'Article",
+        mod_sans: "Sans",
+        mod_extra: "Extra",
+        btn_edit: "Personnaliser / Modifier"
     },
     en: {
         splash_title: "Welcome to Ciao Byebye",
@@ -124,7 +139,22 @@ const translations = {
         status_cooking_bar: "🔥 Cooking (Table {table}) - Queue #{queue}",
         status_ready_bar: "🎉 Ready for pickup at the counter!",
         notif_cash_paid_title: "Payment Confirmed!",
-        notif_cash_paid_body: "Your cash payment has been verified at the cashier. Enjoy your meal!"
+        notif_cash_paid_body: "Your cash payment has been verified at the cashier. Enjoy your meal!",
+        btn_customize: "Customize",
+        custom_modal_title: "Dish Customization",
+        custom_ingredients_title: "Recipe Ingredients",
+        custom_ingredients_subtitle: "Uncheck to remove an ingredient",
+        custom_extras_title: "Extras & Add-ons",
+        custom_extras_subtitle: "Add delicious extra toppings",
+        custom_cooking_title: "Meat Cooking Preference",
+        custom_allergies_title: "Allergies & Dietary Needs",
+        custom_seat_title: "For which guest? (Seat)",
+        custom_notes_title: "Special Kitchen Notes",
+        btn_add_to_cart_custom: "Add to Cart",
+        btn_update_cart_custom: "Update Item",
+        mod_sans: "No",
+        mod_extra: "Extra",
+        btn_edit: "Customize / Edit"
     },
     ar: {
         splash_title: "مرحباً بكم في تشاو باي باي",
@@ -187,7 +217,22 @@ const translations = {
         status_cooking_bar: "🔥 في المطبخ (طاولة {table}) - الدور #{queue}",
         status_ready_bar: "🎉 طلبك جاهز للاستلام عند المنصة !",
         notif_cash_paid_title: "تم تأكيد الدفع !",
-        notif_cash_paid_body: "تم تسجيل استلام المبلغ نقداً في الصندوق بنجاح. شهية طيبة !"
+        notif_cash_paid_body: "تم تسجيل استلام المبلغ نقداً في الصندوق بنجاح. شهية طيبة !",
+        btn_customize: "تخصيص",
+        custom_modal_title: "تخصيص الطبق",
+        custom_ingredients_title: "مكونات الوصفة",
+        custom_ingredients_subtitle: "قم بإلغاء التحديد لإزالة مكون",
+        custom_extras_title: "إضافات ومكملات",
+        custom_extras_subtitle: "أضف مكونات إضافية شهية",
+        custom_cooking_title: "درجة استواء اللحم",
+        custom_allergies_title: "الحساسية والملاحظات الغذائية",
+        custom_seat_title: "رقم المقعد / الضيف",
+        custom_notes_title: "تعليمات خاصة للمطبخ",
+        btn_add_to_cart_custom: "إضافة إلى السلة",
+        btn_update_cart_custom: "تحديث العنصر",
+        mod_sans: "بدون",
+        mod_extra: "إضافي",
+        btn_edit: "تعديل التخصيص"
     },
     es: {
         splash_title: "Bienvenido a Ciao Byebye",
@@ -250,7 +295,22 @@ const translations = {
         status_cooking_bar: "🔥 En cocina (Mesa {table}) - Cola #{queue}",
         status_ready_bar: "🎉 ¡Listo para recoger en mostrador!",
         notif_cash_paid_title: "¡Pago Confirmado!",
-        notif_cash_paid_body: "Su pago en efectivo ha sido validado en caja. ¡Buen provecho!"
+        notif_cash_paid_body: "Su pago en efectivo ha sido validado en caja. ¡Buen provecho!",
+        btn_customize: "Personalizar",
+        custom_modal_title: "Personalización del Plato",
+        custom_ingredients_title: "Ingredientes de la Receta",
+        custom_ingredients_subtitle: "Desmarque para quitar un ingrediente",
+        custom_extras_title: "Suplementos y Extras",
+        custom_extras_subtitle: "Añada extras deliciosos",
+        custom_cooking_title: "Punto de Cocción de la Carne",
+        custom_allergies_title: "Alergias e Intolerancias",
+        custom_seat_title: "¿Para qué comensal? (Asiento)",
+        custom_notes_title: "Instrucciones Especiales para Cocina",
+        btn_add_to_cart_custom: "Añadir a la Cesta",
+        btn_update_cart_custom: "Actualizar Artículo",
+        mod_sans: "Sin",
+        mod_extra: "Extra",
+        btn_edit: "Personalizar / Modificar"
     }
 };
 
@@ -750,6 +810,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const currSelect = document.getElementById('currency-select');
     if (currSelect) currSelect.value = currentCurrency;
 
+    // Détecter le numéro de table ou token QR depuis les paramètres URL (?table=05, ?t=5, ?token=token_table_05)
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tableParam = urlParams.get('table') || urlParams.get('t');
+        const tokenParam = urlParams.get('token');
+        const tableNumEl = document.getElementById('table-number');
+
+        if (tableParam && tableNumEl) {
+            const cleanDigits = tableParam.replace(/[^0-9]/g, '');
+            tableNumEl.innerText = cleanDigits ? (cleanDigits.length === 1 ? '0' + cleanDigits : cleanDigits) : tableParam;
+        } else if (tokenParam && tableNumEl) {
+            const tokenMatch = tokenParam.match(/token_table_(\w+)/);
+            if (tokenMatch && tokenMatch[1]) {
+                const tNum = tokenMatch[1];
+                tableNumEl.innerText = tNum.length === 1 ? '0' + tNum : tNum;
+            }
+        }
+    } catch (e) {
+        console.error('Erreur lecture paramètres URL:', e);
+    }
+
     changeLanguage(currentLang);
     loadActiveTheme();
     requestNotificationPermission();
@@ -770,6 +851,7 @@ async function loadMenu() {
             price: item.price_cents / 100,
             category: item.category,
             description: item.description,
+            ingredients: item.ingredients || [],
             image: item.image_url || 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=400'
         }));
         
@@ -777,10 +859,10 @@ async function loadMenu() {
     } catch (error) {
         console.error('Erreur chargement menu depuis l\'API:', error);
         products = [
-            { id: "p1", rawName: "Moscow Mule Premium", name: "Moscow Mule Premium", price: 12.50, category: "boisson", description: "Vodka artisanale, bière de gingembre bio, jus de citron vert frais, menthe fraîche.", image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=400" },
-            { id: "p2", rawName: "IPA Locale \"La Barbaque\"", name: "IPA Locale \"La Barbaque\"", price: 7.50, category: "boisson", description: "Bière blonde IPA artisanale locale, notes intenses d'agrumes et amertume fraîche.", image: "https://images.unsplash.com/photo-1600718374662-0483d2b9da44?auto=format&fit=crop&q=80&w=400" },
-            { id: "p3", rawName: "Planche de Charcuteries fines", name: "Planche de Charcuteries fines", price: 16.00, category: "entree", description: "Sélection de charcuteries ibériques, cornichons, pain au levain et beurre demi-sel.", image: "https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&q=80&w=400" },
-            { id: "p4", rawName: "Burger Signature L'Atelier", name: "Burger Signature L'Atelier", price: 18.50, category: "plat", description: "Bœuf charolais, cheddar affiné de 18 mois, oignons caramélisés, sauce secrète, frites fraîches.", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400" }
+            { id: "p1", rawName: "Moscow Mule Premium", name: "Moscow Mule Premium", price: 12.50, category: "boisson", description: "Vodka artisanale, bière de gingembre bio, jus de citron vert frais, menthe fraîche.", image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=400", ingredients: [{ name: "Menthe fraîche", is_removable: true }, { name: "Jus de citron vert", is_removable: true }, { name: "Glaçons", is_removable: true }] },
+            { id: "p2", rawName: "IPA Locale \"La Barbaque\"", name: "IPA Locale \"La Barbaque\"", price: 7.50, category: "boisson", description: "Bière blonde IPA artisanale locale, notes intenses d'agrumes et amertume fraîche.", image: "https://images.unsplash.com/photo-1600718374662-0483d2b9da44?auto=format&fit=crop&q=80&w=400", ingredients: [] },
+            { id: "p3", rawName: "Planche de Charcuteries fines", name: "Planche de Charcuteries fines", price: 16.00, category: "entree", description: "Sélection de charcuteries ibériques, cornichons, pain au levain et beurre demi-sel.", image: "https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&q=80&w=400", ingredients: [{ name: "Beurre demi-sel", is_removable: true }, { name: "Cornichons", is_removable: true }, { name: "Pain au levain", is_removable: true }] },
+            { id: "p4", rawName: "Burger Signature L'Atelier", name: "Burger Signature L'Atelier", price: 18.50, category: "plat", description: "Bœuf charolais, cheddar affiné de 18 mois, oignons caramélisés, sauce secrète, frites fraîches.", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400", ingredients: [{ name: "Oignons caramélisés", is_removable: true }, { name: "Cheddar affiné", is_removable: true }, { name: "Sauce secrète", is_removable: true }, { name: "Frites fraîches", is_removable: true }] }
         ];
         renderMenu();
     }
@@ -820,6 +902,423 @@ function requestNotificationPermission() {
     }
 }
 
+// ========================================================
+// DISH CUSTOMIZATION MODAL & MODIFIERS SYSTEM (CLIENT PWA)
+// ========================================================
+
+let activeCustomProduct = null;
+let editingCartItemId = null;
+let customRemovedIngredients = new Set();
+let customSelectedExtras = [];
+let customCookingPref = 'Saignant';
+let customSelectedAllergies = new Set();
+let customSeatNumber = 1;
+
+const ALLERGENS_LIST = [
+    'Gluten', 'Lactose', 'Arachides', 'Fruits à coque', 'Crustacés', 'Œufs', 'Soja', 'Moutarde', 'Sésame'
+];
+
+function getProductIngredients(product) {
+    if (product.ingredients && Array.isArray(product.ingredients) && product.ingredients.length > 0) {
+        return product.ingredients.map(ing => ({
+            id: ing.id,
+            name: ing.name,
+            is_removable: ing.is_removable !== false,
+            is_86: ing.is_86 === true
+        }));
+    }
+    
+    const pName = (product.rawName || product.name || '').toLowerCase();
+    if (pName.includes('burger')) {
+        return [
+            { name: 'Oignons caramélisés', is_removable: true },
+            { name: 'Cheddar affiné', is_removable: true },
+            { name: 'Sauce secrète', is_removable: true },
+            { name: 'Frites fraîches', is_removable: true },
+            { name: 'Cornichons pickles', is_removable: true }
+        ];
+    } else if (pName.includes('mule') || pName.includes('cocktail')) {
+        return [
+            { name: 'Menthe fraîche', is_removable: true },
+            { name: 'Jus de citron vert', is_removable: true },
+            { name: 'Glaçons', is_removable: true }
+        ];
+    } else if (pName.includes('planche') || pName.includes('charcuterie')) {
+        return [
+            { name: 'Beurre demi-sel', is_removable: true },
+            { name: 'Cornichons', is_removable: true },
+            { name: 'Pain au levain', is_removable: true }
+        ];
+    } else if (product.category === 'plat') {
+        return [
+            { name: 'Sauce du chef', is_removable: true },
+            { name: 'Garniture', is_removable: true }
+        ];
+    }
+    return [];
+}
+
+function getProductAvailableExtras(product) {
+    const pName = (product.rawName || product.name || '').toLowerCase();
+    const cat = product.category;
+
+    if (pName.includes('burger') || cat === 'plat') {
+        return [
+            { id: 'extra_cheddar', label: 'Cheddar Affiné 18 Mois', price: 1.50, icon: 'fa-cheese' },
+            { id: 'extra_bacon', label: 'Bacon Grillé Croustillant', price: 2.00, icon: 'fa-bacon' },
+            { id: 'extra_steak', label: 'Double Steak Charolais', price: 3.50, icon: 'fa-drumstick-bite' },
+            { id: 'extra_sauce', label: 'Extra Sauce Maison', price: 0.80, icon: 'fa-bottle-droplet' },
+            { id: 'extra_frites', label: 'Portion Frites Fraîches', price: 2.50, icon: 'fa-bowl-food' },
+            { id: 'extra_avocat', label: 'Tranches d\'Avocat Frais', price: 1.80, icon: 'fa-leaf' }
+        ];
+    } else if (cat === 'boisson') {
+        return [
+            { id: 'extra_shot', label: 'Supplément Double Dose', price: 3.00, icon: 'fa-glass-whiskey' },
+            { id: 'extra_citron', label: 'Extra Rondelle Citron Vert', price: 0.50, icon: 'fa-lemon' },
+            { id: 'extra_menthe', label: 'Extra Menthe Fraîche', price: 0.50, icon: 'fa-seedling' },
+            { id: 'extra_sirop', label: 'Trait de Sirop Gourmet', price: 0.80, icon: 'fa-cubes-stacked' }
+        ];
+    } else if (cat === 'entree') {
+        return [
+            { id: 'extra_pain', label: 'Corbeille Pain au Levain', price: 1.50, icon: 'fa-bread-slice' },
+            { id: 'extra_beurre', label: 'Beurre Truffé Maison', price: 2.00, icon: 'fa-cube' },
+            { id: 'extra_fromage', label: 'Portion Fromage Affiné', price: 3.00, icon: 'fa-cheese' }
+        ];
+    } else if (cat === 'dessert') {
+        return [
+            { id: 'extra_chantilly', label: 'Chantilly Maison Vanillée', price: 1.00, icon: 'fa-cloud' },
+            { id: 'extra_coulis', label: 'Coulis Caramel Beurre Salé', price: 1.00, icon: 'fa-droplet' },
+            { id: 'extra_glace', label: 'Boule de Glace Artisanale', price: 2.00, icon: 'fa-ice-cream' }
+        ];
+    }
+    return [
+        { id: 'extra_sauce', label: 'Sauce Supplémentaire', price: 0.80, icon: 'fa-bottle-droplet' },
+        { id: 'extra_garniture', label: 'Extra Garniture', price: 2.00, icon: 'fa-utensils' }
+    ];
+}
+
+function openCustomModal(productId, existingCartItemId = null) {
+    const product = products.find(p => p.id === productId);
+    if (!product || product.is_available === false) return;
+
+    activeCustomProduct = product;
+    editingCartItemId = existingCartItemId;
+    customRemovedIngredients = new Set();
+    customSelectedExtras = [];
+    customSelectedAllergies = new Set();
+    customCookingPref = (product.name.toLowerCase().includes('burger') || product.category === 'plat') ? 'Saignant' : null;
+    customSeatNumber = 1;
+    let specialNotes = '';
+
+    if (existingCartItemId) {
+        const existing = cart.find(c => c.cartItemId === existingCartItemId);
+        if (existing) {
+            customRemovedIngredients = new Set(existing.removedIngredients || []);
+            customSelectedExtras = [...(existing.selectedExtras || [])];
+            customCookingPref = existing.cooking_pref || customCookingPref;
+            customSelectedAllergies = new Set(existing.allergies || []);
+            customSeatNumber = existing.seat_number || 1;
+            specialNotes = existing.specialNotes || '';
+        }
+    }
+
+    const t = translations[currentLang] || translations.fr;
+    const localized = getLocalizedProduct(product);
+
+    const titleEl = document.getElementById('custom-dish-title');
+    if (titleEl) titleEl.innerText = localized.name;
+    const basePriceEl = document.getElementById('custom-dish-base-price');
+    if (basePriceEl) basePriceEl.innerText = formatPrice(product.price);
+    
+    const confirmBtnText = document.getElementById('confirm-custom-btn-text');
+    if (confirmBtnText) {
+        confirmBtnText.innerText = existingCartItemId ? (t.btn_update_cart_custom || 'Mettre à Jour') : (t.btn_add_to_cart_custom || 'Ajouter au Panier');
+    }
+
+    // Ingrédients
+    const ings = getProductIngredients(product);
+    const ingsSec = document.getElementById('section-ingredients');
+    const ingsList = document.getElementById('custom-ingredients-list');
+    if (ingsSec && ingsList) {
+        if (ings.length > 0) {
+            ingsSec.style.display = 'block';
+            ingsList.innerHTML = ings.map(ing => {
+                const isRemoved = customRemovedIngredients.has(ing.name);
+                return `
+                    <div class="ingredient-toggle-item ${isRemoved ? 'removed' : ''}" onclick="toggleCustomIngredient('${ing.name.replace(/'/g, "\\'")}')">
+                        <span class="ingredient-name">${ing.name}</span>
+                        <span class="ingredient-status-tag ${isRemoved ? 'removed-tag' : 'included'}">
+                            <i class="fa-solid ${isRemoved ? 'fa-xmark' : 'fa-check'}"></i> ${isRemoved ? (t.mod_sans || 'Sans') : 'Inclus'}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            ingsSec.style.display = 'none';
+        }
+    }
+
+    // Extras
+    const extras = getProductAvailableExtras(product);
+    const extrasSec = document.getElementById('section-extras');
+    const extrasList = document.getElementById('custom-extras-list');
+    if (extrasSec && extrasList) {
+        if (extras.length > 0) {
+            extrasSec.style.display = 'block';
+            extrasList.innerHTML = extras.map(ext => {
+                const isSelected = customSelectedExtras.some(e => e.id === ext.id);
+                return `
+                    <div class="extra-option-item ${isSelected ? 'selected' : ''}" onclick="toggleCustomExtra('${ext.id}')">
+                        <div class="extra-left">
+                            <div class="extra-checkbox"><i class="fa-solid fa-check"></i></div>
+                            <span class="extra-label"><i class="fa-solid ${ext.icon || 'fa-plus'}"></i> ${ext.label}</span>
+                        </div>
+                        <span class="extra-price-tag">+${formatPrice(ext.price)}</span>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            extrasSec.style.display = 'none';
+        }
+    }
+
+    // Cuisson
+    const cookingSec = document.getElementById('section-cooking');
+    const isMeatOrBurger = product.name.toLowerCase().includes('burger') || (product.category === 'plat' && !product.name.toLowerCase().includes('poisson') && !product.name.toLowerCase().includes('salade'));
+    if (cookingSec) {
+        if (isMeatOrBurger) {
+            cookingSec.style.display = 'block';
+            updateCookingPillsUI();
+        } else {
+            cookingSec.style.display = 'none';
+            customCookingPref = null;
+        }
+    }
+
+    // Allergies
+    const allergiesList = document.getElementById('custom-allergies-list');
+    if (allergiesList) {
+        allergiesList.innerHTML = ALLERGENS_LIST.map(alg => {
+            const isActive = customSelectedAllergies.has(alg);
+            return `
+                <div class="allergy-chip ${isActive ? 'active' : ''}" onclick="toggleCustomAllergy('${alg}')">
+                    <i class="fa-solid fa-triangle-exclamation"></i> ${alg}
+                </div>
+            `;
+        }).join('');
+    }
+
+    updateSeatPillsUI();
+
+    const notesInput = document.getElementById('custom-special-notes');
+    if (notesInput) notesInput.value = specialNotes;
+
+    updateCustomModalPrice();
+
+    const modal = document.getElementById('custom-modal');
+    const overlay = document.getElementById('custom-modal-overlay');
+    if (modal && overlay) {
+        modal.classList.add('active');
+        overlay.classList.add('active');
+    }
+}
+
+function closeCustomModal() {
+    const modal = document.getElementById('custom-modal');
+    const overlay = document.getElementById('custom-modal-overlay');
+    if (modal && overlay) {
+        modal.classList.remove('active');
+        overlay.classList.remove('active');
+    }
+    activeCustomProduct = null;
+    editingCartItemId = null;
+}
+
+function toggleCustomIngredient(name) {
+    if (customRemovedIngredients.has(name)) {
+        customRemovedIngredients.delete(name);
+    } else {
+        customRemovedIngredients.add(name);
+    }
+    if (activeCustomProduct) {
+        const t = translations[currentLang] || translations.fr;
+        const ings = getProductIngredients(activeCustomProduct);
+        const ingsList = document.getElementById('custom-ingredients-list');
+        if (ingsList) {
+            ingsList.innerHTML = ings.map(ing => {
+                const isRemoved = customRemovedIngredients.has(ing.name);
+                return `
+                    <div class="ingredient-toggle-item ${isRemoved ? 'removed' : ''}" onclick="toggleCustomIngredient('${ing.name.replace(/'/g, "\\'")}')">
+                        <span class="ingredient-name">${ing.name}</span>
+                        <span class="ingredient-status-tag ${isRemoved ? 'removed-tag' : 'included'}">
+                            <i class="fa-solid ${isRemoved ? 'fa-xmark' : 'fa-check'}"></i> ${isRemoved ? (t.mod_sans || 'Sans') : 'Inclus'}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+    updateCustomModalPrice();
+}
+
+function toggleCustomExtra(extraId) {
+    if (!activeCustomProduct) return;
+    const available = getProductAvailableExtras(activeCustomProduct);
+    const target = available.find(e => e.id === extraId);
+    if (!target) return;
+
+    const idx = customSelectedExtras.findIndex(e => e.id === extraId);
+    if (idx !== -1) {
+        customSelectedExtras.splice(idx, 1);
+    } else {
+        customSelectedExtras.push(target);
+    }
+
+    const extrasList = document.getElementById('custom-extras-list');
+    if (extrasList) {
+        extrasList.innerHTML = available.map(ext => {
+            const isSelected = customSelectedExtras.some(e => e.id === ext.id);
+            return `
+                <div class="extra-option-item ${isSelected ? 'selected' : ''}" onclick="toggleCustomExtra('${ext.id}')">
+                    <div class="extra-left">
+                        <div class="extra-checkbox"><i class="fa-solid fa-check"></i></div>
+                        <span class="extra-label"><i class="fa-solid ${ext.icon || 'fa-plus'}"></i> ${ext.label}</span>
+                    </div>
+                    <span class="extra-price-tag">+${formatPrice(ext.price)}</span>
+                </div>
+            `;
+        }).join('');
+    }
+    updateCustomModalPrice();
+}
+
+function selectCooking(cooking) {
+    customCookingPref = cooking;
+    updateCookingPillsUI();
+}
+
+function updateCookingPillsUI() {
+    document.querySelectorAll('#custom-cooking-options .cooking-btn').forEach(btn => {
+        const c = btn.getAttribute('data-cook');
+        if (c && c.toLowerCase() === (customCookingPref || '').toLowerCase()) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function toggleCustomAllergy(allergy) {
+    if (customSelectedAllergies.has(allergy)) {
+        customSelectedAllergies.delete(allergy);
+    } else {
+        customSelectedAllergies.add(allergy);
+    }
+    const allergiesList = document.getElementById('custom-allergies-list');
+    if (allergiesList) {
+        allergiesList.innerHTML = ALLERGENS_LIST.map(alg => {
+            const isActive = customSelectedAllergies.has(alg);
+            return `
+                <div class="allergy-chip ${isActive ? 'active' : ''}" onclick="toggleCustomAllergy('${alg}')">
+                    <i class="fa-solid fa-triangle-exclamation"></i> ${alg}
+                </div>
+            `;
+        }).join('');
+    }
+}
+
+function selectCustomSeat(seatNum) {
+    customSeatNumber = seatNum;
+    updateSeatPillsUI();
+}
+
+function updateSeatPillsUI() {
+    document.querySelectorAll('#custom-seat-selector .seat-pill').forEach((pill, idx) => {
+        if (idx + 1 === customSeatNumber) {
+            pill.classList.add('active');
+        } else {
+            pill.classList.remove('active');
+        }
+    });
+}
+
+function updateCustomModalPrice() {
+    if (!activeCustomProduct) return;
+    const basePrice = activeCustomProduct.price;
+    const extrasTotal = customSelectedExtras.reduce((sum, e) => sum + e.price, 0);
+    const unitPrice = basePrice + extrasTotal;
+    const priceEl = document.getElementById('custom-modal-total-price');
+    if (priceEl) priceEl.innerText = formatPrice(unitPrice);
+}
+
+function saveCustomizationToCart() {
+    if (!activeCustomProduct) return;
+
+    const basePrice = activeCustomProduct.price;
+    const extrasTotal = customSelectedExtras.reduce((sum, e) => sum + e.price, 0);
+    const unitPrice = basePrice + extrasTotal;
+
+    const notesInput = document.getElementById('custom-special-notes');
+    const specialNotes = notesInput ? notesInput.value.trim() : '';
+
+    const modifiers = [];
+    customRemovedIngredients.forEach(ing => {
+        modifiers.push({ type: 'sans', label: ing });
+    });
+    customSelectedExtras.forEach(ext => {
+        modifiers.push({ type: 'extra', label: ext.label, price: ext.price });
+    });
+
+    const allergies = Array.from(customSelectedAllergies);
+    const removedIngredients = Array.from(customRemovedIngredients);
+    const selectedExtras = [...customSelectedExtras];
+
+    if (editingCartItemId) {
+        const itemIdx = cart.findIndex(c => c.cartItemId === editingCartItemId);
+        if (itemIdx !== -1) {
+            cart[itemIdx] = {
+                ...cart[itemIdx],
+                price: unitPrice,
+                modifiers,
+                allergies,
+                removedIngredients,
+                selectedExtras,
+                cooking_pref: customCookingPref,
+                seat_number: customSeatNumber,
+                specialNotes
+            };
+        }
+    } else {
+        const cartItemId = 'citem_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+        cart.push({
+            cartItemId,
+            id: activeCustomProduct.id,
+            name: activeCustomProduct.rawName || activeCustomProduct.name,
+            basePrice: activeCustomProduct.price,
+            price: unitPrice,
+            category: activeCustomProduct.category,
+            quantity: 1,
+            seat_number: customSeatNumber,
+            cooking_pref: customCookingPref,
+            modifiers,
+            allergies,
+            removedIngredients,
+            selectedExtras,
+            specialNotes
+        });
+    }
+
+    closeCustomModal();
+    updateCartUI();
+    renderMenu();
+}
+
+function openEditCustomModal(cartItemId) {
+    const item = cart.find(c => c.cartItemId === cartItemId);
+    if (!item) return;
+    openCustomModal(item.id, cartItemId);
+}
+
 function renderMenu() {
     const t = translations[currentLang] || translations.fr;
     const filteredProducts = products.filter(product => {
@@ -827,20 +1326,20 @@ function renderMenu() {
     });
 
     menuGrid.innerHTML = filteredProducts.map(product => {
-        const cartItem = cart.find(item => item.id === product.id);
-        const quantity = cartItem ? cartItem.quantity : 0;
+        const cartItemsForProd = cart.filter(item => item.id === product.id);
+        const quantity = cartItemsForProd.reduce((sum, item) => sum + item.quantity, 0);
         const localized = getLocalizedProduct(product);
         const isAvailable = product.is_available !== false;
 
         return `
             <div class="product-card glass ${!isAvailable ? 'out-of-stock' : ''}" data-category="${product.category}">
-                <div class="product-img-wrapper">
+                <div class="product-img-wrapper" onclick="openCustomModal('${product.id}')" style="cursor:pointer;">
                     <img src="${product.image}" alt="${localized.name}" loading="lazy">
                     <span class="product-badge">${getCategoryLabel(product.category)}</span>
                     ${!isAvailable ? '<span style="position:absolute; top:10px; right:10px; background:#ef4444; color:#fff; font-size:10px; font-weight:800; padding:3px 8px; border-radius:4px;">ÉPUISÉ (86)</span>' : ''}
                 </div>
                 <div class="product-info">
-                    <div class="product-title-row">
+                    <div class="product-title-row" onclick="openCustomModal('${product.id}')" style="cursor:pointer;">
                         <h3>${localized.name}</h3>
                         <span class="product-price">${formatPrice(product.price)}</span>
                     </div>
@@ -850,17 +1349,16 @@ function renderMenu() {
                             <button class="add-to-cart-btn" disabled style="background:rgba(255,255,255,0.1); color:var(--text-muted); cursor:not-allowed;">
                                 <i class="fa-solid fa-ban"></i> Indisponible
                             </button>
-                        ` : (quantity === 0 ? `
-                            <button class="add-to-cart-btn" onclick="addToCart('${product.id}')">
-                                <i class="fa-solid fa-plus"></i> ${t.btn_add}
-                            </button>
                         ` : `
-                            <div class="item-stepper">
-                                <button class="stepper-btn" onclick="updateItemQuantity('${product.id}', -1)"><i class="fa-solid fa-minus"></i></button>
-                                <span class="stepper-val">${quantity}</span>
-                                <button class="stepper-btn" onclick="updateItemQuantity('${product.id}', 1)"><i class="fa-solid fa-plus"></i></button>
+                            <div style="display:flex; gap:6px; width:100%; align-items:center;">
+                                <button class="btn-customize-item" onclick="openCustomModal('${product.id}')" title="Personnaliser les ingrédients et options">
+                                    <i class="fa-solid fa-sliders"></i> <span data-i18n="btn_customize">${t.btn_customize || 'Personnaliser'}</span>
+                                </button>
+                                <button class="add-to-cart-btn" onclick="addToCart('${product.id}')" style="flex:1;">
+                                    <i class="fa-solid fa-plus"></i> ${quantity > 0 ? `Ajouter (${quantity})` : t.btn_add}
+                                </button>
                             </div>
-                        `)}
+                        `}
                     </div>
                 </div>
             </div>
@@ -882,16 +1380,31 @@ function addToCart(productId) {
     const product = products.find(p => p.id === productId);
     if (!product || product.is_available === false) return;
 
-    const existingItem = cart.find(item => item.id === productId);
+    const ings = getProductIngredients(product);
+    const isBurgerOrMeat = product.name.toLowerCase().includes('burger') || (product.category === 'plat' && !product.name.toLowerCase().includes('poisson'));
+    
+    // If dish has rich customizable options, open modal for full user experience
+    if (ings.length > 0 || isBurgerOrMeat) {
+        openCustomModal(productId);
+        return;
+    }
+
+    const cartItemId = 'citem_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+    const existingItem = cart.find(item => item.id === productId && (!item.modifiers || item.modifiers.length === 0));
     if (existingItem) {
         existingItem.quantity += 1;
     } else {
         cart.push({
+            cartItemId,
             id: product.id,
             name: product.rawName || product.name,
+            basePrice: product.price,
             price: product.price,
             category: product.category,
             seat_number: 1,
+            cooking_pref: null,
+            modifiers: [],
+            allergies: [],
             quantity: 1
         });
     }
@@ -900,8 +1413,8 @@ function addToCart(productId) {
     renderMenu();
 }
 
-function updateItemQuantity(productId, delta) {
-    const itemIndex = cart.findIndex(item => item.id === productId);
+function updateCartItemQty(cartItemId, delta) {
+    const itemIndex = cart.findIndex(item => item.cartItemId === cartItemId || item.id === cartItemId);
     if (itemIndex === -1) return;
 
     cart[itemIndex].quantity += delta;
@@ -933,18 +1446,40 @@ function updateCartUI() {
         cartItemsContainer.innerHTML = cart.map(item => {
             const product = products.find(p => p.id === item.id) || item;
             const localized = getLocalizedProduct(product);
+            const hasMods = (item.modifiers && item.modifiers.length > 0) || item.cooking_pref || (item.allergies && item.allergies.length > 0) || item.specialNotes;
+
             return `
                 <div class="cart-item">
-                    <div class="cart-item-info">
-                        <div class="cart-item-title">${localized.name}</div>
+                    <div class="cart-item-info" style="flex:1; padding-right:12px;">
+                        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
+                            <strong class="cart-item-title">${localized.name}</strong>
+                            <span class="cart-seat-badge">🪑 S${item.seat_number || 1}</span>
+                        </div>
                         <div class="cart-item-unit-price">${formatPrice(item.price)} / u</div>
+                        
+                        ${hasMods ? `
+                            <div class="cart-item-mods">
+                                ${item.cooking_pref ? `<span class="cart-mod-badge cook"><i class="fa-solid fa-fire"></i> ${item.cooking_pref}</span>` : ''}
+                                ${(item.modifiers || []).map(m => {
+                                    if (m.type === 'sans') return `<span class="cart-mod-badge sans">❌ Sans ${m.label}</span>`;
+                                    if (m.type === 'extra') return `<span class="cart-mod-badge extra">➕ Extra ${m.label} (+${formatPrice(m.price || 0)})</span>`;
+                                    return `<span class="cart-mod-badge">${m.label}</span>`;
+                                }).join('')}
+                                ${(item.allergies || []).map(a => `<span class="cart-mod-badge allergy">⚠️ ${a}</span>`).join('')}
+                                ${item.specialNotes ? `<span class="cart-mod-badge note">📝 ${item.specialNotes}</span>` : ''}
+                            </div>
+                        ` : ''}
+
+                        <button class="cart-edit-btn" onclick="openEditCustomModal('${item.cartItemId || item.id}')">
+                            <i class="fa-solid fa-sliders"></i> ${t.btn_edit || 'Personnaliser / Modifier'}
+                        </button>
                     </div>
                     <div class="item-stepper">
-                        <button class="stepper-btn" onclick="updateItemQuantity('${item.id}', -1)"><i class="fa-solid fa-minus"></i></button>
+                        <button class="stepper-btn" onclick="updateCartItemQty('${item.cartItemId || item.id}', -1)"><i class="fa-solid fa-minus"></i></button>
                         <span class="stepper-val">${item.quantity}</span>
-                        <button class="stepper-btn" onclick="updateItemQuantity('${item.id}', 1)"><i class="fa-solid fa-plus"></i></button>
+                        <button class="stepper-btn" onclick="updateCartItemQty('${item.cartItemId || item.id}', 1)"><i class="fa-solid fa-plus"></i></button>
                     </div>
-                    <div class="cart-item-total">${formatPrice(item.price * item.quantity)}</div>
+                    <div class="cart-item-total" style="min-width:65px; text-align:right;">${formatPrice(item.price * item.quantity)}</div>
                 </div>
             `;
         }).join('');
@@ -981,11 +1516,23 @@ function closePayment() {
 async function simulatePaymentSuccess() {
     const t = translations[currentLang] || translations.fr;
     const confirmBtn = document.getElementById('confirm-payment-btn');
-    confirmBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${t.btn_processing}`;
-    confirmBtn.disabled = true;
+    if (confirmBtn) {
+        confirmBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${t.btn_processing || 'Traitement...'}`;
+        confirmBtn.disabled = true;
+    }
 
-    const clientName = clientNameInput.value.trim() || 'Alex';
-    const tableNumber = document.getElementById('table-number').innerText;
+    if (!cart || cart.length === 0) {
+        alert(t.cart_empty || 'Votre panier est vide.');
+        if (confirmBtn) {
+            confirmBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> <span id="confirm-payment-btn-text">${selectedPaymentMethod === 'especes' ? t.btn_confirm_cash : t.btn_confirm_payment}</span>`;
+            confirmBtn.disabled = false;
+        }
+        return;
+    }
+
+    const clientName = (clientNameInput && clientNameInput.value ? clientNameInput.value.trim() : '') || 'Alex';
+    const tableNumEl = document.getElementById('table-number');
+    const tableNumber = tableNumEl ? tableNumEl.innerText.trim() : '05';
 
     try {
         const response = await fetch('/api/orders/mock-create', {
@@ -1004,12 +1551,16 @@ async function simulatePaymentSuccess() {
                     seat_number: item.seat_number || 1,
                     modifiers: item.modifiers || [],
                     allergies: item.allergies || [],
-                    cooking_pref: item.cooking_pref || null
+                    cooking_pref: item.cooking_pref || null,
+                    customization_notes: item.specialNotes || null
                 }))
             })
         });
 
-        if (!response.ok) throw new Error('Erreur de création de la commande');
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || `Erreur serveur (${response.status})`);
+        }
         const data = await response.json();
         
         closePayment();
@@ -1034,10 +1585,12 @@ async function simulatePaymentSuccess() {
 
     } catch (error) {
         console.error('Erreur lors de la création de la commande :', error);
-        alert('Erreur lors de l\'envoi de la commande. Veuillez réessayer.');
+        alert(error.message && error.message !== 'Failed to fetch' ? error.message : 'Erreur lors de l\'envoi de la commande. Veuillez réessayer.');
     } finally {
-        confirmBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> <span id="confirm-payment-btn-text">${selectedPaymentMethod === 'especes' ? t.btn_confirm_cash : t.btn_confirm_payment}</span>`;
-        confirmBtn.disabled = false;
+        if (confirmBtn) {
+            confirmBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> <span id="confirm-payment-btn-text">${selectedPaymentMethod === 'especes' ? t.btn_confirm_cash : t.btn_confirm_payment}</span>`;
+            confirmBtn.disabled = false;
+        }
     }
 }
 

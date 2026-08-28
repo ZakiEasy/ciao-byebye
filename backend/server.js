@@ -253,14 +253,42 @@ app.use((req, res, next) => {
 // Servir les fichiers statiques du dossier frontend
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// 1. Récupérer le menu du restaurant
+// Helper de validation de format UUID pour Postgres
+const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
+// 1. Récupérer le menu du restaurant avec les fiches techniques ingrédients
 app.get('/api/menu', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM products WHERE is_available = TRUE ORDER BY category, name');
+    const result = await pool.query(`
+      SELECT p.*,
+             COALESCE(
+               json_agg(
+                 json_build_object(
+                   'id', i.id,
+                   'name', i.name,
+                   'unit', i.unit,
+                   'is_removable', COALESCE(pi.is_removable, true),
+                   'is_86', COALESCE(i.is_86, false)
+                 )
+               ) FILTER (WHERE i.id IS NOT NULL),
+               '[]'
+             ) as ingredients
+      FROM products p
+      LEFT JOIN product_ingredients pi ON p.id = pi.product_id
+      LEFT JOIN ingredients i ON pi.ingredient_id = i.id
+      WHERE p.is_available = TRUE
+      GROUP BY p.id
+      ORDER BY p.category, p.name
+    `);
     res.json(result.rows);
   } catch (error) {
-    console.error('Erreur lors de la récupération du menu:', error);
-    res.status(500).json({ error: 'Erreur serveur interne' });
+    console.error('Erreur lors de la récupération du menu enrichi (fallback simple):', error);
+    try {
+      const fallbackRes = await pool.query('SELECT * FROM products WHERE is_available = TRUE ORDER BY category, name');
+      res.json(fallbackRes.rows);
+    } catch (e2) {
+      res.status(500).json({ error: 'Erreur serveur interne' });
+    }
   }
 });
 
@@ -272,29 +300,59 @@ app.post('/api/orders/create-payment-intent', async (req, res) => {
     // Calculer le total à partir des prix réels en base de données pour éviter la falsification côté client
     let totalAmountCents = 0;
     const itemsDetails = [];
+    const orderItems = Array.isArray(items) ? items : [];
 
-    for (const item of items) {
-      const productResult = await pool.query('SELECT price_cents FROM products WHERE id = $1', [item.product_id]);
-      if (productResult.rows.length === 0) {
-        return res.status(400).json({ error: `Produit non trouvé : ${item.product_id}` });
+    for (const item of orderItems) {
+      let productResult;
+      if (item.product_id && isUUID(item.product_id)) {
+        productResult = await pool.query('SELECT id, price_cents FROM products WHERE id = $1', [item.product_id]);
       }
-      const unitPrice = productResult.rows[0].price_cents;
-      totalAmountCents += unitPrice * item.quantity;
-      itemsDetails.push({ ...item, unit_price_cents: unitPrice });
+      if (!productResult || productResult.rows.length === 0) {
+        productResult = await pool.query(
+          'SELECT id, price_cents FROM products WHERE name = $1 OR name ILIKE $2 LIMIT 1',
+          [item.name, `%${(item.name || '').split(' ')[0]}%`]
+        );
+      }
+      
+      const prodId = productResult && productResult.rows.length > 0 ? productResult.rows[0].id : null;
+      const unitPrice = productResult && productResult.rows.length > 0 
+        ? productResult.rows[0].price_cents 
+        : Math.round((parseFloat(item.price) || 10) * 100);
+      const qty = parseInt(item.quantity || 1, 10) || 1;
+      
+      totalAmountCents += unitPrice * qty;
+      itemsDetails.push({ ...item, product_id: prodId, unit_price_cents: unitPrice, quantity: qty });
+    }
+
+    if (totalAmountCents <= 0) {
+      totalAmountCents = 100; // minimum 1 EUR
     }
 
     // Créer le PaymentIntent sur Stripe
     const paymentIntent = await stripe.paymentIntents.create({
       amount: totalAmountCents,
       currency: 'eur',
-      metadata: { session_id, client_name },
+      metadata: { session_id: session_id || '', client_name: client_name || 'Alex' },
     });
 
     // Enregistrer la commande en statut 'en_attente'
+    let effectiveSessionId = session_id;
+    if (!effectiveSessionId || !isUUID(effectiveSessionId)) {
+      // Create or find a default active session
+      const defaultTable = await pool.query('SELECT id FROM tables LIMIT 1');
+      if (defaultTable.rows.length > 0) {
+        const sessRes = await pool.query(
+          'INSERT INTO table_sessions (table_id, status) VALUES ($1, $2) RETURNING id',
+          [defaultTable.rows[0].id, 'active']
+        );
+        effectiveSessionId = sessRes.rows[0].id;
+      }
+    }
+
     const orderResult = await pool.query(
       `INSERT INTO orders (session_id, client_name, payment_intent_id, payment_status, total_amount_cents, order_status)
        VALUES ($1, $2, $3, 'en_attente', $4, 'recu') RETURNING id`,
-      [session_id, client_name, paymentIntent.id, totalAmountCents]
+      [effectiveSessionId, client_name || 'Alex', paymentIntent.id, totalAmountCents]
     );
     const orderId = orderResult.rows[0].id;
 
@@ -303,7 +361,7 @@ app.post('/api/orders/create-payment-intent', async (req, res) => {
       await pool.query(
         `INSERT INTO order_items (order_id, product_id, quantity, unit_price_cents, customization_notes)
          VALUES ($1, $2, $3, $4, $5)`,
-        [orderId, detail.product_id, detail.quantity, detail.unit_price_cents, detail.customization_notes]
+        [orderId, detail.product_id, detail.quantity, detail.unit_price_cents, detail.customization_notes || '']
       );
     }
 
@@ -313,7 +371,7 @@ app.post('/api/orders/create-payment-intent', async (req, res) => {
     });
   } catch (error) {
     console.error('Erreur de création de paiement:', error);
-    res.status(500).json({ error: 'Erreur de paiement' });
+    res.status(500).json({ error: error.message || 'Erreur de paiement' });
   }
 });
 
@@ -513,10 +571,32 @@ app.post('/api/orders/mock-create', async (req, res) => {
   const paymentStatus = isCash ? 'a_payer_en_caisse' : 'complete';
   
   try {
-    const tableResult = await pool.query('SELECT id, nominal_covers, actual_covers FROM tables WHERE number = $1', [tableNumber]);
-    if (tableResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Table non trouvée' });
+    const orderItems = Array.isArray(items) ? items : [];
+    if (orderItems.length === 0) {
+      return res.status(400).json({ error: 'Le panier est vide' });
     }
+
+    const rawTableStr = String(tableNumber || '05').trim();
+    const digitsMatch = rawTableStr.match(/\d+/);
+    const cleanDigits = digitsMatch ? digitsMatch[0] : '05';
+    const paddedNum = cleanDigits.length === 1 ? '0' + cleanDigits : cleanDigits;
+
+    let tableResult = await pool.query(
+      'SELECT id, nominal_covers, actual_covers FROM tables WHERE number = $1 OR number = $2 OR name ILIKE $3 LIMIT 1',
+      [rawTableStr, paddedNum, `%${cleanDigits}%`]
+    );
+
+    if (tableResult.rows.length === 0) {
+      const newTable = await pool.query(
+        `INSERT INTO tables (number, name, qr_code_token, status, zone, shape, min_covers, max_covers, nominal_covers, pos_x, pos_y)
+         VALUES ($1, $2, $3, 'libre', 'salle', 'square', 2, 4, 4, 100, 100)
+         ON CONFLICT (qr_code_token) DO UPDATE SET number = EXCLUDED.number
+         RETURNING id, nominal_covers, actual_covers`,
+        [paddedNum, `Table ${paddedNum}`, `token_table_${paddedNum}_${Date.now()}`]
+      );
+      tableResult = newTable;
+    }
+
     const tableId = tableResult.rows[0].id;
     
     // Mise à jour de l'état de service de la table
@@ -540,26 +620,36 @@ app.post('/api/orders/mock-create', async (req, res) => {
       sessionId = sessionResult.rows[0].id;
     }
     
-    const priceSumCents = items.reduce((sum, item) => sum + Math.round((item.price || (item.price_cents ? item.price_cents / 100 : 0)) * 100 * (item.quantity || 1)), 0);
+    const priceSumCents = orderItems.reduce((sum, item) => {
+      const p = parseFloat(item.price || (item.price_cents ? item.price_cents / 100 : 0)) || 0;
+      const q = parseInt(item.quantity || 1, 10) || 1;
+      return sum + Math.round(p * 100 * q);
+    }, 0);
+
+    const safeClientName = (clientName && typeof clientName === 'string' ? clientName.trim() : '') || 'Alex';
+
     const orderResult = await pool.query(
-      `INSERT INTO orders (session_id, total_amount_cents, payment_status, order_status, client_name)
-       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      [sessionId, priceSumCents, paymentStatus, 'en_cuisine', clientName]
+      `INSERT INTO orders (session_id, total_amount_cents, payment_status, payment_method, order_status, client_name)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+      [sessionId, priceSumCents, paymentStatus, isCash ? 'especes' : 'carte', 'en_cuisine', safeClientName]
     );
     const orderId = orderResult.rows[0].id;
     
-    for (const item of items) {
+    for (const item of orderItems) {
       let prodResult;
-      if (item.id) {
+      if (item.id && isUUID(item.id)) {
         prodResult = await pool.query('SELECT id, category FROM products WHERE id = $1', [item.id]);
       }
       if (!prodResult || prodResult.rows.length === 0) {
-        prodResult = await pool.query('SELECT id, category FROM products WHERE name = $1 OR name ILIKE $2 LIMIT 1', [item.name, `%${item.name.split(' ')[0]}%`]);
+        prodResult = await pool.query(
+          'SELECT id, category FROM products WHERE name = $1 OR name ILIKE $2 LIMIT 1',
+          [item.name, `%${(item.name || '').split(' ')[0]}%`]
+        );
       }
       if (!prodResult || prodResult.rows.length === 0) {
         prodResult = await pool.query(
           'INSERT INTO products (name, price_cents, category, is_available) VALUES ($1, $2, $3, TRUE) RETURNING id, category',
-          [item.name, Math.round((item.price || (item.price_cents ? item.price_cents/100 : 10)) * 100), item.category || 'plat']
+          [item.name || 'Article', Math.round((parseFloat(item.price) || (item.price_cents ? item.price_cents/100 : 10)) * 100), item.category || 'plat']
         );
       }
 
@@ -572,8 +662,8 @@ app.post('/api/orders/mock-create', async (req, res) => {
         const courseStatus = item.course_status || (courseStep === 'boisson' || courseStep === 'entree' ? 'fire' : 'hold');
         const station = item.station || (category === 'boisson' ? 'bar' : (category === 'entree' || category === 'dessert' ? 'froid' : 'chaud'));
         const itemSeat = item.seat_number || seatNumber || 1;
-        const modifiers = item.modifiers || [];
-        const allergies = item.allergies || [];
+        const modifiers = Array.isArray(item.modifiers) ? item.modifiers : [];
+        const allergies = Array.isArray(item.allergies) ? item.allergies : [];
         const cookingPref = item.cooking_pref || null;
 
         await pool.query(
@@ -583,7 +673,7 @@ app.post('/api/orders/mock-create', async (req, res) => {
             modifiers, allergies, cooking_pref
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
           [
-            orderId, productId, item.quantity || 1, Math.round((item.price || (item.price_cents ? item.price_cents/100 : 0)) * 100),
+            orderId, productId, item.quantity || 1, Math.round((parseFloat(item.price) || (item.price_cents ? item.price_cents/100 : 0)) * 100),
             itemSeat, courseStep, courseStatus, station,
             JSON.stringify(modifiers), JSON.stringify(allergies), cookingPref
           ]
@@ -599,21 +689,21 @@ app.post('/api/orders/mock-create', async (req, res) => {
 
     io.emit('new_order', {
       orderId,
-      tableNumber,
-      clientName,
-      items,
+      tableNumber: paddedNum,
+      clientName: safeClientName,
+      items: orderItems,
       queuePos,
       paymentStatus,
       paymentMethod: isCash ? 'especes' : 'carte',
-      message: `Nouvelle commande de ${clientName} (Table ${tableNumber}) ${isCash ? '[À ENCAISSER EN ESPÈCES]' : '[PAYÉ STRIPE]'}`
+      message: `Nouvelle commande de ${safeClientName} (Table ${paddedNum}) ${isCash ? '[À ENCAISSER EN ESPÈCES]' : '[PAYÉ STRIPE]'}`
     });
 
-    io.emit('table_layout_updated', { tableNumber, serviceStatus: 'en_preparation' });
+    io.emit('table_layout_updated', { tableNumber: paddedNum, serviceStatus: 'en_preparation' });
     
     res.json({ success: true, orderId, queuePos, paymentStatus, paymentMethod: isCash ? 'especes' : 'carte' });
   } catch (error) {
     console.error('Erreur mock order create:', error);
-    res.status(500).json({ error: 'Erreur serveur' });
+    res.status(500).json({ error: error.message || 'Erreur serveur lors de la commande' });
   }
 });
 

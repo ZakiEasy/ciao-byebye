@@ -2822,3 +2822,516 @@ input:checked + .switch-slider:before {
     letter-spacing: 0.5px;
 }
 
+/* ===================================================
+   DISH CUSTOMIZATION MODAL (INGREDIENTS, EXTRAS, ALLERGIES)
+   =================================================== */
+
+.custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(8px);
+    z-index: 210;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.custom-modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.custom-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.96);
+    width: calc(100% - 32px);
+    max-width: 480px;
+    max-height: 88vh;
+    background: rgba(18, 18, 24, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-lg, 16px);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(245, 158, 11, 0.15);
+    z-index: 211;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    overflow: hidden;
+}
+
+.custom-modal.active {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.custom-modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.custom-dish-summary h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 2px;
+}
+
+.custom-dish-base-price {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary, #f59e0b);
+}
+
+.close-custom-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.close-custom-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+}
+
+.custom-modal-body {
+    padding: 18px 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.custom-section {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+
+.custom-section-header {
+    margin-bottom: 12px;
+}
+
+.custom-section-header h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.custom-section-header h4 i {
+    color: var(--primary, #f59e0b);
+}
+
+.custom-section-desc {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+/* Ingredients list (Remove toggle) */
+.ingredients-toggle-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ingredient-toggle-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.ingredient-toggle-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.ingredient-toggle-item.removed {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.ingredient-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #f1f5f9;
+}
+
+.ingredient-toggle-item.removed .ingredient-name {
+    color: #fca5a5;
+    text-decoration: line-through;
+}
+
+.ingredient-status-tag {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ingredient-status-tag.included {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.ingredient-status-tag.removed-tag {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+/* Extras grid */
+.extras-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.extra-option-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.extra-option-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.extra-option-item.selected {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+.extra-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.extra-checkbox {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: transparent;
+    transition: all 0.2s ease;
+}
+
+.extra-option-item.selected .extra-checkbox {
+    background: var(--primary, #f59e0b);
+    border-color: var(--primary, #f59e0b);
+    color: #000;
+}
+
+.extra-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #f1f5f9;
+}
+
+.extra-price-tag {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary, #f59e0b);
+    background: rgba(245, 158, 11, 0.12);
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+
+/* Meat Cooking Options */
+.cooking-options {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.cooking-btn {
+    padding: 9px 4px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    color: #cbd5e1;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.cooking-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.cooking-btn.active {
+    background: var(--primary, #f59e0b);
+    color: #000;
+    border-color: var(--primary, #f59e0b);
+    font-weight: 700;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+}
+
+/* Allergies chips */
+.allergies-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.allergy-chip {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    color: #cbd5e1;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.allergy-chip:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.allergy-chip.active {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+    color: #fca5a5;
+    font-weight: 700;
+}
+
+/* Seat Selector */
+.seat-selector-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.seat-pill {
+    flex: 1;
+    min-width: 65px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    color: #cbd5e1;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.seat-pill.active {
+    background: rgba(59, 130, 246, 0.25);
+    border-color: #3b82f6;
+    color: #93c5fd;
+    font-weight: 700;
+}
+
+/* Special Notes Input */
+.custom-notes-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.3);
+    color: #f1f5f9;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+}
+
+.custom-notes-input:focus {
+    border-color: var(--primary, #f59e0b);
+}
+
+/* Custom modal footer */
+.custom-modal-footer {
+    padding: 14px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(18, 18, 24, 0.98);
+}
+
+.custom-total-preview {
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+.custom-total-preview strong {
+    font-size: 18px;
+    color: #fff;
+    margin-left: 4px;
+}
+
+.confirm-custom-btn {
+    background: var(--primary, #f59e0b);
+    color: #000;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.confirm-custom-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+}
+
+/* Product Card Customization Trigger */
+.btn-customize-item {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #f1f5f9;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-customize-item:hover {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: var(--primary, #f59e0b);
+    color: var(--primary, #f59e0b);
+}
+
+/* Enriched Cart Item Custom Badges */
+.cart-item-mods {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+
+.cart-mod-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.cart-mod-badge.sans {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.cart-mod-badge.extra {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.cart-mod-badge.cook {
+    background: rgba(249, 115, 22, 0.15);
+    color: #fb923c;
+    border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.cart-mod-badge.allergy {
+    background: rgba(220, 38, 38, 0.2);
+    color: #fca5a5;
+    border: 1px solid rgba(220, 38, 38, 0.4);
+}
+
+.cart-mod-badge.note {
+    background: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.cart-seat-badge {
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+}
+
+.cart-edit-btn {
+    background: none;
+    border: none;
+    color: var(--primary, #f59e0b);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 0;
+    margin-top: 4px;
+    text-decoration: underline;
+    opacity: 0.9;
+}
+
+.cart-edit-btn:hover {
+    opacity: 1;
+}
+
+
