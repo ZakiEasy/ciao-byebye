@@ -14,14 +14,26 @@ const io = new Server(server, {
   }
 });
 
-// Connexion à la base de données PostgreSQL (avec fallback Supabase si variable non définie sur Render)
+// Connexion à la base de données PostgreSQL (avec fallback Supabase si variable non définie ou obsolète sur Render)
 const DEFAULT_SUPABASE_URL = 'postgresql://postgres:eOxUv9ON54dNvOMr@db.wsaufyznxhezyrqsmtvz.supabase.co:5432/postgres';
-const dbConnectionString = process.env.DATABASE_URL || DEFAULT_SUPABASE_URL;
+
+let rawDbUrl = process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL || DEFAULT_SUPABASE_URL;
+// Si la variable DATABASE_URL pointe sur une ancienne base interne Render 'dpg-...' inexistante ou résolue en erreur DNS
+if (rawDbUrl.includes('dpg-')) {
+  console.warn('⚠️ DATABASE_URL contient un hostname interne Render obsolète (dpg-...). Redirection automatique vers Supabase.');
+  rawDbUrl = process.env.SUPABASE_DATABASE_URL || DEFAULT_SUPABASE_URL;
+}
+
+const dbConnectionString = rawDbUrl;
 const isLocalhost = dbConnectionString.includes('localhost') || dbConnectionString.includes('127.0.0.1');
 
 const pool = new Pool({
   connectionString: dbConnectionString,
   ssl: isLocalhost ? false : { rejectUnauthorized: false }
+});
+
+pool.on('error', (err) => {
+  console.error('⚠️ Erreur inattendue sur le pool PostgreSQL:', err.message);
 });
 
 async function initDatabase() {
