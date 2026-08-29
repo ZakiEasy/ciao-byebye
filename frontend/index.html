@@ -449,16 +449,33 @@
     <!-- Success / Order Live Tracker Modal -->
     <div class="success-modal-overlay" id="success-modal-overlay" onclick="closeSuccessModal()"></div>
     <div class="success-modal glass" id="success-modal">
-        <button class="close-success-btn" onclick="closeSuccessModal()" aria-label="Minimiser"><i class="fa-solid fa-chevron-down"></i></button>
+        <button class="close-success-btn" onclick="closeSuccessModal()" aria-label="Fermer la fenêtre"><i class="fa-solid fa-xmark"></i></button>
         <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
         <h2 data-i18n="success_title">Suivi de Commande en Direct</h2>
         <p><span data-i18n="success_thanks">Merci</span> <span id="success-client-name">Alex</span>, <span data-i18n="success_validated">votre commande est en cours de préparation.</span></p>
+        
         <div class="success-details">
             <p><strong><span data-i18n="table_prefix">Table</span> :</strong> <span id="success-table-num">05</span></p>
             <p><strong><span data-i18n="order_prefix">Commande</span> :</strong> #<span id="success-order-id">M-8492</span></p>
             <p><strong><span data-i18n="queue_prefix">Position File d'Attente</span> :</strong> <span id="success-queue-pos" style="color:var(--primary); font-weight:700;">#Q-1</span></p>
             <p id="success-payment-status-row"><strong><span data-i18n="payment_status_label">Règlement</span> :</strong> <span id="success-payment-status-badge" class="paid-tag">✅ Payé Stripe</span></p>
             <p class="pickup-notif-toast"><i class="fa-solid fa-bell"></i> <span data-i18n="pickup_toast">Vous recevrez une alerte sur votre écran dès qu'elle sera prête au comptoir de retrait !</span></p>
+        </div>
+
+        <!-- Collapsible Order Items Accordion -->
+        <div class="order-details-accordion" id="order-details-accordion">
+            <button class="accordion-header-btn" id="btn-toggle-order-details" onclick="toggleOrderDetailsAccordion()">
+                <span><i class="fa-solid fa-receipt" style="color:var(--primary); margin-right:6px;"></i> <span data-i18n="order_details_accordion_title">Détail des articles commandés</span> (<span id="success-items-count">0</span>)</span>
+                <i class="fa-solid fa-chevron-down" id="accordion-chevron"></i>
+            </button>
+            <div class="accordion-content" id="order-details-content">
+                <div id="success-order-items-list">
+                    <!-- Populated dynamically via JS -->
+                </div>
+                <div class="order-totals-summary" id="success-order-totals-summary">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
         </div>
         
         <!-- Live order status tracking -->
@@ -486,7 +503,7 @@
             <button class="btn-open-review" onclick="openReviewModal()"><i class="fa-solid fa-pen-to-square"></i> <span data-i18n="btn_leave_review">Laisser un avis</span></button>
         </div>
 
-        <button class="back-to-menu-btn" onclick="closeSuccessModal()" data-i18n="btn_minimize_tracker">Réduire & Continuer à Parcourir</button>
+        <button class="back-to-menu-btn" onclick="closeSuccessModal()" data-i18n="btn_minimize_tracker">✕ Fermer & Parcourir le Menu</button>
     </div>
 
     <!-- Customer Review & Rating Modal -->

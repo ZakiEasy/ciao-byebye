@@ -1575,13 +1575,33 @@ app.patch('/api/orders/items/:id/acknowledge-allergy', async (req, res) => {
 // 6.03. Bump d'une commande / poste KDS complet
 app.patch('/api/orders/:id/bump', async (req, res) => {
   const { id } = req.params;
-  const { station, staffEmail } = req.body;
+  const { station, staffEmail, forceOrderReady } = req.body;
   try {
-    if (station && station !== 'passe') {
+    if (station && station !== 'passe' && !forceOrderReady) {
       await pool.query(
-        "UPDATE order_items SET course_status = 'ready', bumped_at = CURRENT_TIMESTAMP WHERE order_id = $1 AND station = $2",
+        `UPDATE order_items 
+         SET course_status = 'ready', bumped_at = CURRENT_TIMESTAMP 
+         WHERE order_id = $1 AND (
+           station = $2 
+           OR (station IS NULL AND $2 = 'chaud')
+           OR ($2 = 'bar' AND (station = 'bar' OR product_id IN (SELECT id FROM products WHERE category = 'boisson')))
+           OR ($2 = 'froid' AND (station = 'froid' OR product_id IN (SELECT id FROM products WHERE category IN ('entree', 'dessert'))))
+         )`,
         [id, station]
       );
+
+      // Check if all items in this order are now ready
+      const checkItems = await pool.query(
+        "SELECT COUNT(*) as remaining FROM order_items WHERE order_id = $1 AND course_status NOT IN ('ready', 'served')",
+        [id]
+      );
+      const remaining = parseInt(checkItems.rows[0].remaining, 10);
+      if (remaining === 0) {
+        await pool.query(
+          "UPDATE orders SET order_status = 'prete', updated_at = CURRENT_TIMESTAMP WHERE id = $1",
+          [id]
+        );
+      }
     } else {
       await pool.query(
         "UPDATE order_items SET course_status = 'ready', bumped_at = CURRENT_TIMESTAMP WHERE order_id = $1",

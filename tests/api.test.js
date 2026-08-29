@@ -1064,5 +1064,65 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         const providersInLogs = logsData.logs.map(l => l.provider);
         assert.ok(providersInLogs.includes('laddition') || providersInLogs.includes('zelty'));
     });
+
+    test('43. PATCH /api/orders/:id/status - should transition order to servie and update table service status', async () => {
+        // Create an order first
+        const orderRes = await fetch(`${BASE_URL}/api/orders/mock-create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: '05',
+                clientName: 'Test Service Table',
+                items: [{ name: 'Salade César', price: 14.0, quantity: 1, station: 'froid' }]
+            })
+        });
+        const orderData = await orderRes.json();
+        assert.ok(orderData.orderId);
+
+        // Update status to 'servie'
+        const updateRes = await fetch(`${BASE_URL}/api/orders/${orderData.orderId}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'servie' })
+        });
+        assert.strictEqual(updateRes.status, 200);
+        const updateData = await updateRes.json();
+        assert.strictEqual(updateData.success, true);
+        assert.strictEqual(updateData.status, 'servie');
+    });
+
+    test('44. PATCH /api/orders/:id/bump - should handle station-specific bump and auto advance to prete', async () => {
+        // Create multi-item order
+        const orderRes = await fetch(`${BASE_URL}/api/orders/mock-create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: '08',
+                clientName: 'Test Station Bump',
+                items: [
+                    { name: 'Cocktail Mojito', price: 10.0, quantity: 1, station: 'bar', course_step: 'boisson' }
+                ]
+            })
+        });
+        const orderData = await orderRes.json();
+        assert.ok(orderData.orderId);
+
+        // Bump bar station
+        const bumpRes = await fetch(`${BASE_URL}/api/orders/${orderData.orderId}/bump`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ station: 'bar', staffEmail: 'barman@atelier-chris.fr' })
+        });
+        assert.strictEqual(bumpRes.status, 200);
+        const bumpData = await bumpRes.json();
+        assert.strictEqual(bumpData.success, true);
+
+        // Verify order is now 'prete'
+        const ordersRes = await fetch(`${BASE_URL}/api/orders`);
+        const orders = await ordersRes.json();
+        const bumpedOrder = orders.find(o => o.id === orderData.orderId);
+        assert.ok(bumpedOrder);
+        assert.strictEqual(bumpedOrder.order_status, 'prete');
+    });
 });
 

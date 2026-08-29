@@ -674,6 +674,21 @@ function updateActiveOrderFloatingBar() {
     }
 }
 
+function toggleOrderDetailsAccordion() {
+    const content = document.getElementById('order-details-content');
+    const headerBtn = document.getElementById('btn-toggle-order-details');
+    if (!content || !headerBtn) return;
+    
+    const isOpen = content.classList.contains('open');
+    if (isOpen) {
+        content.classList.remove('open');
+        headerBtn.classList.remove('active');
+    } else {
+        content.classList.add('open');
+        headerBtn.classList.add('active');
+    }
+}
+
 function openActiveOrderModal() {
     if (!activeOrder) return;
     const t = translations[currentLang] || translations.fr;
@@ -684,10 +699,12 @@ function openActiveOrderModal() {
     if (drawerOverlay) drawerOverlay.classList.remove('active');
 
     // Populate modal fields
-    successClientName.innerText = activeOrder.clientName || 'Alex';
-    successTableNum.innerText = activeOrder.tableNumber || '05';
-    successOrderId.innerText = (activeOrder.orderId || '').substring(0, 8).toUpperCase();
-    successOrderId.dataset.dbId = activeOrder.orderId;
+    if (successClientName) successClientName.innerText = activeOrder.clientName || 'Alex';
+    if (successTableNum) successTableNum.innerText = activeOrder.tableNumber || '05';
+    if (successOrderId) {
+        successOrderId.innerText = (activeOrder.orderId || '').substring(0, 8).toUpperCase();
+        successOrderId.dataset.dbId = activeOrder.orderId;
+    }
 
     const queuePosEl = document.getElementById('success-queue-pos');
     if (queuePosEl) {
@@ -698,26 +715,98 @@ function openActiveOrderModal() {
     const payBadge = document.getElementById('success-payment-status-badge');
     if (payBadge) {
         if (activeOrder.paymentStatus === 'a_payer_en_caisse') {
-            payBadge.innerText = t.payment_status_cash_pending;
+            payBadge.innerText = t.payment_status_cash_pending || '⏳ Espèces (en caisse)';
             payBadge.className = 'cash-pending-tag';
         } else if (activeOrder.paymentStatus === 'paye' && activeOrder.paymentMethod === 'especes') {
-            payBadge.innerText = t.payment_status_cash_paid;
+            payBadge.innerText = t.payment_status_cash_paid || '✅ Payé Espèces';
+            payBadge.className = 'paid-tag';
+        } else if (activeOrder.paymentMethod === 'titre_restaurant') {
+            payBadge.innerText = '✅ Titre-Restaurant & CB';
             payBadge.className = 'paid-tag';
         } else {
-            payBadge.innerText = t.payment_status_paid;
+            payBadge.innerText = t.payment_status_paid || '✅ Payé en ligne';
             payBadge.className = 'paid-tag';
         }
     }
 
+    // Populate Order Items in Accordion
+    const itemsCountEl = document.getElementById('success-items-count');
+    const itemsListEl = document.getElementById('success-order-items-list');
+    const totalsSummaryEl = document.getElementById('success-order-totals-summary');
+    const items = activeOrder.items || [];
+
+    if (itemsCountEl) itemsCountEl.innerText = items.reduce((sum, it) => sum + (it.quantity || 1), 0);
+
+    if (itemsListEl) {
+        if (items.length === 0) {
+            itemsListEl.innerHTML = `<div style="font-size:12.5px; color:var(--text-muted); font-style:italic; padding:8px 0;">Articles envoyés en cuisine.</div>`;
+        } else {
+            itemsListEl.innerHTML = items.map(item => {
+                const mods = item.modifiers || [];
+                const modsText = mods.map(m => m.label || m).join(', ');
+                const hasMods = mods.length > 0 || item.cooking_pref;
+                const itemTotal = (item.price || 0) * (item.quantity || 1);
+
+                return `
+                    <div class="order-detail-item">
+                        <div class="order-detail-name">
+                            <div>
+                                <span class="order-detail-seat">🪑 S${item.seat_number || 1}</span>
+                                <strong>${item.quantity || 1}x ${item.name}</strong>
+                            </div>
+                            ${hasMods ? `
+                                <div class="order-detail-mods">
+                                    ${item.cooking_pref ? `<span style="color:#f59e0b;">(${item.cooking_pref})</span> ` : ''}
+                                    ${modsText}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <span class="order-detail-price">${formatPrice(itemTotal)}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+
+    if (totalsSummaryEl && (activeOrder.subtotal !== undefined || items.length > 0)) {
+        const subtotal = activeOrder.subtotal || items.reduce((sum, it) => sum + (it.price * it.quantity), 0);
+        const tip = activeOrder.tipAmount || 0;
+        const ticketResto = activeOrder.ticketRestoAmount || 0;
+        const total = activeOrder.totalAmount || (subtotal + tip);
+
+        totalsSummaryEl.innerHTML = `
+            <div class="totals-row">
+                <span>Sous-total plats</span>
+                <span>${formatPrice(subtotal)}</span>
+            </div>
+            ${tip > 0 ? `
+                <div class="totals-row">
+                    <span>Pourboire équipe 💖</span>
+                    <span style="color:#10b981;">+${formatPrice(tip)}</span>
+                </div>
+            ` : ''}
+            ${ticketResto > 0 ? `
+                <div class="totals-row">
+                    <span>Part Titre-Restaurant 💳</span>
+                    <span style="color:#38bdf8;">-${formatPrice(ticketResto)}</span>
+                </div>
+            ` : ''}
+            <div class="totals-row grand-total">
+                <span>Total réglé</span>
+                <span style="color:#f59e0b;">${formatPrice(total)}</span>
+            </div>
+        `;
+    }
+
     updateTrackerSteps(activeOrder.status);
 
-    successModal.classList.add('active');
-    successModalOverlay.classList.add('active');
+    if (successModal) successModal.classList.add('active');
+    if (successModalOverlay) successModalOverlay.classList.add('active');
 }
 
 function closeSuccessModal() {
-    successModal.classList.remove('active');
-    successModalOverlay.classList.remove('active');
+    if (successModal) successModal.classList.remove('active');
+    if (successModalOverlay) successModalOverlay.classList.remove('active');
     updateActiveOrderFloatingBar();
 }
 
@@ -1765,7 +1854,17 @@ async function simulatePaymentSuccess() {
         
         closePayment();
         
-        // Save active order with 3-hour persistence
+        // Save active order with full items snapshot and 3-hour persistence
+        const orderedItemsSnapshot = cart.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            seat_number: item.seat_number || 1,
+            modifiers: item.modifiers || [],
+            cooking_pref: item.cooking_pref || null
+        }));
+
         saveActiveOrder({
             orderId: data.orderId,
             tableNumber: tableNumber,
@@ -1776,6 +1875,11 @@ async function simulatePaymentSuccess() {
             paymentMethod: selectedPaymentMethod,
             splitCount: currentSplitCount,
             splitPartIndex: currentSplitPart,
+            items: orderedItemsSnapshot,
+            subtotal: splitPartBase,
+            tipAmount: tipAmount,
+            ticketRestoAmount: selectedPaymentMethod === 'titre_restaurant' ? currentTicketRestoAmount : 0,
+            totalAmount: splitPartBase + tipAmount,
             createdAt: Date.now()
         });
 

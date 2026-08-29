@@ -1,0 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+@page {
+    size: A4;
+    margin: 20mm 16mm 20mm 16mm;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1e293b;
+    background: #ffffff;
+    line-height: 1.6;
+    font-size: 13px;
+}
+
+h1 {
+    color: #0f172a;
+    font-size: 22px;
+    font-weight: 800;
+    margin-top: 0;
+    margin-bottom: 8px;
+    border-bottom: 2px solid #0f172a;
+    padding-bottom: 8px;
+}
+
+h2 {
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 22px;
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #e2e8f0;
+    page-break-after: avoid;
+}
+
+h3 {
+    color: #334155;
+    font-size: 14px;
+    font-weight: 700;
+    margin-top: 16px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+}
+
+p {
+    margin: 0 0 10px 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 18px 0;
+    font-size: 12px;
+    page-break-inside: avoid;
+}
+
+th, td {
+    border: 1px solid #cbd5e1;
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+th {
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+
+pre {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 11px;
+    line-height: 1.45;
+    margin: 12px 0 16px 0;
+    page-break-inside: avoid;
+}
+
+code {
+    font-family: 'JetBrains Mono', monospace;
+    background: #f1f5f9;
+    color: #0f172a;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 11.5px;
+}
+
+pre code {
+    background: transparent !important;
+    color: inherit !important;
+    padding: 0;
+}
+
+blockquote {
+    border-left: 4px solid #f59e0b;
+    background: #fffbeb;
+    margin: 12px 0;
+    padding: 10px 14px;
+    color: #92400e;
+    font-size: 12.5px;
+    border-radius: 0 6px 6px 0;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 20px 0;
+}

@@ -110,3 +110,4 @@ graph TD
 - 🍳 [Guide Détaillé Cuisine & KDS Multi-Postes (Module 1)](file:///Users/zaki/Projet%20KZ%20Menu/docs/formation/MODULE_1_FORMATION_CUISINE_KDS.md)
 - 🍽️ [Guide Détaillé Salle, Plan 2D & Service (Module 2)](file:///Users/zaki/Projet%20KZ%20Menu/docs/formation/MODULE_2_FORMATION_SALLE_SERVICE.md)
 - ⚙️ [Guide Détaillé Direction, Pricing & Stocks BOM (Module 3)](file:///Users/zaki/Projet%20KZ%20Menu/docs/formation/MODULE_3_FORMATION_DIRECTION_GESTION.md)
+- 📱 [Guide Détaillé Client, PWA, Split & Titres-Restaurant (Module 4)](file:///Users/zaki/Projet%20KZ%20Menu/docs/formation/MODULE_4_FORMATION_CLIENT_PWA.md)

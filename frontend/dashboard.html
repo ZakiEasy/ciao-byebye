@@ -64,18 +64,25 @@
 
         .dashboard-content {
             flex: 1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            padding: 24px 30px;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 24px;
             height: calc(100vh - 75px);
+            min-height: 0;
             overflow: hidden;
+            box-sizing: border-box;
         }
 
         .kds-column {
             display: flex;
             flex-direction: column;
             height: 100%;
+            min-height: 0;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            padding: 16px;
+            box-sizing: border-box;
         }
 
         .column-header {
@@ -85,6 +92,7 @@
             margin-bottom: 16px;
             padding-bottom: 10px;
             border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+            flex-shrink: 0;
         }
 
         .column-header h2 {
@@ -106,11 +114,13 @@
 
         .cards-list {
             flex: 1;
+            min-height: 0;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 16px;
-            padding-right: 8px;
+            padding-right: 6px;
+            -webkit-overflow-scrolling: touch;
         }
 
         .order-card {
@@ -1052,14 +1062,88 @@
             else if (email === 'barman@atelier-chris.fr') activeRole = 'bar';
             else activeRole = 'gestionnaire';
 
-            const modBtn = document.getElementById('tab-btn-modules');
-            if (modBtn) {
-                modBtn.style.display = (activeRole === 'superadmin' || activeRole === 'gestionnaire' || loggedUserRole === 'superadmin') ? 'inline-block' : 'none';
-            }
-
             showMenuManagement = false;
+            applyRolePermissions();
             updateRoleTitle();
             fetchOrders();
+        }
+
+        function applyRolePermissions() {
+            const tabKds = document.getElementById('tab-btn-kds');
+            const tabFloorplan = document.getElementById('tab-btn-floorplan');
+            const tabInventory = document.getElementById('tab-btn-inventory');
+            const tabMenu = document.getElementById('tab-btn-menu');
+            const tabReviews = document.getElementById('tab-btn-reviews');
+            const tabPos = document.getElementById('tab-btn-pos');
+            const tabModules = document.getElementById('tab-btn-modules');
+            const hqAdminLinks = document.getElementById('hq-admin-links');
+
+            // Default show all basic tabs
+            if (tabKds) tabKds.style.display = 'inline-block';
+            if (tabFloorplan) tabFloorplan.style.display = 'inline-block';
+            if (tabInventory) tabInventory.style.display = 'inline-block';
+            if (tabMenu) tabMenu.style.display = 'inline-block';
+            if (tabReviews) tabReviews.style.display = 'inline-block';
+            if (tabPos) tabPos.style.display = 'inline-block';
+            if (tabModules) tabModules.style.display = 'none';
+            if (hqAdminLinks) hqAdminLinks.style.display = 'none';
+
+            if (activeRole === 'superadmin') {
+                if (tabModules) tabModules.style.display = 'inline-block';
+                if (hqAdminLinks) hqAdminLinks.style.display = 'flex';
+            } else if (activeRole === 'gestionnaire') {
+                if (tabModules) tabModules.style.display = 'inline-block';
+                if (hqAdminLinks) hqAdminLinks.style.display = 'none';
+            } else if (activeRole === 'serveur') {
+                // Waiter sees only Table Map, KDS Service (his assigned tables), and Reviews
+                if (tabInventory) tabInventory.style.display = 'none';
+                if (tabMenu) tabMenu.style.display = 'none';
+                if (tabPos) tabPos.style.display = 'none';
+                if (tabModules) tabModules.style.display = 'none';
+                if (hqAdminLinks) hqAdminLinks.style.display = 'none';
+                if (['inventory', 'menu', 'pos', 'modules'].includes(activeMainTab)) {
+                    activeMainTab = 'floorplan';
+                    document.querySelectorAll('#dashboard-main-nav .action-btn').forEach(b => b.classList.remove('active'));
+                    if (tabFloorplan) tabFloorplan.classList.add('active');
+                }
+            } else if (activeRole === 'cuisine') {
+                // Kitchen sees KDS Cuisine, Stocks, Menu
+                if (tabFloorplan) tabFloorplan.style.display = 'none';
+                if (tabReviews) tabReviews.style.display = 'none';
+                if (tabPos) tabPos.style.display = 'none';
+                if (tabModules) tabModules.style.display = 'none';
+                if (hqAdminLinks) hqAdminLinks.style.display = 'none';
+                if (['floorplan', 'reviews', 'pos', 'modules'].includes(activeMainTab)) {
+                    activeMainTab = 'kds';
+                    document.querySelectorAll('#dashboard-main-nav .action-btn').forEach(b => b.classList.remove('active'));
+                    if (tabKds) tabKds.classList.add('active');
+                }
+            } else if (activeRole === 'chef_de_salle') {
+                // Maître d'hôtel sees Table Map, KDS, Reviews
+                if (tabInventory) tabInventory.style.display = 'none';
+                if (tabMenu) tabMenu.style.display = 'none';
+                if (tabPos) tabPos.style.display = 'none';
+                if (tabModules) tabModules.style.display = 'none';
+                if (hqAdminLinks) hqAdminLinks.style.display = 'none';
+            } else if (activeRole === 'bar') {
+                // Barman sees KDS Bar, Stocks
+                if (tabFloorplan) tabFloorplan.style.display = 'none';
+                if (tabMenu) tabMenu.style.display = 'none';
+                if (tabReviews) tabReviews.style.display = 'none';
+                if (tabPos) tabPos.style.display = 'none';
+                if (tabModules) tabModules.style.display = 'none';
+                if (hqAdminLinks) hqAdminLinks.style.display = 'none';
+            } else if (activeRole === 'technique') {
+                // Kiosk pickup screen
+                if (tabKds) tabKds.style.display = 'none';
+                if (tabFloorplan) tabFloorplan.style.display = 'none';
+                if (tabInventory) tabInventory.style.display = 'none';
+                if (tabMenu) tabMenu.style.display = 'none';
+                if (tabReviews) tabReviews.style.display = 'none';
+                if (tabPos) tabPos.style.display = 'none';
+                if (tabModules) tabModules.style.display = 'none';
+                if (hqAdminLinks) hqAdminLinks.style.display = 'none';
+            }
         }
 
         function updateRoleTitle() {
@@ -1090,6 +1174,8 @@
             } else {
                 headerBtnContainer.innerHTML = '';
             }
+
+            applyRolePermissions();
         }
 
         function toggleMenuManagement() {
@@ -1214,7 +1300,7 @@
             const mainContent = document.getElementById('dashboard-main-content');
 
             mainContent.innerHTML = `
-                <div style="display:flex; flex-direction:column; height:100%; width:100%;">
+                <div style="display:flex; flex-direction:column; height:100%; width:100%; min-height:0; overflow:hidden;">
                     <div class="kds-station-bar">
                         <span style="font-size:13px; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
                             <i class="fa-solid fa-satellite-dish" style="color:var(--primary);"></i> Poste KDS :
@@ -1233,7 +1319,7 @@
                         </button>
                     </div>
 
-                    <div style="flex:1; display:grid; grid-template-columns: 1fr 1fr; gap:20px; overflow:hidden;">
+                    <div style="flex:1; min-height:0; display:grid; grid-template-columns: 1fr 1fr; gap:20px; overflow:hidden;">
                         <section class="kds-column">
                             <div class="column-header">
                                 <h2><i class="fa-solid fa-fire-burner" style="color: #ef4444;"></i> ${t.col_cooking}</h2>
@@ -1273,6 +1359,7 @@
                     const isLongWait = elapsedMin >= 20;
                     const timerColor = elapsedMin < 10 ? '#10b981' : (elapsedMin < 20 ? '#f59e0b' : '#ef4444');
                     const orderTotal = o.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                    const isServerRole = activeRole === 'serveur';
 
                     return `
                         <div class="order-card glass ${isLongWait ? 'wait-alert-pulse' : ''}" style="${isCashPending ? 'border-color: rgba(245, 158, 11, 0.4);' : ''}">
@@ -1281,6 +1368,7 @@
                                     <div style="display:flex; align-items:center; gap:8px;">
                                         <h3>${o.client_name}</h3>
                                         <span class="queue-badge">#Q-${index+1}</span>
+                                        <span style="font-size:11px; color:var(--text-muted);">#${o.id.slice(0, 6).toUpperCase()}</span>
                                     </div>
                                     <div style="display:flex; gap: 6px; margin-top:4px; flex-wrap: wrap; align-items:center;">
                                         <span class="elapsed-timer" style="color:${timerColor}; font-weight:700;">
@@ -1344,15 +1432,21 @@
                                 }).join('')}
                             </ul>
 
-                            <div class="card-actions" style="display:flex; gap: 8px; flex-wrap:wrap; margin-top:10px;">
+                            <div class="card-actions" style="display:flex; gap: 8px; flex-wrap:wrap; margin-top:10px; align-items:center;">
                                 ${isCashPending ? `
                                     <button class="btn-cash-collect" onclick="collectCashPayment('${o.id}')" title="Valider le paiement en espèces">
                                         <i class="fa-solid fa-hand-holding-dollar"></i> Encaisser (${formatKdsPrice(orderTotal)})
                                     </button>
                                 ` : ''}
-                                <button class="action-btn" onclick="bumpKdsOrder('${o.id}', '${kdsActiveStation}')" style="flex:1;">
-                                    <i class="fa-solid fa-mug-hot"></i> ${t.btn_ready}
-                                </button>
+                                ${isServerRole ? `
+                                    <span style="font-size:12px; font-weight:700; color:#f59e0b; padding:7px 12px; background:rgba(245,158,11,0.12); border-radius:8px; border:1px solid rgba(245,158,11,0.25); display:inline-flex; align-items:center; gap:6px;">
+                                        <i class="fa-solid fa-fire-burner"></i> En Préparation Cuisine
+                                    </span>
+                                ` : `
+                                    <button class="action-btn" onclick="bumpKdsOrder('${o.id}', '${kdsActiveStation}')" style="flex:1;">
+                                        <i class="fa-solid fa-mug-hot"></i> ${t.btn_ready}
+                                    </button>
+                                `}
                             </div>
                         </div>
                     `;
@@ -1362,34 +1456,49 @@
             if (readyOrders.length === 0) {
                 readyList.innerHTML = `<div class="empty-column-msg">${t.empty_ready}</div>`;
             } else {
-                readyList.innerHTML = readyOrders.map(o => `
-                    <div class="order-card glass" style="border-color: rgba(16, 185, 129, 0.2);">
-                        <div class="card-header">
-                            <div class="client-info">
-                                <h3>${o.client_name}</h3>
-                                <span>${t.pickup_ready}</span>
-                            </div>
-                            <span class="table-num" style="background: rgba(16, 185, 129, 0.15); border-color:#10b981; color:#10b981;">${t.table_prefix} ${o.table_number}</span>
-                        </div>
-                        <ul class="card-items" style="max-height: 220px; overflow-y: auto; padding-right: 5px;">
-                            ${o.items.map(item => `
-                                <li>
-                                    <div class="item-qty-name">
-                                        <span class="seat-badge">🪑 S${item.seat_number || 1}</span>
-                                        <span class="item-qty" style="color:#10b981;">${item.quantity}x</span>
-                                        <span>${item.name}</span>
+                readyList.innerHTML = readyOrders.map((o, index) => {
+                    const isServerRole = activeRole === 'serveur';
+                    return `
+                        <div class="order-card glass" style="border-color: rgba(16, 185, 129, 0.25); box-shadow: 0 4px 20px rgba(16, 185, 129, 0.1);">
+                            <div class="card-header">
+                                <div class="client-info">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <h3>${o.client_name}</h3>
+                                        <span class="queue-badge" style="background:#10b981; color:#000;">#Q-${index+1}</span>
+                                        <span style="font-size:11px; color:var(--text-muted);">#${o.id.slice(0, 6).toUpperCase()}</span>
                                     </div>
-                                    <span>${formatKdsPrice(item.price * item.quantity)}</span>
-                                </li>
-                            `).join('')}
-                        </ul>
-                        <div class="card-actions">
-                            <button class="action-btn secondary" onclick="updateOrderStatus('${o.id}', 'servie')">
-                                <i class="fa-solid fa-circle-check"></i> ${t.btn_served}
-                            </button>
+                                    <span style="color:#10b981; font-size:12px; font-weight:700; margin-top:2px; display:block;">
+                                        <i class="fa-solid fa-bell"></i> ${t.pickup_ready || 'Prête au passe'}
+                                    </span>
+                                </div>
+                                <span class="table-num" style="background: rgba(16, 185, 129, 0.15); border-color:#10b981; color:#10b981;">${t.table_prefix} ${o.table_number}</span>
+                            </div>
+                            <ul class="card-items" style="max-height: 220px; overflow-y: auto; padding-right: 5px;">
+                                ${o.items.map(item => `
+                                    <li>
+                                        <div class="item-qty-name">
+                                            <span class="seat-badge">🪑 S${item.seat_number || 1}</span>
+                                            <span class="item-qty" style="color:#10b981;">${item.quantity}x</span>
+                                            <span>${item.name}</span>
+                                        </div>
+                                        <span>${formatKdsPrice(item.price * item.quantity)}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                            <div class="card-actions">
+                                ${isServerRole ? `
+                                    <button class="action-btn" onclick="updateOrderStatus('${o.id}', 'servie')" style="background:#10b981; color:#fff; font-weight:700; width:100%; padding:9px 14px; border:none;">
+                                        <i class="fa-solid fa-person-walking-luggage"></i> 🍽️ Servir à Table
+                                    </button>
+                                ` : `
+                                    <button class="action-btn secondary" onclick="updateOrderStatus('${o.id}', 'servie')" style="width:100%;">
+                                        <i class="fa-solid fa-circle-check"></i> ${t.btn_served || 'Marquer Servie'}
+                                    </button>
+                                `}
+                            </div>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
         }
 
@@ -1397,6 +1506,25 @@
             kdsActiveStation = station;
             fetchOrders();
         }
+
+        async function updateOrderStatus(orderId, status) {
+            try {
+                const res = await fetch(`/api/orders/${orderId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: status || 'servie' })
+                });
+                if (res.ok) {
+                    fetchOrders();
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    console.error('Erreur mise à jour statut:', err);
+                }
+            } catch (e) {
+                console.error('Erreur updateOrderStatus:', e);
+            }
+        }
+        window.updateOrderStatus = updateOrderStatus;
 
         async function fireCourseSuite(itemId) {
             try {
