@@ -1077,6 +1077,7 @@
             const tabPos = document.getElementById('tab-btn-pos');
             const tabModules = document.getElementById('tab-btn-modules');
             const hqAdminLinks = document.getElementById('hq-admin-links');
+            const btnTour = document.getElementById('btn-kds-tour');
 
             // Default show all basic tabs
             if (tabKds) tabKds.style.display = 'inline-block';
@@ -1087,6 +1088,7 @@
             if (tabPos) tabPos.style.display = 'inline-block';
             if (tabModules) tabModules.style.display = 'none';
             if (hqAdminLinks) hqAdminLinks.style.display = 'none';
+            if (btnTour) btnTour.style.display = 'inline-block';
 
             if (activeRole === 'superadmin') {
                 if (tabModules) tabModules.style.display = 'inline-block';
@@ -1095,7 +1097,7 @@
                 if (tabModules) tabModules.style.display = 'inline-block';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'none';
             } else if (activeRole === 'serveur') {
-                // Waiter sees only Table Map, KDS Service (his assigned tables), and Reviews
+                // Waiter sees only Table Map (primary), KDS Service, and Reviews
                 if (tabInventory) tabInventory.style.display = 'none';
                 if (tabMenu) tabMenu.style.display = 'none';
                 if (tabPos) tabPos.style.display = 'none';
@@ -1107,7 +1109,7 @@
                     if (tabFloorplan) tabFloorplan.classList.add('active');
                 }
             } else if (activeRole === 'cuisine') {
-                // Kitchen sees KDS Cuisine, Stocks, Menu
+                // Kitchen sees KDS Cuisine (primary), Stocks, and Menu
                 if (tabFloorplan) tabFloorplan.style.display = 'none';
                 if (tabReviews) tabReviews.style.display = 'none';
                 if (tabPos) tabPos.style.display = 'none';
@@ -1125,6 +1127,11 @@
                 if (tabPos) tabPos.style.display = 'none';
                 if (tabModules) tabModules.style.display = 'none';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'none';
+                if (['inventory', 'menu', 'pos', 'modules'].includes(activeMainTab)) {
+                    activeMainTab = 'floorplan';
+                    document.querySelectorAll('#dashboard-main-nav .action-btn').forEach(b => b.classList.remove('active'));
+                    if (tabFloorplan) tabFloorplan.classList.add('active');
+                }
             } else if (activeRole === 'bar') {
                 // Barman sees KDS Bar, Stocks
                 if (tabFloorplan) tabFloorplan.style.display = 'none';
@@ -1133,6 +1140,12 @@
                 if (tabPos) tabPos.style.display = 'none';
                 if (tabModules) tabModules.style.display = 'none';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'none';
+                kdsActiveStation = 'bar';
+                if (['floorplan', 'menu', 'reviews', 'pos', 'modules'].includes(activeMainTab)) {
+                    activeMainTab = 'kds';
+                    document.querySelectorAll('#dashboard-main-nav .action-btn').forEach(b => b.classList.remove('active'));
+                    if (tabKds) tabKds.classList.add('active');
+                }
             } else if (activeRole === 'technique') {
                 // Kiosk pickup screen
                 if (tabKds) tabKds.style.display = 'none';
@@ -1143,6 +1156,7 @@
                 if (tabPos) tabPos.style.display = 'none';
                 if (tabModules) tabModules.style.display = 'none';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'none';
+                if (btnTour) btnTour.style.display = 'none';
             }
         }
 
@@ -1588,9 +1602,6 @@
             }
             if (zoomBadge) {
                 zoomBadge.innerText = `${Math.round(floorPlanZoom * 100)}%`;
-            }
-        }
-
         function toggleMoveMode() {
             isMoveMode = !isMoveMode;
             const btn = document.getElementById('btn-toggle-move-mode');
@@ -1604,6 +1615,9 @@
 
         async function renderFloorPlanView() {
             const mainContent = document.getElementById('dashboard-main-content');
+            const canEditLayout = activeRole === 'superadmin' || activeRole === 'gestionnaire';
+            const canCloseService = activeRole === 'superadmin' || activeRole === 'gestionnaire' || activeRole === 'chef_de_salle';
+            
             try {
                 const res = await fetch('/api/tables/layout');
                 if (res.ok) {
@@ -1645,18 +1659,24 @@
                                 <button class="floorplan-zoom-btn" onclick="resetFloorPlanZoom()" title="Réinitialiser 100%"><i class="fa-solid fa-arrows-rotate"></i></button>
                             </div>
 
-                            <button id="btn-toggle-move-mode" class="action-btn secondary" onclick="toggleMoveMode()" style="font-size:12px; padding:6px 12px; ${isMoveMode ? 'background:rgba(245,158,11,0.25); border-color:var(--primary); color:var(--primary);' : ''}">
-                                <i class="fa-solid fa-up-down-left-right"></i> Déplacer
-                            </button>
+                            ${canEditLayout ? `
+                                <button id="btn-toggle-move-mode" class="action-btn secondary" onclick="toggleMoveMode()" style="font-size:12px; padding:6px 12px; ${isMoveMode ? 'background:rgba(245,158,11,0.25); border-color:var(--primary); color:var(--primary);' : ''}">
+                                    <i class="fa-solid fa-up-down-left-right"></i> Déplacer
+                                </button>
+                            ` : ''}
                             <button class="action-btn secondary" onclick="openMergeTableModal()" style="font-size:12px; padding:6px 12px; color:var(--primary); border-color:rgba(245,158,11,0.4);">
                                 <i class="fa-solid fa-link"></i> Fusionner
                             </button>
-                            <button class="action-btn secondary" onclick="unmergeAllDaily()" style="font-size:12px; padding:6px 12px; color:#a855f7; border-color:rgba(168,85,247,0.4);" title="Clôturer le service et dissocier toutes les tables">
-                                <i class="fa-solid fa-moon"></i> Clôture Journée
-                            </button>
-                            <button class="action-btn secondary" onclick="openAddTableModal()" style="font-size:12px; padding:6px 12px;">
-                                <i class="fa-solid fa-plus"></i> Ajouter Table
-                            </button>
+                            ${canCloseService ? `
+                                <button class="action-btn secondary" onclick="unmergeAllDaily()" style="font-size:12px; padding:6px 12px; color:#a855f7; border-color:rgba(168,85,247,0.4);" title="Clôturer le service et dissocier toutes les tables">
+                                    <i class="fa-solid fa-moon"></i> Clôture Journée
+                                </button>
+                            ` : ''}
+                            ${canEditLayout ? `
+                                <button class="action-btn secondary" onclick="openAddTableModal()" style="font-size:12px; padding:6px 12px;">
+                                    <i class="fa-solid fa-plus"></i> Ajouter Table
+                                </button>
+                            ` : ''}
                             <button class="action-btn secondary" onclick="renderFloorPlanView()" style="font-size:12px; padding:6px 12px;">
                                 <i class="fa-solid fa-rotate"></i> Actualiser
                             </button>
@@ -1671,17 +1691,18 @@
                                 const statusClass = `status-${t.service_status || 'libre'}`;
                                 const shapeClass = `shape-${t.shape || 'square'}`;
                                 const isMerged = !!t.merged_parent_id;
+                                const isMyTable = activeRole === 'serveur' && t.assigned_waiter_email === activeEmail;
 
                                 return `
-                                    <div class="table-node ${shapeClass} ${statusClass} ${isLongWait ? 'wait-alert-pulse' : ''}" 
+                                    <div class="table-node ${shapeClass} ${statusClass} ${isLongWait ? 'wait-alert-pulse' : ''} ${isMyTable ? 'my-assigned-table' : ''}" 
                                          id="table-node-${t.id}"
                                          data-table-id="${t.id}"
                                          data-table-num="${t.number}"
-                                         style="left:${t.pos_x || 100}px; top:${t.pos_y || 100}px; width:${t.width || 100}px; height:${t.height || 100}px;"
+                                         style="left:${t.pos_x || 100}px; top:${t.pos_y || 100}px; width:${t.width || 100}px; height:${t.height || 100}px; ${isMyTable ? 'border: 2px solid #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);' : ''}"
                                          onmousedown="handleTableMouseDown(event, '${t.id}')">
                                         <div class="table-node-number">${t.number}</div>
                                         <div class="table-node-capacity">${t.min_covers}-${t.max_covers}p (${t.actual_covers || 0} cvts)</div>
-                                        ${t.assigned_waiter_email ? `<div class="table-node-server">👤 ${t.assigned_waiter_email.split('@')[0]}</div>` : ''}
+                                        ${t.assigned_waiter_email ? `<div class="table-node-server">${isMyTable ? '⭐ Mon Rang' : '👤 ' + t.assigned_waiter_email.split('@')[0]}</div>` : ''}
                                         ${isLongWait ? `<div class="table-node-wait-timer">⚠️ >20min</div>` : ''}
                                         ${isMerged ? `<span style="font-size:9px; color:var(--primary); font-weight:700;"><i class="fa-solid fa-link"></i> ${t.unmerge_policy === 'at_day_end' ? 'Journée' : 'Service'}</span>` : ''}
                                     </div>
@@ -1714,6 +1735,13 @@
         // --- GESTION DU GLISSER-DÉPOSER (DRAG & DROP) TEMPS RÉEL SUR GRILLE ---
         function handleTableMouseDown(e, tableId) {
             if (e.button !== 0) return; // Uniquement clic gauche
+            const canEditLayout = activeRole === 'superadmin' || activeRole === 'gestionnaire';
+            if (!canEditLayout && !isMoveMode) {
+                // If not in layout edit mode, treat click as opening modal
+                openTableActionModal(tableId);
+                return;
+            }
+
             const node = document.getElementById(`table-node-${tableId}`);
             if (!node) return;
 
@@ -1752,38 +1780,34 @@
 
         async function handleFloorPlanMouseUp(e) {
             if (!isDraggingTable || !activeDragTable) return;
-            const targetTableId = activeDragTable.id;
+
+            const tableId = activeDragTable.id;
             const node = activeDragTable.element;
             node.classList.remove('is-dragging');
 
-            if (hasMovedSignificantly && isMoveMode) {
-                // Sauvegarder la nouvelle position sur la grille
-                const finalX = Math.max(0, Math.round(parseFloat(node.style.left) / 20) * 20);
-                const finalY = Math.max(0, Math.round(parseFloat(node.style.top) / 20) * 20);
-                
-                const tableObj = (floorPlanTables || []).find(t => t.id === targetTableId || t.number === targetTableId);
-                if (tableObj) {
-                    tableObj.pos_x = finalX;
-                    tableObj.pos_y = finalY;
-                }
-
+            if (isMoveMode && hasMovedSignificantly) {
+                const finalX = parseFloat(node.style.left) || 0;
+                const finalY = parseFloat(node.style.top) || 0;
                 try {
                     await fetch('/api/tables/layout', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            id: targetTableId,
-                            number: tableObj ? tableObj.number : undefined,
-                            pos_x: finalX,
-                            pos_y: finalY
+                            tableId: tableId,
+                            posX: finalX,
+                            posY: finalY
                         })
                     });
+                    const tableObj = (floorPlanTables || []).find(t => t.id === tableId);
+                    if (tableObj) {
+                        tableObj.pos_x = finalX;
+                        tableObj.pos_y = finalY;
+                    }
                 } catch (err) {
                     console.error('Erreur sauvegarde déplacement table:', err);
                 }
-            } else {
-                // Simple clic sans déplacement -> Ouvrir la modale d'action de table
-                openTableActionModal(targetTableId);
+            } else if (!hasMovedSignificantly) {
+                openTableActionModal(tableId);
             }
 
             isDraggingTable = false;
@@ -1798,6 +1822,9 @@
             selectedTableModalData = table;
             const container = document.getElementById('table-modal-container');
             if (!container) return;
+
+            const canEditLayout = activeRole === 'superadmin' || activeRole === 'gestionnaire';
+            const canAssignWaiters = activeRole === 'superadmin' || activeRole === 'gestionnaire' || activeRole === 'chef_de_salle';
 
             container.innerHTML = `
                 <div class="table-mgmt-modal-overlay" onclick="closeTableModal(event)">
@@ -1842,7 +1869,7 @@
 
                             <div>
                                 <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Serveur Assigné</label>
-                                <select onchange="assignTableToStaff('${table.number}', this.value)" class="glass-select" style="width:100%;">
+                                <select ${canAssignWaiters ? '' : 'disabled'} onchange="assignTableToStaff('${table.number}', this.value)" class="glass-select" style="width:100%; ${canAssignWaiters ? '' : 'opacity:0.7; cursor:not-allowed;'}">
                                     <option value="">Non assignée</option>
                                     <option value="david@atelier-chris.fr" ${table.assigned_waiter_email === 'david@atelier-chris.fr' ? 'selected' : ''}>David</option>
                                     <option value="sophie@atelier-chris.fr" ${table.assigned_waiter_email === 'sophie@atelier-chris.fr' ? 'selected' : ''}>Sophie</option>
@@ -1866,9 +1893,11 @@
                                     <i class="fa-solid fa-scissors"></i> Dissocier
                                 </button>
                             ` : ''}
-                            <button class="action-btn secondary" onclick="deleteTable('${table.id}', '${table.number}')" style="color:#ef4444; border-color:rgba(239,68,68,0.4);" title="Supprimer la table">
-                                <i class="fa-solid fa-trash"></i> Supprimer
-                            </button>
+                            ${canEditLayout ? `
+                                <button class="action-btn secondary" onclick="deleteTable('${table.id}', '${table.number}')" style="color:#ef4444; border-color:rgba(239,68,68,0.4);" title="Supprimer la table">
+                                    <i class="fa-solid fa-trash"></i> Supprimer
+                                </button>
+                            ` : ''}
                         </div>
                     </div>
                 </div>
@@ -2166,23 +2195,35 @@
                 inventoryLogs = Array.isArray(inventoryLogs) ? inventoryLogs : [];
             }
 
+            let displayedIngredients = inventoryIngredients;
+            if (activeRole === 'bar') {
+                displayedIngredients = inventoryIngredients.filter(ing => 
+                    (ing.category && (ing.category.toLowerCase().includes('boisson') || ing.category.toLowerCase().includes('bar') || ing.category.toLowerCase().includes('sirop') || ing.category.toLowerCase().includes('alcool'))) ||
+                    (ing.unit && ['cl', 'l', 'bouteille', 'canette'].includes(ing.unit.toLowerCase()))
+                );
+            } else if (activeRole === 'cuisine') {
+                displayedIngredients = inventoryIngredients.filter(ing => 
+                    !(ing.category && (ing.category.toLowerCase().includes('boisson') || ing.category.toLowerCase().includes('bar')))
+                );
+            }
+
             mainContent.innerHTML = `
                 <div class="menu-mgmt-panel" style="overflow-y:auto; height:100%;">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
                         <div>
-                            <h2 style="font-size:22px; font-weight:800;"><i class="fa-solid fa-boxes-stacked" style="color:var(--primary);"></i> Inventaire & Fiches Recettes (BOM)</h2>
+                            <h2 style="font-size:22px; font-weight:800;"><i class="fa-solid fa-boxes-stacked" style="color:var(--primary);"></i> ${activeRole === 'bar' ? 'Stocks Bar & Boissons' : (activeRole === 'cuisine' ? 'Stocks & Économat Cuisine' : 'Inventaire & Fiches Recettes (BOM)')}</h2>
                             <p style="font-size:12px; color:var(--text-muted);">Suivi des stocks en direct, fiches techniques de production et déclaration des pertes.</p>
                         </div>
                         <div class="menu-nav-tabs">
-                            <button class="menu-tab-btn ${inventoryActiveSubTab === 'ingredients' ? 'active' : ''}" onclick="setInventorySubTab('ingredients')">📦 Ingrédients (${inventoryIngredients.length})</button>
+                            <button class="menu-tab-btn ${inventoryActiveSubTab === 'ingredients' ? 'active' : ''}" onclick="setInventorySubTab('ingredients')">📦 Ingrédients (${displayedIngredients.length})</button>
                             <button class="menu-tab-btn ${inventoryActiveSubTab === 'recipes' ? 'active' : ''}" onclick="setInventorySubTab('recipes')">🧾 Fiches Recettes (${inventoryRecipes.filter(r => r.bom && r.bom.length > 0).length})</button>
-                            <button class="menu-tab-btn ${inventoryActiveSubTab === 'waste' ? 'active' : ''}" onclick="setInventorySubTab('waste')">🗑️ Pertes Cuisine (${inventoryLogs.length})</button>
+                            <button class="menu-tab-btn ${inventoryActiveSubTab === 'waste' ? 'active' : ''}" onclick="setInventorySubTab('waste')">🗑️ Pertes (${inventoryLogs.length})</button>
                         </div>
                     </div>
 
                     ${inventoryActiveSubTab === 'ingredients' ? `
                         <div class="stock-grid">
-                            ${inventoryIngredients.map(ing => {
+                            ${displayedIngredients.map(ing => {
                                 const stockNum = parseFloat(ing.current_stock);
                                 const threshNum = parseFloat(ing.min_threshold);
                                 const isLow = stockNum <= threshNum;
@@ -2672,6 +2713,10 @@
         async function renderMenuManagement() {
             const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
             const mainContent = document.getElementById('dashboard-main-content');
+            const canEditMenuStructure = activeRole === 'superadmin' || activeRole === 'gestionnaire';
+            if (!canEditMenuStructure && currentMenuSubTab !== 'catalog') {
+                currentMenuSubTab = 'catalog';
+            }
 
             try {
                 const response = await fetch('/api/menu/all');
@@ -2703,28 +2748,30 @@
                         <button class="menu-tab-btn ${currentMenuSubTab === 'catalog' ? 'active' : ''}" onclick="setMenuSubTab('catalog')">
                             ${t.menu_tab_catalog} <span class="count" style="font-size:11px; padding:2px 6px; border-radius:10px; background:rgba(255,255,255,0.1); color:#fff;">${currentItemsCount}</span>
                         </button>
-                        <button class="menu-tab-btn ${currentMenuSubTab === 'create' ? 'active' : ''}" onclick="setMenuSubTab('create')">
-                            ${t.menu_tab_create}
-                        </button>
-                        <button class="menu-tab-btn ${currentMenuSubTab === 'scan' ? 'active' : ''}" onclick="setMenuSubTab('scan')">
-                            ${t.menu_tab_scan}
-                        </button>
-                        <button class="menu-tab-btn ${currentMenuSubTab === 'url_import' ? 'active' : ''}" onclick="setMenuSubTab('url_import')">
-                            ${t.menu_tab_url}
-                        </button>
+                        ${canEditMenuStructure ? `
+                            <button class="menu-tab-btn ${currentMenuSubTab === 'create' ? 'active' : ''}" onclick="setMenuSubTab('create')">
+                                ${t.menu_tab_create}
+                            </button>
+                            <button class="menu-tab-btn ${currentMenuSubTab === 'scan' ? 'active' : ''}" onclick="setMenuSubTab('scan')">
+                                ${t.menu_tab_scan}
+                            </button>
+                            <button class="menu-tab-btn ${currentMenuSubTab === 'url_import' ? 'active' : ''}" onclick="setMenuSubTab('url_import')">
+                                ${t.menu_tab_url}
+                            </button>
+                        ` : ''}
                     </div>
 
                     <!-- Dynamic Sub-view Container -->
                     <div id="menu-subtab-content">
                         ${currentMenuSubTab === 'catalog' ? renderCatalogView() : ''}
-                        ${currentMenuSubTab === 'create' ? renderCreateView() : ''}
-                        ${currentMenuSubTab === 'scan' ? renderScanView() : ''}
-                        ${currentMenuSubTab === 'url_import' ? renderUrlImportView() : ''}
+                        ${currentMenuSubTab === 'create' && canEditMenuStructure ? renderCreateView() : ''}
+                        ${currentMenuSubTab === 'scan' && canEditMenuStructure ? renderScanView() : ''}
+                        ${currentMenuSubTab === 'url_import' && canEditMenuStructure ? renderUrlImportView() : ''}
                     </div>
                 </div>
             `;
 
-            if (currentMenuSubTab === 'create') {
+            if (currentMenuSubTab === 'create' && canEditMenuStructure) {
                 updateLiveDishPreview();
             }
         }
@@ -2751,7 +2798,7 @@
             if (container) {
                 container.innerHTML = '';
                 container.appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
+                setTimeout(() => { toast.remove(); }, 3500);
             }
         }
 
@@ -2760,6 +2807,7 @@
         // ==========================================
         function renderCatalogView() {
             const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
+            const canEditMenuStructure = activeRole === 'superadmin' || activeRole === 'gestionnaire';
             let currentItems = Array.isArray(cachedMenuItems) ? cachedMenuItems : [];
             let filtered = currentItems;
 
@@ -2815,9 +2863,11 @@
                                     <input type="checkbox" ${item.is_available ? 'checked' : ''} onchange="toggleProductAvailability('${item.id}', this.checked)">
                                     <span class="slider"></span>
                                 </label>
-                                <button onclick="deleteDish('${item.id}', '${item.name.replace(/'/g, "\\'")}')" style="background: none; border: none; color: #ef4444; font-size: 14px; cursor: pointer; padding: 4px;" title="Supprimer">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
+                                ${canEditMenuStructure ? `
+                                    <button onclick="deleteDish('${item.id}', '${item.name.replace(/'/g, "\\'")}')" style="background: none; border: none; color: #ef4444; font-size: 14px; cursor: pointer; padding: 4px;" title="Supprimer">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                ` : ''}
                             </div>
                         </div>
                     `).join('')}
@@ -3556,6 +3606,8 @@
             const container = document.getElementById('dashboard-main-content');
             if (!container) return;
 
+            const canEditSyncSettings = activeRole === 'superadmin' || activeRole === 'gestionnaire';
+
             container.innerHTML = `
                 <div style="grid-column: 1 / -1; height: 100%; display: flex; flex-direction: column; overflow-y: auto; padding: 10px; gap: 16px;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -3593,52 +3645,54 @@
                         </div>
                     </div>
 
-                    <!-- E-Reputation & Multi-Platform Sync Config Hub -->
-                    <div class="glass-panel" style="padding:20px; border-radius:16px; border:1px solid rgba(56,189,248,0.25); background:linear-gradient(135deg, rgba(56,189,248,0.05), rgba(15,23,42,0.6));">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-                            <div>
-                                <h3 style="font-size:16px; font-weight:700; color:#38bdf8; display:flex; align-items:center; gap:8px;">
-                                    <i class="fa-solid fa-arrows-split-up-and-left"></i> Hub de Synchronisation Multi-Plateformes (Google, TripAdvisor, Trustpilot)
-                                </h3>
-                                <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">
-                                    Dès qu'un convive attribue 4 ou 5 étoiles en fin de repas, la WebApp lui propose de publier son avis en 1 clic sur vos fiches publiques pour doper votre classement local.
-                                </p>
+                    ${canEditSyncSettings ? `
+                        <!-- E-Reputation & Multi-Platform Sync Config Hub -->
+                        <div class="glass-panel" style="padding:20px; border-radius:16px; border:1px solid rgba(56,189,248,0.25); background:linear-gradient(135deg, rgba(56,189,248,0.05), rgba(15,23,42,0.6));">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                                <div>
+                                    <h3 style="font-size:16px; font-weight:700; color:#38bdf8; display:flex; align-items:center; gap:8px;">
+                                        <i class="fa-solid fa-arrows-split-up-and-left"></i> Hub de Synchronisation Multi-Plateformes (Google, TripAdvisor, Trustpilot)
+                                    </h3>
+                                    <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">
+                                        Dès qu'un convive attribue 4 ou 5 étoiles en fin de repas, la WebApp lui propose de publier son avis en 1 clic sur vos fiches publiques pour doper votre classement local.
+                                    </p>
+                                </div>
+                                <span style="background:rgba(16,185,129,0.2); color:#34d399; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; border:1px solid rgba(16,185,129,0.4);">
+                                    <i class="fa-solid fa-circle-check"></i> Booster E-Réputation Actif
+                                </span>
                             </div>
-                            <span style="background:rgba(16,185,129,0.2); color:#34d399; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; border:1px solid rgba(16,185,129,0.4);">
-                                <i class="fa-solid fa-circle-check"></i> Booster E-Réputation Actif
-                            </span>
-                        </div>
 
-                        <form id="reviews-sync-form" onsubmit="saveReviewSyncSettings(event)" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; align-items:end;">
-                            <div>
-                                <label style="display:block; font-size:11px; color:#94a3b8; font-weight:600; margin-bottom:4px;">
-                                    <i class="fa-brands fa-google" style="color:#f87171;"></i> Lien Google Business Avis :
-                                </label>
-                                <input type="url" id="sync-google-url" class="glass-input" style="width:100%; font-size:12px; padding:8px 10px; border-radius:8px;" placeholder="https://search.google.com/local/writereview?placeid=..." required>
-                            </div>
-                            <div>
-                                <label style="display:block; font-size:11px; color:#94a3b8; font-weight:600; margin-bottom:4px;">
-                                    <i class="fa-solid fa-owl" style="color:#34d399;"></i> Lien TripAdvisor :
-                                </label>
-                                <input type="url" id="sync-tripadvisor-url" class="glass-input" style="width:100%; font-size:12px; padding:8px 10px; border-radius:8px;" placeholder="https://www.tripadvisor.fr/UserReviewEdit...">
-                            </div>
-                            <div>
-                                <label style="display:block; font-size:11px; color:#94a3b8; font-weight:600; margin-bottom:4px;">
-                                    <i class="fa-solid fa-star" style="color:#10b981;"></i> Lien Trustpilot :
-                                </label>
-                                <input type="url" id="sync-trustpilot-url" class="glass-input" style="width:100%; font-size:12px; padding:8px 10px; border-radius:8px;" placeholder="https://fr.trustpilot.com/evaluate/...">
-                            </div>
-                            <div style="grid-column:1 / -1; display:flex; justify-content:space-between; align-items:center; margin-top:6px; border-top:1px solid rgba(255,255,255,0.08); padding-top:10px;">
-                                <label style="font-size:12px; color:#e2e8f0; display:flex; align-items:center; gap:8px; cursor:pointer;">
-                                    <input type="checkbox" id="sync-auto-redirect" checked style="accent-color:#38bdf8; width:16px; height:16px;">
-                                    <span>Afficher automatiquement le booster de recommandation pour les notes ≥ 4 étoiles</span>
-                                </label>
-                                <button type="submit" class="action-btn" id="btn-save-sync-settings" style="font-size:12px; padding:8px 16px;">
-                                    <i class="fa-solid fa-floppy-disk"></i> Enregistrer les Liens de Synchronisation
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                            <form id="reviews-sync-form" onsubmit="saveReviewSyncSettings(event)" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; align-items:end;">
+                                <div>
+                                    <label style="display:block; font-size:11px; color:#94a3b8; font-weight:600; margin-bottom:4px;">
+                                        <i class="fa-brands fa-google" style="color:#f87171;"></i> Lien Google Business Avis :
+                                    </label>
+                                    <input type="url" id="sync-google-url" class="glass-input" style="width:100%; font-size:12px; padding:8px 10px; border-radius:8px;" placeholder="https://search.google.com/local/writereview?placeid=..." required>
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:11px; color:#94a3b8; font-weight:600; margin-bottom:4px;">
+                                        <i class="fa-solid fa-owl" style="color:#34d399;"></i> Lien TripAdvisor :
+                                    </label>
+                                    <input type="url" id="sync-tripadvisor-url" class="glass-input" style="width:100%; font-size:12px; padding:8px 10px; border-radius:8px;" placeholder="https://www.tripadvisor.fr/UserReviewEdit...">
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:11px; color:#94a3b8; font-weight:600; margin-bottom:4px;">
+                                        <i class="fa-solid fa-star" style="color:#10b981;"></i> Lien Trustpilot :
+                                    </label>
+                                    <input type="url" id="sync-trustpilot-url" class="glass-input" style="width:100%; font-size:12px; padding:8px 10px; border-radius:8px;" placeholder="https://fr.trustpilot.com/evaluate/...">
+                                </div>
+                                <div style="grid-column:1 / -1; display:flex; justify-content:space-between; align-items:center; margin-top:6px; border-top:1px solid rgba(255,255,255,0.08); padding-top:10px;">
+                                    <label style="font-size:12px; color:#e2e8f0; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                        <input type="checkbox" id="sync-auto-redirect" checked style="accent-color:#38bdf8; width:16px; height:16px;">
+                                        <span>Afficher automatiquement le booster de recommandation pour les notes ≥ 4 étoiles</span>
+                                    </label>
+                                    <button type="submit" class="action-btn" id="btn-save-sync-settings" style="font-size:12px; padding:8px 16px;">
+                                        <i class="fa-solid fa-floppy-disk"></i> Enregistrer les Liens de Synchronisation
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    ` : ''}
 
                     <!-- Reviews List Feed -->
                     <div style="flex:1;" id="reviews-list-container">
