@@ -14,6 +14,8 @@
     <link rel="stylesheet" href="style.css">
     <!-- HTML5 QR Code Scanner (Camera native) -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- QRCode Generator Engine (Canvas HD & Logo overlay) -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     
     <style>
         /* Specific Dashboard overrides */
@@ -601,6 +603,11 @@
             <!-- Anti-Fraud QR Code Camera Scanner (Serveurs / Salle) -->
             <button class="action-btn secondary" id="btn-qr-audit" onclick="openQRAuditModal()" style="font-size:11px; padding:6px 10px; color:#c084fc; border-color:rgba(192,132,252,0.4);" title="Scanner le QR Code physique d'une table avec la caméra de l'appareil">
                 <i class="fa-solid fa-camera"></i> Scanner QR Table
+            </button>
+
+            <!-- QR Code Generator & Studio Trigger -->
+            <button class="action-btn secondary" id="btn-qr-studio" onclick="openQRStudioModal()" style="font-size:11px; padding:6px 10px; color:#10b981; border-color:rgba(16,185,129,0.4); background:rgba(16,185,129,0.1);" title="Générateur de QR Codes avec Logo Client (Export PNG & Planche Tables)">
+                <i class="fa-solid fa-qrcode"></i> Studio QR Code
             </button>
 
             <!-- Walkthrough Tour Button for KDS -->
@@ -5487,8 +5494,355 @@
             }
         }
 
-        function startKDSTour() {
-            kdsTourStep = 0;
+        // ==========================================
+        // STUDIO & GÉNÉRATEUR DE QR CODES CLIENT AVEC LOGO
+        // ==========================================
+        const DON_ROBERTO_EMBLEM_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="%23b91c1c" stroke="%23f59e0b" stroke-width="4"/><circle cx="60" cy="60" r="48" fill="%23fffbeb"/><path d="M60 22 L85 82 L35 82 Z" fill="%23f59e0b" stroke="%23b45309" stroke-width="2"/><circle cx="55" cy="55" r="4" fill="%23b91c1c"/><circle cx="68" cy="65" r="4" fill="%23b91c1c"/><circle cx="60" cy="42" r="3.5" fill="%2315803d"/><circle cx="50" cy="70" r="3.5" fill="%2315803d"/><path d="M35 82 Q60 92 85 82" fill="%23d97706"/><text x="60" y="104" font-family="Outfit, sans-serif" font-size="11" font-weight="900" fill="%23ffffff" text-anchor="middle" letter-spacing="1">DON ROBERTO</text></svg>`;
+        const CIAO_LOGO_EMBLEM_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="%230f172a" stroke="%2338bdf8" stroke-width="4"/><path d="M40 70 L55 85 L85 45" fill="none" stroke="%2338bdf8" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><text x="60" y="106" font-family="Outfit, sans-serif" font-size="10" font-weight="800" fill="%23ffffff" text-anchor="middle">CIAO BYEBYE</text></svg>`;
+
+        function openQRStudioModal(preselectedTable) {
+            const modal = document.getElementById('qr-studio-modal-overlay');
+            if (modal) {
+                modal.style.display = 'flex';
+                
+                // Populate table selector
+                const select = document.getElementById('qr-studio-table-select');
+                if (select && select.options.length <= 1) {
+                    select.innerHTML = `<option value="all_menu">🍽️ Menu Général du Restaurant (Accueil)</option>`;
+                    const activeTableList = Array.isArray(tablesData) && tablesData.length > 0 
+                        ? tablesData 
+                        : Array.from({ length: 12 }, (_, i) => {
+                            const num = String(i + 1).padStart(2, '0');
+                            return { number: num, name: `Table ${num}`, qr_code_token: `token_table_${num}` };
+                        });
+
+                    activeTableList.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = `table_${t.number}`;
+                        opt.textContent = `🪑 ${t.name || 'Table ' + t.number} (${t.qr_code_token || 'token_table_' + t.number})`;
+                        opt.dataset.token = t.qr_code_token || `token_table_${t.number}`;
+                        opt.dataset.number = t.number;
+                        select.appendChild(opt);
+                    });
+
+                    const optTakeaway = document.createElement('option');
+                    optTakeaway.value = 'takeaway';
+                    optTakeaway.textContent = `🛍️ Mode À Emporter / Comptoir`;
+                    select.appendChild(optTakeaway);
+
+                    const optCustom = document.createElement('option');
+                    optCustom.value = 'custom';
+                    optCustom.textContent = `🔗 URL Personnalisée...`;
+                    select.appendChild(optCustom);
+                }
+
+                if (preselectedTable && select) {
+                    select.value = `table_${preselectedTable}`;
+                }
+
+                onQRStudioDestinationChange();
+                updateQRStudioPreview();
+            }
+        }
+
+        function closeQRStudioModal() {
+            const modal = document.getElementById('qr-studio-modal-overlay');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function onQRStudioDestinationChange() {
+            const select = document.getElementById('qr-studio-table-select');
+            const customBox = document.getElementById('qr-studio-custom-url-box');
+            const customInput = document.getElementById('qr-studio-custom-url-input');
+            const targetVal = select ? select.value : 'all_menu';
+
+            let targetUrl = 'https://don-roberto.ciao-byebye.store/';
+            let tableBadgeText = 'MENU DU RESTAURANT';
+
+            if (targetVal === 'all_menu') {
+                targetUrl = 'https://don-roberto.ciao-byebye.store/';
+                tableBadgeText = 'MENU EN DIRECT';
+                if (customBox) customBox.style.display = 'none';
+            } else if (targetVal.startsWith('table_')) {
+                const selectedOpt = select.options[select.selectedIndex];
+                const tableNum = selectedOpt ? selectedOpt.dataset.number : targetVal.replace('table_', '');
+                const token = selectedOpt ? selectedOpt.dataset.token : `token_table_${tableNum}`;
+                targetUrl = `https://don-roberto.ciao-byebye.store/?table=${tableNum}&token=${token}`;
+                tableBadgeText = `TABLE ${tableNum} • SCANNEZ POUR COMMANDER`;
+                if (customBox) customBox.style.display = 'none';
+            } else if (targetVal === 'takeaway') {
+                targetUrl = 'https://don-roberto.ciao-byebye.store/?service=takeaway';
+                tableBadgeText = 'COMMANDE À EMPORTER';
+                if (customBox) customBox.style.display = 'none';
+            } else if (targetVal === 'custom') {
+                if (customBox) customBox.style.display = 'block';
+                targetUrl = customInput && customInput.value.trim() ? customInput.value.trim() : 'https://don-roberto.ciao-byebye.store/';
+                tableBadgeText = 'FLASHEZ POUR COMMANDER';
+            }
+
+            const linkDisplay = document.getElementById('qr-studio-destination-url');
+            if (linkDisplay) linkDisplay.value = targetUrl;
+
+            const footerInput = document.getElementById('qr-studio-footer-text');
+            if (footerInput) footerInput.value = tableBadgeText;
+
+            updateQRStudioPreview();
+        }
+
+        async function updateQRStudioPreview() {
+            const canvas = document.getElementById('qr-studio-canvas');
+            if (!canvas) return;
+
+            const linkInput = document.getElementById('qr-studio-destination-url');
+            const targetUrl = linkInput ? linkInput.value.trim() : 'https://don-roberto.ciao-byebye.store/';
+            const logoSelect = document.getElementById('qr-studio-logo-select');
+            const logoType = logoSelect ? logoSelect.value : 'don_roberto';
+            const customLogoUrl = document.getElementById('qr-studio-custom-logo-input')?.value.trim();
+            const qrColor = document.getElementById('qr-studio-color-qr')?.value || '#0f172a';
+            const bgCardColor = document.getElementById('qr-studio-color-bg')?.value || '#ffffff';
+            const headerTitle = document.getElementById('qr-studio-header-text')?.value || 'DON ROBERTO';
+            const headerSub = document.getElementById('qr-studio-subtitle-text')?.value || 'Pizzeria & Trattoria Italienne';
+            const footerText = document.getElementById('qr-studio-footer-text')?.value || 'SCANNEZ POUR COMMANDER & PAYER';
+
+            const ctx = canvas.getContext('2d');
+            const width = 600;
+            const height = 750;
+            canvas.width = width;
+            canvas.height = height;
+
+            // Background Card
+            ctx.fillStyle = bgCardColor;
+            ctx.fillRect(0, 0, width, height);
+
+            // Card Outer Border & Shadow
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = '#f59e0b';
+            ctx.strokeRect(10, 10, width - 20, height - 20);
+
+            // Card Inner Fine Border
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+            ctx.strokeRect(16, 16, width - 32, height - 32);
+
+            // Top Header Background Ribbon
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(20, 20, width - 40, 95);
+
+            // Gold bottom line under ribbon
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillRect(20, 113, width - 40, 3);
+
+            // Header Title Text
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 28px Outfit, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(headerTitle, width / 2, 60);
+
+            // Header Subtitle Text
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = '600 13px Outfit, sans-serif';
+            ctx.letterSpacing = '1.5px';
+            ctx.fillText(headerSub.toUpperCase(), width / 2, 88);
+
+            // Generate Temporary QR Canvas via QRCode lib
+            const tempQrCanvas = document.createElement('canvas');
+            try {
+                if (typeof QRCode !== 'undefined') {
+                    await QRCode.toCanvas(tempQrCanvas, targetUrl, {
+                        width: 440,
+                        margin: 1,
+                        errorCorrectionLevel: 'H',
+                        color: {
+                            dark: qrColor,
+                            light: bgCardColor
+                        }
+                    });
+
+                    // Draw QR onto Main Card
+                    ctx.drawImage(tempQrCanvas, 80, 145, 440, 440);
+                } else {
+                    ctx.fillStyle = '#f1f5f9';
+                    ctx.fillRect(80, 145, 440, 440);
+                    ctx.fillStyle = '#0f172a';
+                    ctx.font = '14px sans-serif';
+                    ctx.fillText('Chargement du module QR Code...', width / 2, 360);
+                }
+            } catch (err) {
+                console.error('Erreur génération QR Code canvas:', err);
+            }
+
+            // Draw Centered Logo with White Circular Protection Badge
+            if (logoType !== 'none') {
+                const logoSrc = logoType === 'don_roberto' 
+                    ? DON_ROBERTO_EMBLEM_SVG 
+                    : (logoType === 'ciao_badge' ? CIAO_LOGO_EMBLEM_SVG : (customLogoUrl || DON_ROBERTO_EMBLEM_SVG));
+
+                const logoImg = new Image();
+                logoImg.crossOrigin = 'anonymous';
+                logoImg.onload = function() {
+                    const centerX = width / 2;
+                    const centerY = 145 + 220;
+                    const radius = 48;
+
+                    // White Circular Background Plate
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius + 4, 0, Math.PI * 2, false);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                    ctx.shadowBlur = 12;
+                    ctx.fill();
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.stroke();
+                    ctx.restore();
+
+                    // Clip and Draw Image
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, false);
+                    ctx.clip();
+                    ctx.drawImage(logoImg, centerX - radius, centerY - radius, radius * 2, radius * 2);
+                    ctx.restore();
+                };
+                logoImg.src = logoSrc;
+            }
+
+            // Bottom Footer Badge Ribbon
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(30, 610, width - 60, 95);
+
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#f59e0b';
+            ctx.strokeRect(30, 610, width - 60, 95);
+
+            // Footer Call To Action
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 18px Outfit, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(footerText, width / 2, 650);
+
+            // Security Disclaimer Subtext
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '500 11px Outfit, sans-serif';
+            ctx.fillText('⚡ Commande Sans Attente • Paiement Sécurisé Ciao Byebye', width / 2, 680);
+        }
+
+        function downloadQRStudioPNG() {
+            const canvas = document.getElementById('qr-studio-canvas');
+            if (!canvas) return;
+
+            const select = document.getElementById('qr-studio-table-select');
+            const val = select ? select.value : 'menu';
+            const fileName = `QR_DonRoberto_${val.toUpperCase()}.png`;
+
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            showKdsToast(`QR Code téléchargé : ${fileName} 📥`, 'success');
+        }
+
+        function copyQRStudioLink() {
+            const linkInput = document.getElementById('qr-studio-destination-url');
+            if (linkInput) {
+                navigator.clipboard.writeText(linkInput.value).then(() => {
+                    showKdsToast('Lien du QR Code copié dans le presse-papier ! 📋', 'success');
+                }).catch(() => {
+                    linkInput.select();
+                    document.execCommand('copy');
+                    showKdsToast('Lien copié ! 📋', 'success');
+                });
+            }
+        }
+
+        async function printQRStudioTablesSheet() {
+            const activeTableList = Array.isArray(tablesData) && tablesData.length > 0 
+                ? tablesData 
+                : Array.from({ length: 12 }, (_, i) => {
+                    const num = String(i + 1).padStart(2, '0');
+                    return { number: num, name: `Table ${num}`, qr_code_token: `token_table_${num}` };
+                });
+
+            const printWindow = window.open('', '_blank');
+            if (!printWindow) {
+                alert('Veuillez autoriser les fenêtres pop-up pour imprimer la planche des QR Codes.');
+                return;
+            }
+
+            let cardsHtml = '';
+            for (const t of activeTableList) {
+                const tableUrl = `https://don-roberto.ciao-byebye.store/?table=${t.number}&token=${t.qr_code_token || 'token_table_' + t.number}`;
+                const qrImgSrc = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(tableUrl)}`;
+
+                cardsHtml += `
+                    <div class="qr-stand-card">
+                        <div class="qr-stand-header">
+                            <h2>DON ROBERTO</h2>
+                            <p>PIZZERIA TRATTORIA</p>
+                        </div>
+                        <div class="qr-stand-body">
+                            <div class="qr-image-wrapper">
+                                <img src="${qrImgSrc}" alt="QR Table ${t.number}" class="qr-img">
+                                <div class="qr-center-logo">🍕</div>
+                            </div>
+                            <div class="table-badge">TABLE ${t.number}</div>
+                            <p class="scan-instruction">Scannez avec votre smartphone pour commander et payer directement</p>
+                        </div>
+                        <div class="qr-stand-footer">
+                            <span>⚡ Propulsé par Ciao Byebye</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="fr">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Planche Chevalets QR Code - Don Roberto Pizzeria Trattoria</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+                    <style>
+                        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+                        body { background: #f8fafc; padding: 20px; color: #0f172a; }
+                        .no-print-bar { background: #0f172a; color: #fff; padding: 14px 20px; border-radius: 12px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+                        .btn-print { background: #f59e0b; color: #000; font-weight: 800; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+                        .sheet-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; max-width: 1000px; margin: 0 auto; }
+                        .qr-stand-card { background: #ffffff; border: 3px solid #f59e0b; border-radius: 16px; padding: 20px; text-align: center; page-break-inside: avoid; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+                        .qr-stand-header { background: #0f172a; color: #ffffff; padding: 12px; border-radius: 10px; margin-bottom: 16px; border-bottom: 3px solid #f59e0b; }
+                        .qr-stand-header h2 { font-size: 22px; font-weight: 900; letter-spacing: 0.5px; }
+                        .qr-stand-header p { font-size: 11px; color: #f59e0b; font-weight: 700; letter-spacing: 1.5px; margin-top: 2px; }
+                        .qr-image-wrapper { position: relative; display: inline-block; margin: 10px 0; }
+                        .qr-img { width: 190px; height: 190px; display: block; border-radius: 8px; }
+                        .qr-center-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 42px; height: 42px; background: #ffffff; border: 2px solid #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+                        .table-badge { background: #0f172a; color: #f59e0b; font-size: 18px; font-weight: 900; padding: 8px 16px; border-radius: 8px; display: inline-block; margin: 12px 0 6px 0; letter-spacing: 1px; border: 1px solid #f59e0b; }
+                        .scan-instruction { font-size: 11px; color: #475569; font-weight: 600; max-width: 240px; margin: 0 auto; line-height: 1.3; }
+                        .qr-stand-footer { margin-top: 14px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 10px; color: #94a3b8; font-weight: 600; }
+                        @media print {
+                            .no-print-bar { display: none !important; }
+                            body { padding: 0; background: #fff; }
+                            .sheet-grid { gap: 15px; }
+                            .qr-stand-card { border-width: 2px; box-shadow: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="no-print-bar">
+                        <div>
+                            <strong style="font-size:16px;">🖨️ Planche Prête à Imprimer : 12 Tables Don Roberto</strong>
+                            <div style="font-size:12px; color:#94a3b8; margin-top:2px;">Format A4 idéal pour chevalets de table, autocollants ou découpe sous plexiglas.</div>
+                        </div>
+                        <button class="btn-print" onclick="window.print()">🖨️ Lancer l'Impression</button>
+                    </div>
+                    <div class="sheet-grid">
+                        ${cardsHtml}
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
             let overlay = document.getElementById('kds-walkthrough-overlay');
             if (!overlay) {
                 overlay = document.createElement('div');
@@ -5873,16 +6227,162 @@
                     <input type="text" id="qr-audit-input" placeholder="Ex: https://don-roberto.ciao-byebye.store/?token=token_table_04" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 12px; color:#fff; font-size:12px;">
                     <button class="action-btn" onclick="runQRAuditCheck()" style="padding:8px 14px; background:#c084fc; color:#0f172a; font-weight:700; border:none; font-size:12px;">Tester</button>
                 </div>
+    <!-- ========================================== -->
+    <!-- STUDIO & GÉNÉRATEUR DE QR CODES DON ROBERTO -->
+    <!-- ========================================== -->
+    <div id="qr-studio-modal-overlay" class="pos-modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; justify-content:center; align-items:center; backdrop-filter:blur(8px);">
+        <div class="pos-modal-card" style="background:#0b132b; border:1px solid rgba(245,158,11,0.4); border-radius:18px; padding:24px; width:95%; max-width:960px; color:#fff; box-shadow:0 25px 50px -12px rgba(0,0,0,0.8); max-height:92vh; overflow-y:auto;">
+            
+            <!-- Header Modal -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:14px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:40px; height:40px; border-radius:12px; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center; color:#f59e0b; font-size:20px; border:1px solid rgba(245,158,11,0.3);">
+                        <i class="fa-solid fa-qrcode"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin:0; font-size:18px; font-weight:800; display:flex; align-items:center; gap:8px;">
+                            Studio & Générateur de QR Codes <span style="font-size:11px; background:#f59e0b; color:#000; padding:2px 8px; border-radius:6px; font-weight:800;">HAUTE DÉFINITION</span>
+                        </h3>
+                        <span style="font-size:12px; color:var(--text-muted);">Générez et imprimez les QR Codes officiels de table intégrant le logo client Don Roberto</span>
+                    </div>
+                </div>
+                <button onclick="closeQRStudioModal()" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer;"><i class="fa-solid fa-times"></i></button>
             </div>
 
-            <div style="margin-bottom:14px;">
-                <span style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px;">Simulations Rapides de Salle :</span>
-                <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;" id="qr-audit-quick-tables"></div>
+            <!-- Two-Column Studio Layout -->
+            <div style="display:grid; grid-template-columns:1fr 1.1fr; gap:24px; align-items:start;">
+                
+                <!-- Left Column : Settings & Controls -->
+                <div style="display:flex; flex-direction:column; gap:14px;">
+                    
+                    <!-- 1. Destination / Table -->
+                    <div class="pos-form-group">
+                        <label style="font-size:12px; font-weight:700; color:#f59e0b; display:flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-location-dot"></i> 1. Destination du QR Code :
+                        </label>
+                        <select id="qr-studio-table-select" onchange="onQRStudioDestinationChange()" class="glass-select" style="width:100%; padding:10px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:#fff; font-size:13px;">
+                            <option value="all_menu">🍽️ Menu Général du Restaurant (Accueil)</option>
+                        </select>
+                    </div>
+
+                    <!-- Custom URL input (hidden by default) -->
+                    <div id="qr-studio-custom-url-box" style="display:none;" class="pos-form-group">
+                        <label style="font-size:11px; color:var(--text-muted);">URL personnalisée :</label>
+                        <input type="text" id="qr-studio-custom-url-input" oninput="onQRStudioDestinationChange()" placeholder="https://..." style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 10px; color:#fff; font-size:12px;">
+                    </div>
+
+                    <!-- Read-only Destination Link -->
+                    <div class="pos-form-group">
+                        <label style="font-size:11px; color:var(--text-muted);">Lien de redirection généré :</label>
+                        <div style="display:flex; gap:6px;">
+                            <input type="text" id="qr-studio-destination-url" readonly style="flex:1; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px 10px; color:#38bdf8; font-size:11px; font-family:monospace;">
+                            <button type="button" class="action-btn secondary" onclick="copyQRStudioLink()" style="padding:8px 12px; font-size:11px;" title="Copier l'URL"><i class="fa-solid fa-copy"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- 2. Logo Selection -->
+                    <div class="pos-form-group">
+                        <label style="font-size:12px; font-weight:700; color:#f59e0b; display:flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-image"></i> 2. Logo au Centre du QR Code :
+                        </label>
+                        <select id="qr-studio-logo-select" onchange="updateQRStudioPreview()" class="glass-select" style="width:100%; padding:10px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:#fff; font-size:13px;">
+                            <option value="don_roberto">🍕 Logo Officiel Don Roberto (Pizza & Trattoria)</option>
+                            <option value="ciao_badge">🍽️ Badge Ciao Byebye</option>
+                            <option value="custom_url">🖼️ Logo personnalisé (URL image)</option>
+                            <option value="none">🚫 Sans logo (QR Code nu)</option>
+                        </select>
+                    </div>
+
+                    <!-- Custom Logo URL input (hidden by default) -->
+                    <div id="qr-studio-custom-logo-box" style="display:none;" class="pos-form-group">
+                        <label style="font-size:11px; color:var(--text-muted);">URL du logo personnalisé (PNG transparent recommandé) :</label>
+                        <input type="text" id="qr-studio-custom-logo-input" oninput="updateQRStudioPreview()" placeholder="https://votresite.com/logo.png" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 10px; color:#fff; font-size:12px;">
+                    </div>
+
+                    <!-- 3. Styling & Text -->
+                    <div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.06);">
+                        <label style="font-size:12px; font-weight:700; color:#f59e0b; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+                            <i class="fa-solid fa-palette"></i> 3. Personnalisation Visuelle :
+                        </label>
+                        
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Couleur QR :</label>
+                                <select id="qr-studio-color-qr" onchange="updateQRStudioPreview()" style="width:100%; padding:6px 8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; font-size:12px;">
+                                    <option value="#0f172a">Noir Ardoise (#0f172a)</option>
+                                    <option value="#b91c1c">Rouge Trattoria (#b91c1c)</option>
+                                    <option value="#15803d">Vert Italien (#15803d)</option>
+                                    <option value="#b45309">Or Epicé (#b45309)</option>
+                                    <option value="#000000">Noir Pur (#000000)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Fond Chevalet :</label>
+                                <select id="qr-studio-color-bg" onchange="updateQRStudioPreview()" style="width:100%; padding:6px 8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#fff; font-size:12px;">
+                                    <option value="#ffffff">Blanc Pur (#ffffff)</option>
+                                    <option value="#fffbeb">Crème Toscan (#fffbeb)</option>
+                                    <option value="#f8fafc">Gris Perle (#f8fafc)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom:8px;">
+                            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Titre de l'En-tête :</label>
+                            <input type="text" id="qr-studio-header-text" value="DON ROBERTO" oninput="updateQRStudioPreview()" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:6px 8px; color:#fff; font-size:12px;">
+                        </div>
+
+                        <div style="margin-bottom:8px;">
+                            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Sous-Titre :</label>
+                            <input type="text" id="qr-studio-subtitle-text" value="Pizzeria & Trattoria Italienne" oninput="updateQRStudioPreview()" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:6px 8px; color:#fff; font-size:12px;">
+                        </div>
+
+                        <div>
+                            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Bannière Inférieure :</label>
+                            <input type="text" id="qr-studio-footer-text" value="SCANNEZ POUR COMMANDER & PAYER" oninput="updateQRStudioPreview()" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:6px 8px; color:#fff; font-size:12px;">
+                        </div>
+                    </div>
+
+                    <!-- Planche d'impression complète -->
+                    <div style="background:rgba(245,158,11,0.08); border:1px dashed rgba(245,158,11,0.4); border-radius:10px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong style="font-size:12px; color:#f59e0b; display:block;">🖨️ Planche Complète des 12 Tables</strong>
+                            <span style="font-size:11px; color:var(--text-muted);">Générez les 12 chevalets prêts à imprimer sur format A4</span>
+                        </div>
+                        <button type="button" class="action-btn" onclick="printQRStudioTablesSheet()" style="background:#f59e0b; color:#000; font-weight:800; border:none; padding:8px 14px; font-size:12px; white-space:nowrap;">
+                            <i class="fa-solid fa-print"></i> Imprimer Planche
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- Right Column : Live Canvas Preview & Actions -->
+                <div style="display:flex; flex-direction:column; align-items:center; background:rgba(0,0,0,0.4); border-radius:14px; padding:16px; border:1px solid rgba(255,255,255,0.08);">
+                    <span style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); letter-spacing:1px; margin-bottom:12px;">
+                        Aperçu Réel du Chevalet / Sticker (Haute Résolution) :
+                    </span>
+
+                    <!-- HD Canvas Viewport -->
+                    <div style="max-width:320px; width:100%; box-shadow:0 15px 35px rgba(0,0,0,0.6); border-radius:10px; overflow:hidden; margin-bottom:16px; background:#fff;">
+                        <canvas id="qr-studio-canvas" style="width:100%; height:auto; display:block;"></canvas>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div style="display:flex; gap:10px; width:100%; justify-content:center; flex-wrap:wrap;">
+                        <button type="button" class="action-btn" onclick="downloadQRStudioPNG()" style="flex:1; min-width:160px; background:#10b981; color:#0f172a; font-weight:800; border:none; padding:10px 16px; font-size:13px; display:inline-flex; align-items:center; justify-content:center; gap:8px;">
+                            <i class="fa-solid fa-download"></i> Télécharger le PNG HD
+                        </button>
+                        <button type="button" class="action-btn secondary" onclick="closeQRStudioModal()" style="padding:10px 16px; font-size:13px;">
+                            Fermer
+                        </button>
+                    </div>
+
+                    <div style="margin-top:12px; font-size:11px; color:#94a3b8; text-align:center; line-height:1.4;">
+                        <i class="fa-solid fa-circle-check" style="color:#10b981;"></i> <strong>Correction d'Erreur ECC Niveau H (30%) :</strong> Le QR Code reste 100% lisible et instantanément flashable même avec le logo au centre.
+                    </div>
+                </div>
+
             </div>
 
-            <div style="background:rgba(255,255,255,0.03); border-radius:10px; padding:10px 12px; font-size:11px; color:var(--text-muted); line-height:1.4;">
-                <i class="fa-solid fa-lightbulb" style="color:#f59e0b;"></i> <strong>Usage Serveur :</strong> En début de service ou lors du nettoyage, scannez directement les QR codes des tables avec votre smartphone. Tout sticker corrompu ou falsifié déclenche une alarme instantanée.
-            </div>
         </div>
     </div>
 </body>

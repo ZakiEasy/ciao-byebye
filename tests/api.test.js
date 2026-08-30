@@ -1618,5 +1618,38 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         const updateData = await updateRes.json();
         assert.strictEqual(updateData.success, true);
     });
+
+    test('61. GET /api/qr/tables & GET /api/theme/active - should return official Don Roberto table QR codes and active branding', async () => {
+        // 1. Application et vérification du thème Don Roberto
+        await fetch(`${BASE_URL}/api/theme/apply`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                theme: {
+                    brand_name: 'Don Roberto',
+                    tagline: 'Pizzeria & Trattoria Italienne',
+                    primary_color: '#f59e0b'
+                }
+            })
+        });
+
+        const themeRes = await fetch(`${BASE_URL}/api/theme/active`);
+        assert.strictEqual(themeRes.status, 200);
+        const themeData = await themeRes.json();
+        assert.strictEqual(themeData.success, true);
+        assert.strictEqual(themeData.theme.brand_name, 'Don Roberto');
+
+        // 2. Vérification des QR codes des tables
+        const qrRes = await fetch(`${BASE_URL}/api/qr/tables`);
+        assert.strictEqual(qrRes.status, 200);
+        const qrData = await qrRes.json();
+        assert.strictEqual(qrData.success, true);
+        assert.strictEqual(qrData.restaurant, 'Don Roberto');
+        assert.ok(qrData.total_tables >= 12);
+        assert.ok(qrData.tables[0].target_url.includes('table='));
+        assert.ok(qrData.tables[0].qr_code_token);
+        assert.ok(qrData.tables[0].qr_image_url);
+    });
 });
+
 

@@ -33,7 +33,7 @@ const translations = {
         btn_confirm_payment: "Confirmer le paiement",
         btn_confirm_cash: "Valider la commande (Espèces en Caisse)",
         btn_processing: "Traitement...",
-        security_badge: "Paiement 100% sécurisé et direct pour L'Atelier de Chris.",
+        security_badge: "Paiement 100% sécurisé et direct pour Don Roberto.",
         success_title: "Suivi de Commande en Direct",
         success_thanks: "Merci",
         success_validated: "votre commande est en cours de préparation.",
@@ -111,7 +111,7 @@ const translations = {
         btn_confirm_payment: "Confirm Payment",
         btn_confirm_cash: "Submit Order (Pay Cash at Register)",
         btn_processing: "Processing...",
-        security_badge: "100% direct & secure payment for L'Atelier de Chris.",
+        security_badge: "100% direct & secure payment for Don Roberto.",
         success_title: "Live Order Tracker",
         success_thanks: "Thank you",
         success_validated: "your order is being prepared in the kitchen.",
@@ -267,7 +267,7 @@ const translations = {
         btn_confirm_payment: "Confirmar Pago",
         btn_confirm_cash: "Validar Pedido (Pagar en Caja)",
         btn_processing: "Procesando...",
-        security_badge: "Pago 100% seguro y directo para L'Atelier de Chris.",
+        security_badge: "Pago 100% seguro y directo para Don Roberto.",
         success_title: "Seguimiento en Directo",
         success_thanks: "Gracias",
         success_validated: "su pedido está en preparación en cocina.",
@@ -967,7 +967,7 @@ function applyActiveTheme(theme) {
         root.style.setProperty('--font-main', theme.font_family);
     }
     if (theme.brand_name) {
-        const brandHeaders = document.querySelectorAll('.hero-title, .restaurant-info h1, #header-brand-title');
+        const brandHeaders = document.querySelectorAll('.hero-title, .restaurant-info h1, #header-brand-title, .restaurant-name');
         brandHeaders.forEach(el => {
             if (el) el.innerText = theme.brand_name;
         });

@@ -844,6 +844,35 @@ app.post('/api/tables/verify-qr', async (req, res) => {
   }
 });
 
+// 2.3. Liste complète des QR Codes officiels des tables pour génération / impression
+app.get('/api/qr/tables', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, number, name, qr_code_token, zone, max_covers, service_status FROM tables ORDER BY number ASC');
+    const baseUrl = process.env.PUBLIC_APP_URL || 'https://don-roberto.ciao-byebye.store';
+    
+    const tablesWithQRs = result.rows.map(t => {
+      const targetUrl = `${baseUrl}/?table=${t.number}&token=${t.qr_code_token}`;
+      return {
+        ...t,
+        target_url: targetUrl,
+        qr_image_url: `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=H&data=${encodeURIComponent(targetUrl)}`,
+        restaurant_name: activeRestaurantTheme.brand_name || 'Don Roberto',
+        logo_url: activeRestaurantTheme.logo_url || ''
+      };
+    });
+
+    res.json({
+      success: true,
+      restaurant: activeRestaurantTheme.brand_name || 'Don Roberto',
+      total_tables: tablesWithQRs.length,
+      tables: tablesWithQRs
+    });
+  } catch (err) {
+    console.error('Erreur récupération QR tables:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // 3. Webhook Stripe pour confirmer le paiement
 app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
@@ -2958,16 +2987,16 @@ app.post('/api/menu/scan-photo', async (req, res) => {
 // 6.10. GESTION DU THÈME & DESIGN SYSTEM EXTRACTOR
 // ==========================================
 let activeRestaurantTheme = {
-  brand_name: "L'Atelier Chris",
-  tagline: "Bistronomie & Cocktails Créatifs",
+  brand_name: "Don Roberto",
+  tagline: "Pizzeria & Trattoria Italienne Authentique",
   primary_color: "#f59e0b",
   primary_glow: "rgba(245, 158, 11, 0.4)",
   accent_color: "#ef4444",
   bg_dark: "#0c0c0e",
   card_bg: "rgba(25, 25, 30, 0.75)",
   border_radius: "16px",
-  font_family: "'Plus Jakarta Sans', sans-serif",
-  logo_url: "",
+  font_family: "'Outfit', sans-serif",
+  logo_url: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=200",
   banner_url: ""
 };
 
