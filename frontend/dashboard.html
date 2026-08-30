@@ -1263,7 +1263,21 @@
         const socket = typeof io !== 'undefined' ? io() : null;
         let orders = [];
 
-        async function fetchOrders() {
+        let kdsSearchQuery = '';
+
+        function handleKdsSearch(query) {
+            kdsSearchQuery = (query || '').trim().toLowerCase();
+            renderKdsView(false);
+        }
+
+        function clearKdsSearch() {
+            kdsSearchQuery = '';
+            const input = document.getElementById('kds-search-input');
+            if (input) input.value = '';
+            renderKdsView(false);
+        }
+
+        async function fetchOrders(isPeriodic = true) {
             try {
                 let url = `/api/orders?email=${encodeURIComponent(activeEmail)}`;
                 if (kdsActiveStation && kdsActiveStation !== 'all') {
@@ -1278,7 +1292,12 @@
                 const badge = document.getElementById('stat-unpaid-count');
                 if (badge) badge.innerText = unpaid.length;
 
-                renderDashboard();
+                // En refresh périodique d'arrière-plan, ne mettre à jour que le KDS ou l'écran public de retrait
+                if (activeRole === 'technique') {
+                    renderPublicPickupView();
+                } else if (activeMainTab === 'kds') {
+                    renderKdsView(false);
+                }
             } catch (error) {
                 console.error('Error fetching orders:', error);
             }
@@ -1302,14 +1321,15 @@
             } else if (activeMainTab === 'menu') {
                 renderMenuManagement();
                 return;
-            }
-
-            if (activeRole === 'chef_de_salle') {
-                renderChefDeSalleView();
+            } else if (activeMainTab === 'pos') {
+                if (typeof renderPOSView === 'function') renderPOSView();
+                return;
+            } else if (activeMainTab === 'loyalty') {
+                if (typeof renderLoyaltyView === 'function') renderLoyaltyView();
                 return;
             }
 
-            renderKdsView();
+            renderKdsView(true);
         }
 
         let serverPickupFilterMode = 'all'; // 'all' | 'my_tables'
@@ -1322,7 +1342,12 @@
         function renderPublicPickupView() {
             const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
             const mainContent = document.getElementById('dashboard-main-content');
+            if (!mainContent) return;
             
+            // Sauvegarde de la position de scroll
+            const existingPickupLists = mainContent.querySelectorAll('.pickup-list');
+            const savedScrolls = Array.from(existingPickupLists).map(el => el.scrollTop);
+
             let displayedOrders = orders;
             if (activeRole === 'serveur' && serverPickupFilterMode === 'my_tables') {
                 displayedOrders = orders.filter(o => o.assigned_waiter_email === activeEmail);
@@ -1402,65 +1427,123 @@
                     </div>
                 </div>
             `;
+
+            // Restauration du scroll
+            const newPickupLists = mainContent.querySelectorAll('.pickup-list');
+            newPickupLists.forEach((el, i) => {
+                if (savedScrolls[i] !== undefined) el.scrollTop = savedScrolls[i];
+            });
         }
 
-        function renderKdsView() {
+        function renderKdsView(forceRebuild = false) {
             const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
             const mainContent = document.getElementById('dashboard-main-content');
+            if (!mainContent) return;
 
-            mainContent.innerHTML = `
-                <div style="display:flex; flex-direction:column; height:100%; width:100%; min-height:0; overflow:hidden;">
-                    <div class="kds-station-bar">
-                        <span style="font-size:13px; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
-                            <i class="fa-solid fa-satellite-dish" style="color:var(--primary);"></i> Poste KDS :
-                        </span>
-                        <button class="station-btn ${kdsActiveStation === 'all' ? 'active' : ''}" onclick="setKdsStation('all')">
-                            🍳 Tous / Passe Expo
-                        </button>
-                        <button class="station-btn ${kdsActiveStation === 'chaud' ? 'active' : ''}" onclick="setKdsStation('chaud')">
-                            🥩 Chaud / Grill
-                        </button>
-                        <button class="station-btn ${kdsActiveStation === 'froid' ? 'active' : ''}" onclick="setKdsStation('froid')">
-                            🥗 Froid / Entrées
-                        </button>
-                        <button class="station-btn ${kdsActiveStation === 'bar' ? 'active' : ''}" onclick="setKdsStation('bar')">
-                            🍹 Bar / Boissons
-                        </button>
-                    </div>
+            let cookingList = document.getElementById('list-cooking');
+            let readyList = document.getElementById('list-ready');
+            const searchInput = document.getElementById('kds-search-input');
+            
+            // Sauvegarder les positions de scroll et le focus actif de la recherche
+            const cookingScroll = cookingList ? cookingList.scrollTop : 0;
+            const readyScroll = readyList ? readyList.scrollTop : 0;
+            const isSearchFocused = (document.activeElement === searchInput);
+            const selStart = isSearchFocused && searchInput ? searchInput.selectionStart : 0;
 
-                    <div style="flex:1; min-height:0; display:grid; grid-template-columns: 1fr 1fr; gap:20px; overflow:hidden;">
-                        <section class="kds-column">
-                            <div class="column-header">
-                                <h2><i class="fa-solid fa-fire-burner" style="color: #ef4444;"></i> ${t.col_cooking}</h2>
-                                <span class="count" id="count-cooking" style="background:#ef4444; color:#fff;">0</span>
+            const isKdsStructurePresent = cookingList && readyList && !forceRebuild;
+
+            if (!isKdsStructurePresent) {
+                mainContent.innerHTML = `
+                    <div style="display:flex; flex-direction:column; height:100%; width:100%; min-height:0; overflow:hidden;">
+                        <div class="kds-station-bar" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:space-between;">
+                            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                <span style="font-size:13px; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:6px; margin-right:4px;">
+                                    <i class="fa-solid fa-satellite-dish" style="color:var(--primary);"></i> Poste KDS :
+                                </span>
+                                <button class="station-btn ${kdsActiveStation === 'all' ? 'active' : ''}" onclick="setKdsStation('all')">
+                                    🍳 Tous / Expo
+                                </button>
+                                <button class="station-btn ${kdsActiveStation === 'chaud' ? 'active' : ''}" onclick="setKdsStation('chaud')">
+                                    🥩 Chaud
+                                </button>
+                                <button class="station-btn ${kdsActiveStation === 'froid' ? 'active' : ''}" onclick="setKdsStation('froid')">
+                                    🥗 Froid
+                                </button>
+                                <button class="station-btn ${kdsActiveStation === 'bar' ? 'active' : ''}" onclick="setKdsStation('bar')">
+                                    🍹 Bar
+                                </button>
                             </div>
-                            <div class="cards-list" id="list-cooking"></div>
-                        </section>
 
-                        <section class="kds-column">
-                            <div class="column-header">
-                                <h2><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> ${t.col_ready}</h2>
-                                <span class="count" id="count-ready" style="background:#10b981; color:#fff;">0</span>
+                            <!-- KDS Real-time Search Input -->
+                            <div style="display:flex; align-items:center; gap:6px; min-width:240px; position:relative;">
+                                <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:10px; color:var(--text-muted); font-size:12px; pointer-events:none;"></i>
+                                <input type="text" id="kds-search-input" placeholder="Rechercher table, client, plat..." value="${kdsSearchQuery}" oninput="handleKdsSearch(this.value)" style="width:100%; padding:6px 28px 6px 30px; background:rgba(0,0,0,0.35); border:1px solid var(--glass-border); border-radius:8px; color:#fff; font-size:12px; outline:none;" autocomplete="off">
+                                <button id="kds-clear-search-btn" onclick="clearKdsSearch()" style="position:absolute; right:8px; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:11px; display:${kdsSearchQuery ? 'block' : 'none'};" title="Effacer la recherche"><i class="fa-solid fa-xmark"></i></button>
                             </div>
-                            <div class="cards-list" id="list-ready"></div>
-                        </section>
+                        </div>
+
+                        <div style="flex:1; min-height:0; display:grid; grid-template-columns: 1fr 1fr; gap:20px; overflow:hidden; margin-top:8px;">
+                            <section class="kds-column">
+                                <div class="column-header">
+                                    <h2><i class="fa-solid fa-fire-burner" style="color: #ef4444;"></i> ${t.col_cooking}</h2>
+                                    <span class="count" id="count-cooking" style="background:#ef4444; color:#fff;">0</span>
+                                </div>
+                                <div class="cards-list" id="list-cooking"></div>
+                            </section>
+
+                            <section class="kds-column">
+                                <div class="column-header">
+                                    <h2><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> ${t.col_ready}</h2>
+                                    <span class="count" id="count-ready" style="background:#10b981; color:#fff;">0</span>
+                                </div>
+                                <div class="cards-list" id="list-ready"></div>
+                            </section>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+                cookingList = document.getElementById('list-cooking');
+                readyList = document.getElementById('list-ready');
+            } else {
+                const clearBtn = document.getElementById('kds-clear-search-btn');
+                if (clearBtn) clearBtn.style.display = kdsSearchQuery ? 'block' : 'none';
+            }
 
-            const cookingList = document.getElementById('list-cooking');
-            const readyList = document.getElementById('list-ready');
+            // Filtrage des commandes par terme de recherche
+            function matchKdsFilter(o) {
+                if (!kdsSearchQuery) return true;
+                const q = kdsSearchQuery;
+                const matchClient = (o.client_name || '').toLowerCase().includes(q);
+                const matchTable = (o.table_number || '').toString().toLowerCase().includes(q);
+                const matchId = (o.id || '').toLowerCase().includes(q);
+                const matchZone = (o.table_zone || '').toLowerCase().includes(q);
+                const matchItems = Array.isArray(o.items) && o.items.some(item => 
+                    (item.name || '').toLowerCase().includes(q) ||
+                    (item.cooking_pref || '').toLowerCase().includes(q) ||
+                    (Array.isArray(item.allergies) && item.allergies.some(a => a.toLowerCase().includes(q))) ||
+                    (Array.isArray(item.modifiers) && item.modifiers.some(m => (m.label || '').toLowerCase().includes(q)))
+                );
+                return matchClient || matchTable || matchId || matchZone || matchItems;
+            }
 
-            const cookingOrders = orders.filter(o => o.order_status === 'en_cuisine');
-            const readyOrders = orders.filter(o => o.order_status === 'prete');
+            const rawCooking = orders.filter(o => o.order_status === 'en_cuisine');
+            const rawReady = orders.filter(o => o.order_status === 'prete');
 
-            document.getElementById('stat-cooking').innerText = cookingOrders.length;
-            document.getElementById('count-cooking').innerText = cookingOrders.length;
-            document.getElementById('stat-ready').innerText = readyOrders.length;
-            document.getElementById('count-ready').innerText = readyOrders.length;
+            const cookingOrders = rawCooking.filter(matchKdsFilter);
+            const readyOrders = rawReady.filter(matchKdsFilter);
 
+            const statCookEl = document.getElementById('stat-cooking');
+            if (statCookEl) statCookEl.innerText = rawCooking.length;
+            const countCookEl = document.getElementById('count-cooking');
+            if (countCookEl) countCookEl.innerText = kdsSearchQuery ? `${cookingOrders.length}/${rawCooking.length}` : cookingOrders.length;
+
+            const statReadyEl = document.getElementById('stat-ready');
+            if (statReadyEl) statReadyEl.innerText = rawReady.length;
+            const countReadyEl = document.getElementById('count-ready');
+            if (countReadyEl) countReadyEl.innerText = kdsSearchQuery ? `${readyOrders.length}/${rawReady.length}` : readyOrders.length;
+
+            // Rendu de la colonne en cuisine
             if (cookingOrders.length === 0) {
-                cookingList.innerHTML = `<div class="empty-column-msg">${t.empty_cooking}</div>`;
+                cookingList.innerHTML = `<div class="empty-column-msg">${kdsSearchQuery ? 'Aucune commande trouvée pour cette recherche.' : t.empty_cooking}</div>`;
             } else {
                 cookingList.innerHTML = cookingOrders.map((o, index) => {
                     const elapsedMin = Math.floor((new Date() - new Date(o.created_at)) / 60000);
@@ -1562,8 +1645,9 @@
                 }).join('');
             }
 
+            // Rendu de la colonne prête
             if (readyOrders.length === 0) {
-                readyList.innerHTML = `<div class="empty-column-msg">${t.empty_ready}</div>`;
+                readyList.innerHTML = `<div class="empty-column-msg">${kdsSearchQuery ? 'Aucune commande prête trouvée.' : t.empty_ready}</div>`;
             } else {
                 readyList.innerHTML = readyOrders.map((o, index) => {
                     const isServerRole = activeRole === 'serveur';
@@ -1608,6 +1692,19 @@
                         </div>
                     `;
                 }).join('');
+            }
+
+            // Restauration exacte des positions de scroll des colonnes
+            if (cookingList) cookingList.scrollTop = cookingScroll;
+            if (readyList) readyList.scrollTop = readyScroll;
+
+            // Restauration du focus et du curseur de recherche sans interruption
+            if (isSearchFocused) {
+                const refreshedInput = document.getElementById('kds-search-input');
+                if (refreshedInput) {
+                    refreshedInput.focus();
+                    refreshedInput.setSelectionRange(selStart, selStart);
+                }
             }
         }
 
