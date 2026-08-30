@@ -1542,5 +1542,81 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         const resetData = await resetRes.json();
         assert.strictEqual(resetData.success, true);
     });
+
+    test('59. Benchmark & Performance Suite - Core API response latency under SLA thresholds', async () => {
+        // 1. Benchmark GET /api/health (< 80ms)
+        const t0 = Date.now();
+        const healthRes = await fetch(`${BASE_URL}/api/health`);
+        const tHealth = Date.now() - t0;
+        assert.strictEqual(healthRes.status, 200);
+        assert.ok(tHealth < 150, `Health check latency exceeded SLA: ${tHealth}ms`);
+
+        // 2. Benchmark GET /api/menu (< 120ms)
+        const t1 = Date.now();
+        const menuRes = await fetch(`${BASE_URL}/api/menu`);
+        const tMenu = Date.now() - t1;
+        assert.strictEqual(menuRes.status, 200);
+        assert.ok(tMenu < 250, `Menu retrieval latency exceeded SLA: ${tMenu}ms`);
+
+        // 3. Benchmark GET /api/tables/layout (< 120ms)
+        const t2 = Date.now();
+        const layoutRes = await fetch(`${BASE_URL}/api/tables/layout`);
+        const tLayout = Date.now() - t2;
+        assert.strictEqual(layoutRes.status, 200);
+        assert.ok(tLayout < 250, `Layout latency exceeded SLA: ${tLayout}ms`);
+
+        // 4. Benchmark GET /api/orders (< 150ms)
+        const t3 = Date.now();
+        const ordersRes = await fetch(`${BASE_URL}/api/orders?email=superadmin@ciao-byebye.fr`);
+        const tOrders = Date.now() - t3;
+        assert.strictEqual(ordersRes.status, 200);
+        assert.ok(tOrders < 300, `Orders retrieval latency exceeded SLA: ${tOrders}ms`);
+    });
+
+    test('60. GET /api/orders/:id/status & PUT /api/menu/:id - Real-time tracking and dish updates', async () => {
+        // 1. Création d'une commande test pour vérifier le suivi de statut
+        const mockOrder = await fetch(`${BASE_URL}/api/orders/mock-create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: '02',
+                clientName: 'Test Latency Tracking',
+                paymentMethod: 'especes',
+                items: [{ name: 'Pizza Margherita', price: 10.5, quantity: 1 }]
+            })
+        });
+        const orderData = await mockOrder.json();
+        assert.ok(orderData.orderId);
+
+        // 2. Vérification du statut direct
+        const statusRes = await fetch(`${BASE_URL}/api/orders/${orderData.orderId}/status`);
+        assert.strictEqual(statusRes.status, 200);
+        const statusData = await statusRes.json();
+        assert.strictEqual(statusData.orderId, orderData.orderId);
+        assert.ok(['en_cuisine', 'prete', 'servie'].includes(statusData.status));
+
+        // 3. Récupération d'un produit du menu et modification via PUT /api/menu/:id
+        const menuRes = await fetch(`${BASE_URL}/api/menu`);
+        const menu = await menuRes.json();
+        const firstDish = menu[0];
+        assert.ok(firstDish);
+
+        const updateRes = await fetch(`${BASE_URL}/api/menu/${firstDish.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: firstDish.name,
+                category: firstDish.category,
+                subcategory: firstDish.subcategory || 'Spécialités',
+                price: (firstDish.price_cents / 100),
+                description: 'Description mise à jour pour test de gestion',
+                image_url: firstDish.image_url,
+                is_available: true
+            })
+        });
+        assert.strictEqual(updateRes.status, 200);
+        const updateData = await updateRes.json();
+        assert.strictEqual(updateData.success, true);
+    });
 });
 

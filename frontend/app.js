@@ -390,7 +390,7 @@ function formatPrice(euroAmount) {
     return curr.position === 'before' ? `${curr.symbol} ${formattedNum}` : `${formattedNum} ${curr.symbol}`;
 }
 
-let paymentGateways = { stripe_card_enabled: true, cash_collection_enabled: true, ticket_restaurant_enabled: true };
+let paymentGateways = { stripe_card_enabled: false, cash_collection_enabled: true, ticket_restaurant_enabled: true };
 
 async function fetchPaymentGateways() {
     try {
@@ -410,7 +410,7 @@ function applyPaymentGatewaysUI() {
         if (tabCard) {
             tabCard.style.display = 'none';
         }
-        if (selectedPaymentMethod === 'carte') {
+        if (selectedPaymentMethod === 'carte' || !selectedPaymentMethod) {
             setPaymentMethod('especes');
         }
     } else if (tabCard) {
@@ -616,6 +616,37 @@ function clearClientSession() {
 // ACTIVE ORDER TRACKING & FLOATING WIDGET
 // ==========================================
 
+let clientOrderPollInterval = null;
+
+function startClientOrderPolling() {
+    if (clientOrderPollInterval) clearInterval(clientOrderPollInterval);
+    if (!activeOrder || !activeOrder.orderId) return;
+
+    clientOrderPollInterval = setInterval(async () => {
+        if (!activeOrder || !activeOrder.orderId) {
+            if (clientOrderPollInterval) clearInterval(clientOrderPollInterval);
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/orders/${activeOrder.orderId}/status`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data && (data.status !== activeOrder.status || data.paymentStatus !== activeOrder.paymentStatus)) {
+                    activeOrder.status = data.status;
+                    if (data.paymentStatus) activeOrder.paymentStatus = data.paymentStatus;
+                    localStorage.setItem('ciao_active_order', JSON.stringify(activeOrder));
+                    updateActiveOrderFloatingBar();
+                    updateTrackerSteps(activeOrder.status);
+                    renderSuccessModal();
+                }
+            }
+        } catch (err) {
+            // Polling silencieux
+        }
+    }, 4000);
+}
+
 function saveActiveOrder(orderData) {
     activeOrder = {
         ...orderData,
@@ -623,6 +654,7 @@ function saveActiveOrder(orderData) {
     };
     localStorage.setItem('ciao_active_order', JSON.stringify(activeOrder));
     updateActiveOrderFloatingBar();
+    startClientOrderPolling();
 }
 
 function restoreActiveOrder() {
@@ -634,6 +666,7 @@ function restoreActiveOrder() {
                 activeOrder = parsed;
                 updateActiveOrderFloatingBar();
                 updateTrackerSteps(activeOrder.status);
+                startClientOrderPolling();
             } else {
                 localStorage.removeItem('ciao_active_order');
                 activeOrder = null;
@@ -1632,12 +1665,12 @@ function renderMenu() {
                                 <i class="fa-solid fa-ban"></i> Indisponible
                             </button>
                         ` : `
-                            <div style="display:flex; gap:6px; width:100%; align-items:center;">
-                                <button class="btn-customize-item" onclick="openCustomModal('${product.id}')" title="Personnaliser les ingrédients et options">
-                                    <i class="fa-solid fa-sliders"></i> <span data-i18n="btn_customize">${t.btn_customize || 'Personnaliser'}</span>
+                            <div class="product-footer-actions" style="display:flex; gap:5px; width:100%; align-items:center; justify-content:flex-end;">
+                                <button class="btn-customize-item" onclick="openCustomModal('${product.id}')" title="Options & Personnalisation">
+                                    <i class="fa-solid fa-sliders"></i> <span>Options</span>
                                 </button>
-                                <button class="add-to-cart-btn" onclick="addToCart('${product.id}')" style="flex:1;">
-                                    <i class="fa-solid fa-plus"></i> ${quantity > 0 ? `Ajouter (${quantity})` : t.btn_add}
+                                <button class="add-to-cart-btn" onclick="addToCart('${product.id}')">
+                                    <i class="fa-solid fa-plus"></i> <span>${quantity > 0 ? `Ajouté (${quantity})` : (t.btn_add || 'Ajouter')}</span>
                                 </button>
                             </div>
                         `}

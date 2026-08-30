@@ -452,7 +452,7 @@ const donRobertoOfficialMenu = [
     price_cents: 700,
     category: 'dessert',
     subcategory: 'Dolci Italiens Maison',
-    image_url: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&q=80&w=600'
+    image_url: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&q=80&w=600'
   },
   {
     name: 'Fondant au Chocolat Cœur Coulant',
@@ -464,11 +464,11 @@ const donRobertoOfficialMenu = [
   },
   {
     name: 'Tarte au Daim Croustillante',
-    description: 'Tarte pâtissière aux éclats de bonbons Daim caramélisés et crème d\'amande fondante.',
+    description: 'Tarte pâtissière aux éclats de bonbons Daim caramélisés et crème d\'amande fondante sur biscuit croustillant.',
     price_cents: 390,
     category: 'dessert',
     subcategory: 'Dolci Italiens Maison',
-    image_url: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&q=80&w=600'
+    image_url: 'https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&q=80&w=600'
   },
   {
     name: 'Glace Häagen-Dazs (Pot 100ml)',
@@ -669,25 +669,25 @@ async function provisionClient(config = donRobertoDefaultConfig) {
       {
         email: `gerant.${config.subdomain}@ciao-byebye.fr`,
         role: 'gestionnaire',
-        password: hashPassword('DonRoberto2026!Dir'),
+        password: hashPassword('c&&RHnu*uEFz'),
         assigned_tables: []
       },
       {
         email: `serveur.${config.subdomain}@ciao-byebye.fr`,
         role: 'serveur',
-        password: hashPassword('DonRoberto2026!Srv'),
+        password: hashPassword('zvCFeeCnPRgH'),
         assigned_tables: tableNumbers
       },
       {
         email: `cuisine.${config.subdomain}@ciao-byebye.fr`,
         role: 'cuisine',
-        password: hashPassword('DonRoberto2026!Kds'),
+        password: hashPassword('3%&USrvexn45'),
         assigned_tables: []
       },
       {
         email: `comptoir.${config.subdomain}@ciao-byebye.fr`,
         role: 'technique',
-        password: hashPassword('DonRoberto2026!Pos'),
+        password: hashPassword('qdeWTbQmbwAV'),
         assigned_tables: []
       },
       {
@@ -791,10 +791,10 @@ async function provisionClient(config = donRobertoDefaultConfig) {
     console.log(`🪑 Tables Configurées : ${config.tables.length} tables (${totalCovers} couverts)`);
     console.log(`🍕 Produits en Ligne  : ${config.menu.length} articles authentiques`);
     console.log('🔑 Identifiants d\'accès :');
-    console.log(`   • Gérant   : gerant.${config.subdomain}@ciao-byebye.fr (Mot de passe: DonRoberto2026!Dir)`);
-    console.log(`   • Serveur  : serveur.${config.subdomain}@ciao-byebye.fr (Mot de passe: DonRoberto2026!Srv)`);
-    console.log(`   • Cuisine  : cuisine.${config.subdomain}@ciao-byebye.fr (Mot de passe: DonRoberto2026!Kds)`);
-    console.log(`   • Comptoir : comptoir.${config.subdomain}@ciao-byebye.fr (Mot de passe: DonRoberto2026!Pos)`);
+    console.log(`   • Gérant   : gerant.${config.subdomain}@ciao-byebye.fr (Mot de passe: c&&RHnu*uEFz)`);
+    console.log(`   • Serveur  : serveur.${config.subdomain}@ciao-byebye.fr (Mot de passe: zvCFeeCnPRgH)`);
+    console.log(`   • Cuisine  : cuisine.${config.subdomain}@ciao-byebye.fr (Mot de passe: 3%&USrvexn45)`);
+    console.log(`   • Comptoir : comptoir.${config.subdomain}@ciao-byebye.fr (Mot de passe: qdeWTbQmbwAV)`);
     console.log('================================================================\n');
 
   } catch (err) {

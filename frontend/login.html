@@ -258,16 +258,13 @@
 
             <!-- Staff Profile Selector -->
             <div class="input-group" style="margin-bottom: 20px;">
-                <label for="sso-profile" id="lbl-demo-profile">Profil de démonstration (SSO)</label>
+                <label for="sso-profile" id="lbl-demo-profile">Compte Utilisateur Don Roberto (SSO / Démo)</label>
                 <select id="sso-profile">
-                    <option value="superadmin@ciao-byebye.fr" id="opt-superadmin" selected>👑 SuperAdmin Global (superadmin@ciao-byebye.fr - Accès Total)</option>
-                    <option value="chef@atelier-chris.fr" id="opt-chef">👨‍🍳 Chef Cuisine (chef@atelier-chris.fr)</option>
-                    <option value="maitre@atelier-chris.fr" id="opt-maitre">🤵 Chef de Salle (maitre@atelier-chris.fr)</option>
-                    <option value="david@atelier-chris.fr" id="opt-david">🏃‍♂️ Serveur David (david@atelier-chris.fr - Tables 5, 8, 12)</option>
-                    <option value="sophie@atelier-chris.fr" id="opt-sophie">🏃‍♀️ Serveuse Sophie (sophie@atelier-chris.fr - Tables 1, 2, 3)</option>
-                    <option value="boss@atelier-chris.fr" id="opt-boss">📈 Gestionnaire / Direction (boss@atelier-chris.fr)</option>
-                    <option value="pickup@atelier-chris.fr" id="opt-pickup">📺 Comptoir Retrait Public (pickup@atelier-chris.fr)</option>
-                    <option value="barman@atelier-chris.fr" id="opt-barman">🍹 Barman (barman@atelier-chris.fr - Boissons)</option>
+                    <option value="gerant.don-roberto@ciao-byebye.fr" id="opt-boss" selected>👔 Gérant / Direction (gerant.don-roberto@ciao-byebye.fr)</option>
+                    <option value="serveur.don-roberto@ciao-byebye.fr" id="opt-serveur">🤵 Serveur / Salle (serveur.don-roberto@ciao-byebye.fr)</option>
+                    <option value="cuisine.don-roberto@ciao-byebye.fr" id="opt-chef">🍕 Cuisine / Chef Pizzaiolo (cuisine.don-roberto@ciao-byebye.fr)</option>
+                    <option value="comptoir.don-roberto@ciao-byebye.fr" id="opt-pickup">🖥️ Comptoir / Caisse (comptoir.don-roberto@ciao-byebye.fr)</option>
+                    <option value="superadmin@ciao-byebye.fr" id="opt-superadmin">👑 SuperAdmin Global (superadmin@ciao-byebye.fr)</option>
                 </select>
             </div>
 
@@ -290,7 +287,7 @@
             <form onsubmit="handleManualLogin(event)">
                 <div class="input-group">
                     <label for="email" id="lbl-email">Adresse e-mail</label>
-                    <input type="email" id="email" required placeholder="chef@atelier-chris.fr">
+                    <input type="email" id="email" required placeholder="gerant.don-roberto@ciao-byebye.fr">
                 </div>
                 <div class="input-group">
                     <label for="password" id="lbl-password">Mot de passe</label>
@@ -307,15 +304,12 @@
                 lang_label: "Langue :",
                 title: "Portail Pro Cuisine & KDS",
                 desc: "Connectez-vous pour accéder au tableau de bord KDS",
-                demo_profile: "Profil de démonstration (SSO)",
-                opt_superadmin: "👑 SuperAdmin Global (superadmin@ciao-byebye.fr - Accès Total)",
-                opt_chef: "👨‍🍳 Chef Cuisine (chef@atelier-chris.fr)",
-                opt_maitre: "🤵 Chef de Salle (maitre@atelier-chris.fr)",
-                opt_david: "🏃‍♂️ Serveur David (david@atelier-chris.fr - Tables 5, 8, 12)",
-                opt_sophie: "🏃‍♀️ Serveuse Sophie (sophie@atelier-chris.fr - Tables 1, 2, 3)",
-                opt_boss: "📈 Gestionnaire / Direction (boss@atelier-chris.fr)",
-                opt_pickup: "📺 Comptoir Retrait Public (pickup@atelier-chris.fr)",
-                opt_barman: "🍹 Barman (barman@atelier-chris.fr - Boissons)",
+                demo_profile: "Compte Utilisateur Don Roberto (SSO / Démo)",
+                opt_superadmin: "👑 SuperAdmin Global (superadmin@ciao-byebye.fr)",
+                opt_chef: "🍕 Cuisine / Chef Pizzaiolo (cuisine.don-roberto@ciao-byebye.fr)",
+                opt_serveur: "🤵 Serveur / Salle (serveur.don-roberto@ciao-byebye.fr)",
+                opt_boss: "👔 Gérant / Direction (gerant.don-roberto@ciao-byebye.fr)",
+                opt_pickup: "🖥️ Comptoir / Caisse (comptoir.don-roberto@ciao-byebye.fr)",
                 btn_google: "Se connecter avec Google",
                 btn_apple: "Se connecter avec Apple",
                 btn_microsoft: "Se connecter avec Microsoft",
@@ -328,15 +322,12 @@
                 lang_label: "Language:",
                 title: "Kitchen & KDS Pro Portal",
                 desc: "Sign in to access the KDS kitchen dashboard",
-                demo_profile: "Demo Staff Profile (SSO)",
-                opt_superadmin: "👑 Global SuperAdmin (superadmin@ciao-byebye.fr - Full Access)",
-                opt_chef: "👨‍🍳 Kitchen Head Chef (chef@atelier-chris.fr)",
-                opt_maitre: "🤵 Head Waiter / Floor Manager (maitre@atelier-chris.fr)",
-                opt_david: "🏃‍♂️ Waiter David (david@ - Tables 5, 8, 12)",
-                opt_sophie: "🏃‍♀️ Waitress Sophie (sophie@ - Tables 1, 2, 3)",
-                opt_boss: "📈 General Manager / Admin (boss@atelier-chris.fr)",
-                opt_pickup: "📺 Public Pickup Kiosk (pickup@atelier-chris.fr)",
-                opt_barman: "🍹 Bartender (barman@ - Drinks only)",
+                demo_profile: "Don Roberto Staff Account (SSO / Demo)",
+                opt_superadmin: "👑 Global SuperAdmin (superadmin@ciao-byebye.fr)",
+                opt_chef: "🍕 Kitchen / Pizzaiolo (cuisine.don-roberto@ciao-byebye.fr)",
+                opt_serveur: "🤵 Waiter / Floor Staff (serveur.don-roberto@ciao-byebye.fr)",
+                opt_boss: "👔 General Manager / Direction (gerant.don-roberto@ciao-byebye.fr)",
+                opt_pickup: "🖥️ Front Desk / Cashier (comptoir.don-roberto@ciao-byebye.fr)",
                 btn_google: "Sign in with Google",
                 btn_apple: "Sign in with Apple",
                 btn_microsoft: "Sign in with Microsoft",
@@ -349,15 +340,12 @@
                 lang_label: "اللغة :",
                 title: "بوابة المطبخ وإدارة الطلبات KDS",
                 desc: "سجّل الدخول للوصول إلى لوحة تحكم المطبخ والخدمة",
-                demo_profile: "الملف التجريبي لطاقم العمل (SSO)",
-                opt_superadmin: "👑 المشرف العام المتميز (superadmin@ciao-byebye.fr - وصول كامل)",
-                opt_chef: "👨‍🍳 الشيف الرئيسي (chef@atelier-chris.fr)",
-                opt_maitre: "🤵 مدير الصالة (maitre@atelier-chris.fr)",
-                opt_david: "🏃‍♂️ النادل دافيد (طاولات 5، 8، 12)",
-                opt_sophie: "🏃‍♀️ النادلة صوفي (طاولات 1، 2، 3)",
-                opt_boss: "📈 المدير العام والإدارة (boss@atelier-chris.fr)",
-                opt_pickup: "📺 شاشة الاستلام العامة (pickup@atelier-chris.fr)",
-                opt_barman: "🍹 مسؤول المشروبات (barman@atelier-chris.fr)",
+                demo_profile: "حساب الطاقم دون روبرتو (SSO)",
+                opt_superadmin: "👑 المشرف العام المتميز (superadmin@ciao-byebye.fr)",
+                opt_chef: "🍕 المطبخ / صانع البيتزا (cuisine.don-roberto@ciao-byebye.fr)",
+                opt_serveur: "🤵 النادل / طاقم الصالة (serveur.don-roberto@ciao-byebye.fr)",
+                opt_boss: "👔 المدير العام / الإدارة (gerant.don-roberto@ciao-byebye.fr)",
+                opt_pickup: "🖥️ الكاونتر والصندوق (comptoir.don-roberto@ciao-byebye.fr)",
                 btn_google: "تسجيل الدخول عبر Google",
                 btn_apple: "تسجيل الدخول عبر Apple",
                 btn_microsoft: "تسجيل الدخول عبر Microsoft",
@@ -368,21 +356,18 @@
             },
             es: {
                 lang_label: "Idioma:",
-                title: "Portal Pro Cocina y KDS",
-                desc: "Inicie sesión para acceder al panel de cocina KDS",
-                demo_profile: "Perfil de demostración (SSO)",
-                opt_superadmin: "👑 SuperAdmin Global (superadmin@ciao-byebye.fr - Acceso Total)",
-                opt_chef: "👨‍🍳 Jefe de Cocina (chef@atelier-chris.fr)",
-                opt_maitre: "🤵 Jefe de Sala (maitre@atelier-chris.fr)",
-                opt_david: "🏃‍♂️ Camarero David (david@ - Mesas 5, 8, 12)",
-                opt_sophie: "🏃‍♀️ Camarera Sophie (sophie@ - Mesas 1, 2, 3)",
-                opt_boss: "📈 Gerente / Dirección (boss@atelier-chris.fr)",
-                opt_pickup: "📺 Pantalla de Retirada (pickup@atelier-chris.fr)",
-                opt_barman: "🍹 Camarero de Barra (barman@ - Bebidas)",
+                title: "Portal Pro Cocina & KDS",
+                desc: "Inicia sesión para acceder al panel KDS",
+                demo_profile: "Cuenta Personal Don Roberto (SSO)",
+                opt_superadmin: "👑 SuperAdmin Global (superadmin@ciao-byebye.fr)",
+                opt_chef: "🍕 Cocina / Pizzaiolo (cuisine.don-roberto@ciao-byebye.fr)",
+                opt_serveur: "🤵 Camarero / Sala (serveur.don-roberto@ciao-byebye.fr)",
+                opt_boss: "👔 Gerente / Dirección (gerant.don-roberto@ciao-byebye.fr)",
+                opt_pickup: "🖥️ Mostrador / Caja (comptoir.don-roberto@ciao-byebye.fr)",
                 btn_google: "Iniciar sesión con Google",
                 btn_apple: "Iniciar sesión con Apple",
                 btn_microsoft: "Iniciar sesión con Microsoft",
-                separator: "o credenciales de respaldo",
+                separator: "o credenciales de emergencia",
                 lbl_email: "Correo electrónico",
                 lbl_password: "Contraseña",
                 btn_submit: "Iniciar sesión"

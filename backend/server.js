@@ -765,7 +765,8 @@ app.get('/api/settings/payment-gateways', async (req, res) => {
     stripeKey && 
     stripeKey.startsWith('sk_') && 
     !stripeKey.includes('placeholder') &&
-    process.env.STRIPE_ACCOUNT_CONNECTED !== 'false'
+    !stripeKey.includes('test_dummy') &&
+    process.env.STRIPE_ACCOUNT_CONNECTED === 'true'
   );
 
   res.json({
@@ -775,7 +776,7 @@ app.get('/api/settings/payment-gateways', async (req, res) => {
     mode: isStripeConfigured ? 'production_stripe' : 'demo_cash_only',
     message: isStripeConfigured 
       ? 'Paiements par carte bancaire Stripe activés' 
-      : 'Compte Stripe non relié — Paiements par carte désactivés, règlement au comptoir/serveur uniquement.'
+      : 'Compte Stripe non configuré — Paiements par carte désactivés, règlement en espèces au comptoir ou auprès du serveur.'
   });
 });
 
@@ -1891,6 +1892,38 @@ app.get('/api/orders', async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error('Erreur récupération commandes:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 5.1. Suivi statut d'une commande spécifique (Client & KDS Polling)
+app.get('/api/orders/:id/status', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(`
+      SELECT o.id, o.order_status, o.payment_status, o.total_amount_cents,
+             t.number as table_number, o.created_at
+      FROM orders o
+      JOIN table_sessions ts ON o.session_id = ts.id
+      JOIN tables t ON ts.table_id = t.id
+      WHERE o.id = $1
+    `, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Commande non trouvée' });
+    }
+
+    const o = result.rows[0];
+    res.json({
+      orderId: o.id,
+      status: o.order_status,
+      paymentStatus: o.payment_status,
+      tableNumber: o.table_number,
+      totalAmountCents: o.total_amount_cents,
+      createdAt: o.created_at
+    });
+  } catch (err) {
+    console.error('Erreur récupération statut commande:', err);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
@@ -4179,7 +4212,7 @@ app.post('/api/loyalty/enroll', async (req, res) => {
   }
 
   try {
-    const progRes = await pool.query('SELECT * FROM loyalty_program_settings LIMIT 1');
+    const progRes = await pool.query('SELECT * FROM loyalty_program_settings ORDER BY updated_at DESC LIMIT 1');
     const welcomeBonus = progRes.rows[0]?.welcome_bonus_points || 25;
 
     const result = await pool.query(
@@ -4188,6 +4221,7 @@ app.post('/api/loyalty/enroll', async (req, res) => {
        ON CONFLICT (phone) DO UPDATE SET
          email = COALESCE(EXCLUDED.email, loyalty_customers.email),
          full_name = COALESCE(EXCLUDED.full_name, loyalty_customers.full_name),
+         current_points = GREATEST(loyalty_customers.current_points, EXCLUDED.current_points),
          updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
       [cleanPhone, cleanEmail || null, full_name || 'Nouveau Membre', welcomeBonus]
