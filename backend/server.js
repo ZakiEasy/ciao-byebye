@@ -507,18 +507,30 @@ app.get('/api/tables/:qr_token/display', async (req, res) => {
 
     // Trouver la session active de cette table
     const sessionResult = await pool.query(
-      "SELECT id FROM table_sessions WHERE table_id = $1 AND status = 'active' ORDER BY started_at DESC LIMIT 1",
+      "SELECT id, started_at FROM table_sessions WHERE table_id = $1 AND status = 'active' ORDER BY started_at DESC LIMIT 1",
       [table.id]
     );
 
-    if (sessionResult.rows.length === 0) {
+    if (sessionResult.rows.length === 0 || table.service_status === 'libre') {
       return res.json({
         tableNumber: table.number,
         activeSession: false,
+        orders: [],
         message: 'Aucune session active à cette table'
       });
     }
     const session = sessionResult.rows[0];
+
+    // Clôturer la session si elle date de plus de 3 heures
+    if (new Date(session.started_at).getTime() < Date.now() - (3 * 3600 * 1000)) {
+      await pool.query("UPDATE table_sessions SET status = 'completed', ended_at = CURRENT_TIMESTAMP WHERE id = $1", [session.id]);
+      return res.json({
+        tableNumber: table.number,
+        activeSession: false,
+        orders: [],
+        message: 'Session de table clôturée'
+      });
+    }
 
     // Récupérer toutes les commandes payées ou en attente associées à cette session
     const ordersResult = await pool.query(
@@ -701,11 +713,11 @@ app.get('/api/tables/:number/shared-orders', async (req, res) => {
     const table = tableRes.rows[0];
 
     const sessionRes = await pool.query(
-      "SELECT id FROM table_sessions WHERE table_id = $1 AND status = 'active' ORDER BY started_at DESC LIMIT 1",
+      "SELECT id, started_at FROM table_sessions WHERE table_id = $1 AND status = 'active' ORDER BY started_at DESC LIMIT 1",
       [table.id]
     );
 
-    if (sessionRes.rows.length === 0) {
+    if (sessionRes.rows.length === 0 || table.service_status === 'libre') {
       return res.json({
         tableNumber: paddedNum,
         activeSession: false,
@@ -713,7 +725,19 @@ app.get('/api/tables/:number/shared-orders', async (req, res) => {
         orders: []
       });
     }
-    const sessionId = sessionRes.rows[0].id;
+    const session = sessionRes.rows[0];
+
+    // Si la session est expirée (> 3h), on la clôture
+    if (new Date(session.started_at).getTime() < Date.now() - (3 * 3600 * 1000)) {
+      await pool.query("UPDATE table_sessions SET status = 'completed', ended_at = CURRENT_TIMESTAMP WHERE id = $1", [session.id]);
+      return res.json({
+        tableNumber: paddedNum,
+        activeSession: false,
+        totalGuestsConnected: activeTableGuests.get(paddedNum)?.size || 0,
+        orders: []
+      });
+    }
+    const sessionId = session.id;
 
     const ordersResult = await pool.query(
       `SELECT id, client_name, payment_status, order_status, total_amount_cents, created_at
@@ -1040,12 +1064,18 @@ app.post('/api/orders/mock-create', async (req, res) => {
       WHERE id = $1
     `, [tableId]);
 
-    let sessionResult = await pool.query('SELECT id FROM table_sessions WHERE table_id = $1 AND status = $2', [tableId, 'active']);
+    // Clôturer les anciennes sessions périmées (> 3 heures)
+    await pool.query(
+      "UPDATE table_sessions SET status = 'completed', ended_at = CURRENT_TIMESTAMP WHERE table_id = $1 AND status = 'active' AND started_at < NOW() - INTERVAL '3 hours'",
+      [tableId]
+    );
+
+    let sessionResult = await pool.query("SELECT id FROM table_sessions WHERE table_id = $1 AND status = 'active' ORDER BY started_at DESC LIMIT 1", [tableId]);
     let sessionId;
     if (sessionResult.rows.length === 0) {
       const newSession = await pool.query(
-        'INSERT INTO table_sessions (table_id, status) VALUES ($1, $2) RETURNING id',
-        [tableId, 'active']
+        "INSERT INTO table_sessions (table_id, status) VALUES ($1, 'active') RETURNING id",
+        [tableId]
       );
       sessionId = newSession.rows[0].id;
     } else {
@@ -2288,7 +2318,7 @@ app.patch('/api/tables/:id/service', async (req, res) => {
 
     const updatedTable = result.rows[0];
 
-    // Si la table repasse à "libre" et que la politique de fusion est 'at_service_end', défaire automatiquement la fusion
+    // Si la table repasse à "libre" et que la politique de fusion est 'at_service_end', défaire automatiquement la fusion et clore la session
     if (service_status === 'libre') {
       await pool.query(`
         UPDATE tables 
@@ -2296,6 +2326,13 @@ app.patch('/api/tables/:id/service', async (req, res) => {
         WHERE (merged_parent_id = $1 OR id = $1)
           AND (unmerge_policy IS NULL OR unmerge_policy = 'at_service_end')
       `, [updatedTable.id]);
+
+      await pool.query(
+        "UPDATE table_sessions SET status = 'completed', ended_at = CURRENT_TIMESTAMP WHERE table_id = $1 AND status = 'active'",
+        [updatedTable.id]
+      );
+      activeTableGuests.delete(updatedTable.number);
+      io.emit('table_session_closed', { tableId: updatedTable.id, tableNumber: updatedTable.number });
     }
 
     io.emit('table_layout_updated', { table: updatedTable });
