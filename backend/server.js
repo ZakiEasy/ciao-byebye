@@ -3039,16 +3039,20 @@ app.post('/api/menu/scan-photo', async (req, res) => {
 // ==========================================
 let activeRestaurantTheme = {
   brand_name: "Don Roberto",
-  tagline: "Pizzeria & Trattoria Italienne Authentique",
+  tagline: "Pizzeria Napolitaine & Trattoria Italienne Authentique",
   primary_color: "#f59e0b",
   primary_glow: "rgba(245, 158, 11, 0.4)",
-  accent_color: "#ef4444",
-  bg_dark: "#0c0c0e",
-  card_bg: "rgba(25, 25, 30, 0.75)",
+  accent_color: "#e11d48",
+  bg_dark: "#0a0a0c",
+  card_bg: "rgba(22, 22, 28, 0.78)",
   border_radius: "16px",
   font_family: "'Outfit', sans-serif",
   logo_url: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=200",
-  banner_url: ""
+  banner_url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&q=80&w=1200",
+  address: "158 Avenue de la Californie, 06200 Nice",
+  phone: "04 83 93 60 40",
+  rating: "4.7",
+  reviews_count: 431
 };
 
 // Récupérer le thème actif

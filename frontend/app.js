@@ -994,6 +994,20 @@ function applyActiveTheme(theme) {
             if (el) el.innerText = theme.brand_name;
         });
     }
+    if (theme.tagline) {
+        const taglines = document.querySelectorAll('#restaurant-tagline, .restaurant-tagline');
+        taglines.forEach(el => {
+            if (el) el.innerText = theme.tagline;
+        });
+    }
+    if (theme.address) {
+        const addr = document.getElementById('restaurant-address');
+        if (addr) addr.innerHTML = `<i class="fa-solid fa-location-dot" style="color:#ef4444;"></i> ${theme.address}`;
+    }
+    if (theme.rating) {
+        const rat = document.getElementById('restaurant-rating');
+        if (rat) rat.innerHTML = `<i class="fa-solid fa-star" style="color:#f59e0b;"></i> ${theme.rating}/5 (${theme.reviews_count || 431} avis Google)`;
+    }
 }
 
 async function loadActiveTheme() {

@@ -70,8 +70,14 @@
     <!-- Header / Navbar -->
     <header class="app-header">
         <div class="header-container">
-            <div class="logo">
-                <span class="logo-accent">Ciao</span> Byebye
+            <div class="logo" style="display:flex; align-items:center; gap:8px;">
+                <div style="width:34px; height:34px; border-radius:50%; background:#fff; border:2px solid var(--primary); display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 2px 8px rgba(0,0,0,0.3); flex-shrink:0;">
+                    🍕
+                </div>
+                <div>
+                    <div style="font-size:16px; font-weight:800; line-height:1.1; letter-spacing:-0.3px;"><span class="logo-accent">Don</span> Roberto</div>
+                    <div style="font-size:9px; color:#10b981; font-weight:700; letter-spacing:0.8px; text-transform:uppercase;">Pizzeria & Trattoria</div>
+                </div>
             </div>
             <div class="header-controls">
                 <!-- Lang & Currency Selectors -->
@@ -121,7 +127,7 @@
             <div class="account-profile-card">
                 <div class="profile-avatar"><i class="fa-solid fa-user"></i></div>
                 <div class="profile-meta">
-                    <strong id="drawer-user-name">Alex</strong>
+                    <strong id="drawer-user-name">Invité</strong>
                     <span id="drawer-session-status" class="session-badge-guest">Session Invité (3h)</span>
                     <span id="drawer-session-timer" style="font-size:11px; color:var(--text-muted);">Valide 3h</span>
                 </div>
@@ -155,14 +161,45 @@
 
     <!-- Main Content Container -->
     <main class="app-main">
-        <!-- Welcoming & Client Identification -->
-        <section class="welcome-section glass">
-            <h2><span data-i18n="welcome_prefix">Bienvenue chez</span> <span class="restaurant-name">Don Roberto</span></h2>
-            <p data-i18n="welcome_subtitle">Passez votre commande en direct et payez en toute liberté.</p>
+        <!-- Don Roberto Immersive Hero Banner & Client Identification -->
+        <section class="welcome-section glass" style="background: linear-gradient(135deg, rgba(20, 20, 26, 0.94) 0%, rgba(15, 23, 42, 0.90) 100%), url('https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&q=80&w=1200') center/cover; position: relative; overflow: hidden; border-radius: 20px; padding: 22px 18px; margin-bottom: 20px; border: 1px solid rgba(245, 158, 11, 0.35); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <div style="display:flex; align-items:center; gap:14px; margin-bottom:14px;">
+                <div style="width:52px; height:52px; border-radius:50%; background:#fff; border:3px solid var(--primary); display:flex; align-items:center; justify-content:center; font-size:26px; box-shadow:0 4px 14px rgba(245,158,11,0.35); flex-shrink:0;">
+                    🍕
+                </div>
+                <div>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <h1 style="font-size: 21px; font-weight: 800; margin: 0; color:#fff; letter-spacing:-0.5px;">
+                            <span class="restaurant-name">Don Roberto</span>
+                        </h1>
+                        <span style="background:rgba(16,185,129,0.2); color:#34d399; font-size:11px; font-weight:800; padding:2px 8px; border-radius:12px; border:1px solid rgba(16,185,129,0.35); display:inline-flex; align-items:center; gap:4px;">
+                            <i class="fa-solid fa-circle-check"></i> Fait Maison
+                        </span>
+                    </div>
+                    <p id="restaurant-tagline" style="font-size:12px; color:#fcd34d; font-weight:600; margin:2px 0 0 0;">
+                        Pizzeria Napolitaine & Trattoria Italienne Authentique
+                    </p>
+                </div>
+            </div>
+
+            <!-- Badges & Restaurant Details -->
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; font-size:11px; color:#cbd5e1;">
+                <span id="restaurant-address" style="background:rgba(255,255,255,0.06); padding:4px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:5px; border:1px solid rgba(255,255,255,0.08);">
+                    <i class="fa-solid fa-location-dot" style="color:#ef4444;"></i> 158 Avenue de la Californie, Nice
+                </span>
+                <span id="restaurant-rating" style="background:rgba(255,255,255,0.06); padding:4px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:5px; border:1px solid rgba(255,255,255,0.08);">
+                    <i class="fa-solid fa-star" style="color:#f59e0b;"></i> 4.7/5 (431 avis Google)
+                </span>
+                <span style="background:rgba(255,255,255,0.06); padding:4px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:5px; border:1px solid rgba(255,255,255,0.08);">
+                    <i class="fa-solid fa-fire-burner" style="color:#f97316;"></i> Four à Pizza Traditionnel
+                </span>
+            </div>
             
-            <div class="client-ident-input">
-                <label for="client-name"><i class="fa-solid fa-user"></i> <span data-i18n="name_label">Votre Prénom pour la commande :</span></label>
-                <input type="text" id="client-name" placeholder="Ex. Thomas, Sarah..." value="">
+            <div class="client-ident-input" style="background:rgba(0,0,0,0.35); border-radius:12px; padding:10px 14px; border:1px solid rgba(255,255,255,0.1);">
+                <label for="client-name" style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px;">
+                    <i class="fa-solid fa-user" style="color:var(--primary);"></i> <span data-i18n="name_label">Votre Prénom pour le service à table :</span>
+                </label>
+                <input type="text" id="client-name" placeholder="Ex. Thomas, Sarah, Lucas..." value="" style="width:100%; background:transparent; border:none; color:#fff; font-size:14px; font-weight:600; outline:none;">
             </div>
         </section>
 
