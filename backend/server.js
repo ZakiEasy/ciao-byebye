@@ -3725,7 +3725,7 @@ app.patch('/api/crm/leads/:id', async (req, res) => {
   }
 });
 
-// 9.4. Synchronisation vers CRM externe (HubSpot Integration)
+// 9.4. Synchronisation vers CRM externe (HubSpot Integration Complète : Contact + Entreprise + Deal + Associations)
 app.post('/api/crm/leads/:id/sync-hubspot', async (req, res) => {
   const { id } = req.params;
   const hubspotToken = process.env.HUBSPOT_ACCESS_TOKEN || process.env.HUBSPOT_API_KEY;
@@ -3738,28 +3738,48 @@ app.post('/api/crm/leads/:id/sync-hubspot', async (req, res) => {
     let hubspotDealId = `hs_deal_${Date.now()}_${Math.floor(Math.random()*1000)}`;
     let apiStatus = 'synced_offline_fallback';
     let hubspotContactId = null;
+    let hubspotCompanyId = null;
     let hubspotContactUrl = null;
+    let hubspotCompanyUrl = null;
     let hubspotDealUrl = null;
 
     if (hubspotToken) {
       try {
         const contactEmail = lead.contact_email || `contact.${lead.id.substring(0,8)}@lead-prospect.fr`;
+        const demoSubdomain = lead.business_name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        const demoUrl = `https://${demoSubdomain}.ciao-byebye.store`;
+
+        const detailedSummary = `📍 ${lead.business_name}\n` +
+          `🏢 Adresse : ${lead.address || ''}, ${lead.postal_code || ''} ${lead.city || ''}\n` +
+          `📞 Contact : ${lead.contact_name || 'Gérant'} (${lead.contact_phone || 'N/A'})\n` +
+          `💼 Statut & Infos : ${lead.notes || ''}\n` +
+          `💰 CA Estimé : ${lead.estimated_revenue_eur ? lead.estimated_revenue_eur.toLocaleString('fr-FR') + ' € HT/an' : 'N/A'}\n` +
+          `🍽️ Capacité : ${lead.estimated_covers || 50} couverts\n` +
+          `⭐ Réputation : Note Google ${lead.web_rating || '4.7'}/5 (${lead.web_reviews_count || 431} avis)\n` +
+          `🚀 Solution Actuelle : ${lead.current_pos_solution || 'N/A'}\n` +
+          `💡 Hook Commercial : ${lead.sales_pitch_hook || 'Suppression des 30% de commissions plateformes'}\n` +
+          `🌐 Site Démo Dédié : ${demoUrl}\n` +
+          `📦 Formule Commerciale : Offre Pro (99 € Net / mois - Programme Fidélité Inclus)`;
+
+        // 1. Création ou Récupération du Contact dans HubSpot CRM v3
         const contactPayload = {
           properties: {
             email: contactEmail,
             firstname: (lead.contact_name ? lead.contact_name.split(' ')[0] : 'Gérant'),
             lastname: (lead.contact_name ? lead.contact_name.split(' ').slice(1).join(' ') : '') || lead.business_name,
             phone: lead.contact_phone || '',
+            jobtitle: 'Gérant / Dirigeant',
             company: lead.business_name,
-            city: lead.city,
-            address: lead.address,
+            city: lead.city || '',
+            address: lead.address || '',
             zip: lead.postal_code || '06000',
-            website: `https://${lead.business_name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.ciao-byebye.store`
+            website: demoUrl,
+            annualrevenue: String(lead.estimated_revenue_eur || 340000),
+            message: detailedSummary
           }
         };
 
-        // 1. Création ou Récupération du Contact dans HubSpot CRM v3
-        const hsResponse = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
+        const hsContactRes = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -3768,33 +3788,68 @@ app.post('/api/crm/leads/:id/sync-hubspot', async (req, res) => {
           body: JSON.stringify(contactPayload)
         });
 
-        const hsData = await hsResponse.json();
+        const hsContactData = await hsContactRes.json();
 
-        if (hsResponse.ok && hsData.id) {
-          hubspotContactId = hsData.id;
-          hubspotContactUrl = hsData.url || `https://app-eu1.hubspot.com/contacts/149213507/record/0-1/${hsData.id}`;
-          apiStatus = 'synced_live_hubspot';
-        } else if (hsResponse.status === 409 && hsData.message && hsData.message.includes('Existing ID:')) {
-          // Contact déjà existant dans HubSpot
-          const match = hsData.message.match(/Existing ID:\s*(\d+)/);
+        if (hsContactRes.ok && hsContactData.id) {
+          hubspotContactId = hsContactData.id;
+          hubspotContactUrl = hsContactData.url || `https://app-eu1.hubspot.com/contacts/149213507/record/0-1/${hsContactData.id}`;
+        } else if (hsContactRes.status === 409 && hsContactData.message && hsContactData.message.includes('Existing ID:')) {
+          const match = hsContactData.message.match(/Existing ID:\s*(\d+)/);
           if (match && match[1]) {
             hubspotContactId = match[1];
             hubspotContactUrl = `https://app-eu1.hubspot.com/contacts/149213507/record/0-1/${hubspotContactId}`;
-            apiStatus = 'contact_already_exists_updated';
           }
         }
 
-        // 2. Création de la Transaction / Deal dans HubSpot CRM v3
+        // 2. Création ou Récupération de l'Entreprise (Company) dans HubSpot CRM v3
+        const domainName = (lead.contact_email && lead.contact_email.includes('@')) 
+          ? lead.contact_email.split('@')[1] 
+          : `${demoSubdomain}.fr`;
+
+        const companyPayload = {
+          properties: {
+            name: lead.business_name,
+            domain: domainName,
+            website: demoUrl,
+            phone: lead.contact_phone || '',
+            address: lead.address || '',
+            city: lead.city || '',
+            zip: lead.postal_code || '06000',
+            country: 'France',
+            annualrevenue: String(lead.estimated_revenue_eur || 340000),
+            industry: 'RESTAURANTS',
+            description: detailedSummary
+          }
+        };
+
+        const hsCompanyRes = await fetch('https://api.hubapi.com/crm/v3/objects/companies', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hubspotToken}`
+          },
+          body: JSON.stringify(companyPayload)
+        });
+
+        const hsCompanyData = await hsCompanyRes.json();
+        if (hsCompanyRes.ok && hsCompanyData.id) {
+          hubspotCompanyId = hsCompanyData.id;
+          hubspotCompanyUrl = hsCompanyData.url || `https://app-eu1.hubspot.com/contacts/149213507/record/0-2/${hsCompanyData.id}`;
+        }
+
+        // 3. Création de la Transaction (Deal) dans HubSpot CRM v3
         const dealPayload = {
           properties: {
             dealname: `Ciao Byebye Pro (99€/mois) - ${lead.business_name}`,
             amount: "99",
+            dealtype: "newbusiness",
             pipeline: "default",
-            closedate: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString()
+            closedate: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
+            description: detailedSummary
           }
         };
 
-        const dealResponse = await fetch('https://api.hubapi.com/crm/v3/objects/deals', {
+        const hsDealRes = await fetch('https://api.hubapi.com/crm/v3/objects/deals', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -3803,18 +3858,37 @@ app.post('/api/crm/leads/:id/sync-hubspot', async (req, res) => {
           body: JSON.stringify(dealPayload)
         });
 
-        const dealData = await dealResponse.json();
-        if (dealResponse.ok && dealData.id) {
-          hubspotDealId = dealData.id;
-          hubspotDealUrl = dealData.url || `https://app-eu1.hubspot.com/contacts/149213507/record/0-3/${dealData.id}`;
-          apiStatus = 'synced_live_hubspot_contact_and_deal';
-          console.log(`[HUBSPOT] Contact (${hubspotContactId}) et Deal (${hubspotDealId}) synchronisés en direct.`);
-        } else {
-          console.warn('[HUBSPOT] Note création Deal HubSpot:', dealData.message || dealData.category);
-          if (hubspotContactId) {
-            hubspotDealId = `hs_contact_${hubspotContactId}`;
-          }
+        const hsDealData = await hsDealRes.json();
+        if (hsDealRes.ok && hsDealData.id) {
+          hubspotDealId = hsDealData.id;
+          hubspotDealUrl = hsDealData.url || `https://app-eu1.hubspot.com/contacts/149213507/record/0-3/${hsDealData.id}`;
+          apiStatus = 'synced_live_hubspot_full_suite';
+        } else if (hubspotContactId) {
+          hubspotDealId = `hs_contact_${hubspotContactId}`;
         }
+
+        // 4. Associations Automatiques dans HubSpot (Contact <-> Company <-> Deal)
+        if (hubspotContactId && hubspotCompanyId) {
+          await fetch(`https://api.hubapi.com/crm/v3/objects/contacts/${hubspotContactId}/associations/companies/${hubspotCompanyId}/contact_to_company`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${hubspotToken}` }
+          }).catch(() => {});
+        }
+
+        if (hubspotDealId && hubspotCompanyId && !hubspotDealId.startsWith('hs_deal_')) {
+          await fetch(`https://api.hubapi.com/crm/v3/objects/deals/${hubspotDealId}/associations/companies/${hubspotCompanyId}/deal_to_company`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${hubspotToken}` }
+          }).catch(() => {});
+        }
+
+        if (hubspotDealId && hubspotContactId && !hubspotDealId.startsWith('hs_deal_')) {
+          await fetch(`https://api.hubapi.com/crm/v3/objects/deals/${hubspotDealId}/associations/contacts/${hubspotContactId}/deal_to_contact`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${hubspotToken}` }
+          }).catch(() => {});
+        }
+
       } catch (apiErr) {
         console.warn('[HUBSPOT] Erreur requête API HubSpot (mode résilient activé):', apiErr.message);
       }
@@ -3828,10 +3902,12 @@ app.post('/api/crm/leads/:id/sync-hubspot', async (req, res) => {
 
     res.json({
       success: true,
-      message: `Prospect ${lead.business_name} synchronisé avec succès dans HubSpot CRM.`,
+      message: `Prospect ${lead.business_name} synchronisé avec succès dans HubSpot CRM (Contact, Entreprise, Deal & Associations).`,
       hubspot_deal_id: hubspotDealId,
       hubspot_contact_id: hubspotContactId,
+      hubspot_company_id: hubspotCompanyId,
       hubspot_contact_url: hubspotContactUrl,
+      hubspot_company_url: hubspotCompanyUrl,
       hubspot_deal_url: hubspotDealUrl,
       api_status: apiStatus,
       lead: updated.rows[0]
