@@ -329,6 +329,7 @@ let currentLang = localStorage.getItem('ciao_lang') || 'fr';
 let currentCurrency = localStorage.getItem('ciao_currency') || 'EUR';
 const cart = [];
 let currentCategory = 'all';
+let currentSubcategory = 'all';
 let products = [];
 let activeOrder = null;
 let selectedPaymentMethod = 'carte'; // 'carte' | 'especes'
@@ -1003,20 +1004,25 @@ async function loadMenu() {
             name: item.name,
             price: item.price_cents / 100,
             category: item.category,
+            subcategory: item.subcategory || null,
             description: item.description,
             ingredients: item.ingredients || [],
-            image: item.image_url || 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=400'
+            image: item.image_url || 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=400',
+            is_available: item.is_available
         }));
         
+        renderSubcategories();
         renderMenu();
     } catch (error) {
         console.error('Erreur chargement menu depuis l\'API:', error);
         products = [
-            { id: "p1", rawName: "Moscow Mule Premium", name: "Moscow Mule Premium", price: 12.50, category: "boisson", description: "Vodka artisanale, bière de gingembre bio, jus de citron vert frais, menthe fraîche.", image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=400", ingredients: [{ name: "Menthe fraîche", is_removable: true }, { name: "Jus de citron vert", is_removable: true }, { name: "Glaçons", is_removable: true }] },
-            { id: "p2", rawName: "IPA Locale \"La Barbaque\"", name: "IPA Locale \"La Barbaque\"", price: 7.50, category: "boisson", description: "Bière blonde IPA artisanale locale, notes intenses d'agrumes et amertume fraîche.", image: "https://images.unsplash.com/photo-1600718374662-0483d2b9da44?auto=format&fit=crop&q=80&w=400", ingredients: [] },
-            { id: "p3", rawName: "Planche de Charcuteries fines", name: "Planche de Charcuteries fines", price: 16.00, category: "entree", description: "Sélection de charcuteries ibériques, cornichons, pain au levain et beurre demi-sel.", image: "https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&q=80&w=400", ingredients: [{ name: "Beurre demi-sel", is_removable: true }, { name: "Cornichons", is_removable: true }, { name: "Pain au levain", is_removable: true }] },
-            { id: "p4", rawName: "Burger Signature L'Atelier", name: "Burger Signature L'Atelier", price: 18.50, category: "plat", description: "Bœuf charolais, cheddar affiné de 18 mois, oignons caramélisés, sauce secrète, frites fraîches.", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400", ingredients: [{ name: "Oignons caramélisés", is_removable: true }, { name: "Cheddar affiné", is_removable: true }, { name: "Sauce secrète", is_removable: true }, { name: "Frites fraîches", is_removable: true }] }
+            { id: "p1", rawName: "Salade Niçoise Authentique", name: "Salade Niçoise Authentique", price: 10.90, category: "entree", subcategory: "Salades Fraîches Maison", description: "Mesclun niçois, thon albacore, poivrons rouges, filets d'anchois de Méditerranée, oignons rouges, œuf dur bio, tomates cerises, olives caillettes de Nice, vinaigrette maison.", image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600", ingredients: [] },
+            { id: "p2", rawName: "Pizza Margherita", name: "Pizza Margherita", price: 9.00, category: "plat", subcategory: "Pizzas Classiques", description: "Sauce tomate italienne San Marzano, mozzarella Fior di Latte fondante, feuilles de basilic frais, huile d'olive extra vierge.", image: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&q=80&w=600", ingredients: [] },
+            { id: "p3", rawName: "Pizza Burratina Pugliese", name: "Pizza Burratina Pugliese", price: 16.00, category: "plat", subcategory: "Pizzas Gourmet", description: "Crème de basilic, mozzarella, authentique Burrata crémeuse des Pouilles (120g au centre), jambon cru San Daniele, tomates cerises, copeaux de parmesan, pesto verde, roquette.", image: "https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?auto=format&fit=crop&q=80&w=600", ingredients: [] },
+            { id: "p4", rawName: "Burger Classic Don Roberto", name: "Burger Classic Don Roberto", price: 10.00, category: "plat", subcategory: "Burgers Artisanaux", description: "Pain brioché artisanal toasté, steak haché boucher 180g, cheddar affiné fondu, salade batavia, tomates fraîches, sauce burger. Servi avec frites.", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=600", ingredients: [] },
+            { id: "p5", rawName: "Tiramisu Maison Tradizionale", name: "Tiramisu Maison Tradizionale", price: 3.90, category: "dessert", subcategory: "Dolci Italiens Maison", description: "Recette familiale : Biscuits Savoiardi imbibés d'espresso Illy, crème au mascarpone frais fouettée, cacao amer pur.", image: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&q=80&w=600", ingredients: [] }
         ];
+        renderSubcategories();
         renderMenu();
     }
 }
@@ -1472,28 +1478,151 @@ function openEditCustomModal(cartItemId) {
     openCustomModal(item.id, cartItemId);
 }
 
+// Helper pour les icônes de sous-catégories
+function getSubcategoryIcon(subcat) {
+    if (!subcat) return '<i class="fa-solid fa-utensils"></i>';
+    const s = subcat.toLowerCase();
+    if (s.includes('classique')) return '<i class="fa-solid fa-pizza-slice"></i>';
+    if (s.includes('gourmet') || s.includes('signature')) return '<i class="fa-solid fa-crown"></i>';
+    if (s.includes('carni') || s.includes('viande')) return '<i class="fa-solid fa-drumstick-bite"></i>';
+    if (s.includes('végé') || s.includes('fromage')) return '<i class="fa-solid fa-cheese"></i>';
+    if (s.includes('poisson') || s.includes('mer')) return '<i class="fa-solid fa-fish"></i>';
+    if (s.includes('région') || s.includes('spécialité')) return '<i class="fa-solid fa-mountain"></i>';
+    if (s.includes('burger')) return '<i class="fa-solid fa-burger"></i>';
+    if (s.includes('salade')) return '<i class="fa-solid fa-leaf"></i>';
+    if (s.includes('dolci') || s.includes('dessert') || s.includes('italien')) return '<i class="fa-solid fa-cake-candles"></i>';
+    if (s.includes('glace')) return '<i class="fa-solid fa-ice-cream"></i>';
+    if (s.includes('vin')) return '<i class="fa-solid fa-wine-glass"></i>';
+    if (s.includes('bière')) return '<i class="fa-solid fa-beer-mug-empty"></i>';
+    if (s.includes('soda') || s.includes('eau')) return '<i class="fa-solid fa-bottle-water"></i>';
+    return '<i class="fa-solid fa-utensils"></i>';
+}
+
+function renderSubcategories() {
+    const subcatNav = document.getElementById('subcategory-nav');
+    if (!subcatNav) return;
+
+    // Produits concernés par la catégorie principale active
+    const relevantProducts = products.filter(p => currentCategory === 'all' || p.category === currentCategory);
+    
+    // Décompte des sous-catégories
+    const subcatCounts = {};
+    relevantProducts.forEach(p => {
+        if (p.subcategory) {
+            subcatCounts[p.subcategory] = (subcatCounts[p.subcategory] || 0) + 1;
+        }
+    });
+
+    const subcategories = Object.keys(subcatCounts);
+
+    // Si 0 ou 1 seule sous-catégorie, on masque la barre de pills
+    if (subcategories.length <= 1) {
+        subcatNav.style.display = 'none';
+        subcatNav.innerHTML = '';
+        currentSubcategory = 'all';
+        return;
+    }
+
+    subcatNav.style.display = 'flex';
+    
+    // Si la sous-catégorie sélectionnée n'appartient plus à la vue, reset à 'all'
+    if (currentSubcategory !== 'all' && !subcategories.includes(currentSubcategory)) {
+        currentSubcategory = 'all';
+    }
+
+    const t = translations[currentLang] || translations.fr;
+    const allLabel = t.cat_all || 'Tout';
+
+    let html = `
+        <button class="subcategory-chip ${currentSubcategory === 'all' ? 'active' : ''}" data-subcat="all">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>${allLabel}</span>
+            <span class="chip-count">${relevantProducts.length}</span>
+        </button>
+    `;
+
+    subcategories.forEach(subcat => {
+        const isActive = currentSubcategory === subcat;
+        const icon = getSubcategoryIcon(subcat);
+        html += `
+            <button class="subcategory-chip ${isActive ? 'active' : ''}" data-subcat="${subcat}">
+                ${icon}
+                <span>${subcat}</span>
+                <span class="chip-count">${subcatCounts[subcat]}</span>
+            </button>
+        `;
+    });
+
+    subcatNav.innerHTML = html;
+
+    // Écouteurs de clic sur les sous-catégories
+    subcatNav.querySelectorAll('.subcategory-chip').forEach(chip => {
+        chip.addEventListener('click', (e) => {
+            const btn = e.target.closest('.subcategory-chip');
+            if (!btn) return;
+            subcatNav.querySelectorAll('.subcategory-chip').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            currentSubcategory = btn.getAttribute('data-subcat');
+            renderMenu();
+        });
+    });
+}
+
 function renderMenu() {
     const t = translations[currentLang] || translations.fr;
     const filteredProducts = products.filter(product => {
-        return currentCategory === 'all' || product.category === currentCategory;
+        const matchesCategory = currentCategory === 'all' || product.category === currentCategory;
+        const matchesSubcat = currentSubcategory === 'all' || product.subcategory === currentSubcategory;
+        return matchesCategory && matchesSubcat;
     });
 
-    menuGrid.innerHTML = filteredProducts.map(product => {
+    if (filteredProducts.length === 0) {
+        menuGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align:center; padding: 40px 20px; color: var(--text-muted);">
+                <i class="fa-solid fa-utensils" style="font-size: 32px; opacity:0.4; margin-bottom: 12px; display:block;"></i>
+                <p>Aucun produit disponible dans cette sélection.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Affichage des en-têtes de sous-catégories lors de la consultation globale
+    const showHeaders = currentSubcategory === 'all';
+    let currentHeader = null;
+    let html = '';
+
+    filteredProducts.forEach(product => {
         const cartItemsForProd = cart.filter(item => item.id === product.id);
         const quantity = cartItemsForProd.reduce((sum, item) => sum + item.quantity, 0);
         const localized = getLocalizedProduct(product);
         const isAvailable = product.is_available !== false;
+        const subcat = product.subcategory || getCategoryLabel(product.category);
 
-        return `
-            <div class="product-card glass ${!isAvailable ? 'out-of-stock' : ''}" data-category="${product.category}">
+        // Insertion d'un en-tête de section lors du changement de sous-catégorie
+        if (showHeaders && subcat !== currentHeader) {
+            currentHeader = subcat;
+            const subcatTotal = filteredProducts.filter(p => (p.subcategory || getCategoryLabel(p.category)) === subcat).length;
+            html += `
+                <div class="subcategory-section-header">
+                    <h3>${getSubcategoryIcon(subcat)} ${subcat}</h3>
+                    <span class="section-count">${subcatTotal} article${subcatTotal > 1 ? 's' : ''}</span>
+                </div>
+            `;
+        }
+
+        html += `
+            <div class="product-card glass ${!isAvailable ? 'out-of-stock' : ''}" data-category="${product.category}" data-subcategory="${product.subcategory || ''}">
                 <div class="product-img-wrapper" onclick="openCustomModal('${product.id}')" style="cursor:pointer;">
                     <img src="${product.image}" alt="${localized.name}" loading="lazy">
-                    <span class="product-badge">${getCategoryLabel(product.category)}</span>
+                    <span class="product-badge">${product.subcategory || getCategoryLabel(product.category)}</span>
                     ${!isAvailable ? '<span style="position:absolute; top:10px; right:10px; background:#ef4444; color:#fff; font-size:10px; font-weight:800; padding:3px 8px; border-radius:4px;">ÉPUISÉ (86)</span>' : ''}
                 </div>
                 <div class="product-info">
                     <div class="product-title-row" onclick="openCustomModal('${product.id}')" style="cursor:pointer;">
-                        <h3>${localized.name}</h3>
+                        <div>
+                            ${product.subcategory ? `<span class="product-subcategory-tag">${product.subcategory}</span>` : ''}
+                            <h3>${localized.name}</h3>
+                        </div>
                         <span class="product-price">${formatPrice(product.price)}</span>
                     </div>
                     <p class="product-description">${localized.description}</p>
@@ -1516,7 +1645,9 @@ function renderMenu() {
                 </div>
             </div>
         `;
-    }).join('');
+    });
+
+    menuGrid.innerHTML = html;
 }
 
 document.querySelectorAll('.category-btn').forEach(btn => {
@@ -1525,6 +1656,8 @@ document.querySelectorAll('.category-btn').forEach(btn => {
         const targetBtn = e.target.closest('.category-btn');
         targetBtn.classList.add('active');
         currentCategory = targetBtn.getAttribute('data-category');
+        currentSubcategory = 'all';
+        renderSubcategories();
         renderMenu();
     });
 });

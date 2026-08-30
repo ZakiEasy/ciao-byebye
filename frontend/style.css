@@ -184,6 +184,115 @@ body {
     background: rgba(255, 255, 255, 0.08);
 }
 
+/* Subcategory Navigation Pills */
+.subcategory-nav {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    margin-top: -12px;
+    margin-bottom: 20px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.subcategory-nav::-webkit-scrollbar {
+    display: none;
+}
+
+.subcategory-chip {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-secondary);
+    padding: 7px 15px;
+    border-radius: 20px;
+    font-family: var(--font-main);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+}
+
+.subcategory-chip:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+.subcategory-chip.active {
+    background: var(--primary);
+    color: #1a1a1a;
+    border-color: var(--primary);
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(234, 179, 8, 0.25);
+}
+
+.subcategory-chip .chip-count {
+    font-size: 11px;
+    opacity: 0.8;
+    background: rgba(0, 0, 0, 0.15);
+    padding: 1px 6px;
+    border-radius: 10px;
+}
+
+.subcategory-chip.active .chip-count {
+    background: rgba(0, 0, 0, 0.2);
+    color: #1a1a1a;
+}
+
+/* Subcategory Section Headers in Menu Grid */
+.subcategory-section-header {
+    grid-column: 1 / -1;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid var(--primary);
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(8px);
+}
+
+.subcategory-section-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.subcategory-section-header .section-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 3px 10px;
+    border-radius: 12px;
+}
+
+/* Subcategory Badge on Product Card */
+.product-subcategory-tag {
+    display: inline-block;
+    font-size: 11px;
+    color: var(--primary);
+    font-weight: 600;
+    margin-bottom: 4px;
+    letter-spacing: 0.2px;
+}
+
 /* Menu Grid & Harmonious Product Cards */
 .menu-grid {
     display: flex;

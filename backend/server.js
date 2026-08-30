@@ -125,6 +125,9 @@ async function initDatabase() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
 
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS subcategory VARCHAR(100);
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS sub_category VARCHAR(100);
+
       CREATE TABLE IF NOT EXISTS orders (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         session_id UUID REFERENCES table_sessions(id) ON DELETE CASCADE,
@@ -2612,7 +2615,7 @@ app.patch('/api/menu/:id/availability', async (req, res) => {
 
 // 6.5. Créer un nouveau produit de menu (Création manuelle)
 app.post('/api/menu', async (req, res) => {
-  const { name, description, price_cents, price, category, image_url, is_available } = req.body;
+  const { name, description, price_cents, price, category, subcategory, image_url, is_available } = req.body;
   if (!name || !category) {
     return res.status(400).json({ error: 'Le nom et la catégorie sont obligatoires.' });
   }
@@ -2620,20 +2623,22 @@ app.post('/api/menu', async (req, res) => {
   const finalPriceCents = price_cents !== undefined ? parseInt(price_cents, 10) : (price ? Math.round(parseFloat(price) * 100) : 0);
   const finalImageUrl = image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400';
   const available = is_available !== undefined ? is_available : true;
+  const finalSubcat = subcategory ? subcategory.trim() : null;
 
   try {
     const result = await pool.query(
-      `INSERT INTO products (name, description, price_cents, category, image_url, is_available)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO products (name, description, price_cents, category, subcategory, image_url, is_available)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (name) DO UPDATE 
        SET description = EXCLUDED.description,
            price_cents = EXCLUDED.price_cents,
            category = EXCLUDED.category,
+           subcategory = EXCLUDED.subcategory,
            image_url = EXCLUDED.image_url,
            is_available = EXCLUDED.is_available,
            updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
-      [name.trim(), description || '', finalPriceCents, category.toLowerCase().trim(), finalImageUrl, available]
+      [name.trim(), description || '', finalPriceCents, category.toLowerCase().trim(), finalSubcat, finalImageUrl, available]
     );
 
     io.emit('menu_updated');
@@ -2658,19 +2663,21 @@ app.post('/api/menu/bulk', async (req, res) => {
       const priceCents = item.price_cents !== undefined ? parseInt(item.price_cents, 10) : (item.price ? Math.round(parseFloat(item.price) * 100) : 1000);
       const imageUrl = item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400';
       const available = item.is_available !== undefined ? item.is_available : true;
+      const subcat = item.subcategory ? item.subcategory.trim() : null;
 
       const result = await pool.query(
-        `INSERT INTO products (name, description, price_cents, category, image_url, is_available)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO products (name, description, price_cents, category, subcategory, image_url, is_available)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          ON CONFLICT (name) DO UPDATE 
          SET description = EXCLUDED.description,
              price_cents = EXCLUDED.price_cents,
              category = EXCLUDED.category,
+             subcategory = EXCLUDED.subcategory,
              image_url = EXCLUDED.image_url,
              is_available = EXCLUDED.is_available,
              updated_at = CURRENT_TIMESTAMP
          RETURNING *`,
-        [item.name.trim(), item.description || '', priceCents, item.category.toLowerCase().trim(), imageUrl, available]
+        [item.name.trim(), item.description || '', priceCents, item.category.toLowerCase().trim(), subcat, imageUrl, available]
       );
       inserted.push(result.rows[0]);
     }
@@ -2686,7 +2693,7 @@ app.post('/api/menu/bulk', async (req, res) => {
 // 6.7. Mettre à jour un produit existant
 app.put('/api/menu/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, description, price_cents, price, category, image_url, is_available } = req.body;
+  const { name, description, price_cents, price, category, subcategory, image_url, is_available } = req.body;
 
   try {
     const current = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
@@ -2699,15 +2706,16 @@ app.put('/api/menu/:id', async (req, res) => {
     const finalDesc = description !== undefined ? description : cur.description;
     const finalPriceCents = price_cents !== undefined ? parseInt(price_cents, 10) : (price !== undefined ? Math.round(parseFloat(price) * 100) : cur.price_cents);
     const finalCat = category !== undefined ? category.toLowerCase().trim() : cur.category;
+    const finalSubcat = subcategory !== undefined ? (subcategory ? subcategory.trim() : null) : cur.subcategory;
     const finalImg = image_url !== undefined ? image_url : cur.image_url;
     const finalAvail = is_available !== undefined ? is_available : cur.is_available;
 
     const result = await pool.query(
       `UPDATE products 
-       SET name = $1, description = $2, price_cents = $3, category = $4, image_url = $5, is_available = $6, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $7
+       SET name = $1, description = $2, price_cents = $3, category = $4, subcategory = $5, image_url = $6, is_available = $7, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $8
        RETURNING *`,
-      [finalName, finalDesc, finalPriceCents, finalCat, finalImg, finalAvail, id]
+      [finalName, finalDesc, finalPriceCents, finalCat, finalSubcat, finalImg, finalAvail, id]
     );
 
     io.emit('menu_updated');
