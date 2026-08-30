@@ -522,10 +522,10 @@ function initClientSession() {
         dismissClientAuth();
     } else {
         const guestExpiresAt = parseInt(localStorage.getItem('ciao_guest_expires_at'), 10);
+        const savedGuestName = localStorage.getItem('ciao_guest_name');
         const now = Date.now();
 
-        if (guestExpiresAt && now < guestExpiresAt) {
-            const savedGuestName = localStorage.getItem('ciao_guest_name') || 'Alex';
+        if (guestExpiresAt && now < guestExpiresAt && savedGuestName) {
             setClientIdentity(savedGuestName, false, guestExpiresAt);
             dismissClientAuth();
         } else {
@@ -535,11 +535,15 @@ function initClientSession() {
                 localStorage.removeItem('ciao_guest_expires_at');
                 localStorage.removeItem('ciao_active_order');
             }
-            const newExpiry = now + GUEST_TTL_MS;
-            const guestId = 'guest_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('ciao_guest_id', guestId);
-            localStorage.setItem('ciao_guest_expires_at', newExpiry.toString());
-            setClientIdentity('Alex', false, newExpiry);
+            // Afficher le modal d'accueil pour demander le nom du convive ou connexion SSO
+            const authOverlay = document.getElementById('client-auth-overlay');
+            if (authOverlay) {
+                authOverlay.classList.add('active');
+                setTimeout(() => {
+                    const nameInput = document.getElementById('modal-guest-name-input');
+                    if (nameInput) nameInput.focus();
+                }, 400);
+            }
         }
     }
 
@@ -2662,20 +2666,45 @@ if (socket) {
     });
 }
 
-// Client SSO simulation
+// Client SSO Authentication & Guest Name Handling
+function submitGuestNameAndContinue() {
+    const input = document.getElementById('modal-guest-name-input');
+    let name = input ? input.value.trim() : '';
+    if (!name) {
+        alert('Veuillez renseigner votre prénom pour identifier vos commandes à votre table.');
+        if (input) input.focus();
+        return;
+    }
+
+    const now = Date.now();
+    const newExpiry = now + GUEST_TTL_MS;
+    const guestId = localStorage.getItem('ciao_guest_id') || ('guest_' + Math.random().toString(36).substr(2, 9));
+    
+    localStorage.setItem('ciao_guest_id', guestId);
+    localStorage.setItem('ciao_guest_name', name);
+    localStorage.setItem('ciao_guest_expires_at', newExpiry.toString());
+    
+    setClientIdentity(name, false, newExpiry);
+    dismissClientAuth();
+    showToast(`Bienvenue à table, ${name} ! 🍕`, 'success');
+}
+
 function clientSSO(provider) {
-    console.log(`Client authentifié via SSO ${provider}`);
     const mockNames = {
-        'Google': 'Thomas',
-        'Apple': 'Sarah'
+        'Google': 'Thomas Martin',
+        'Apple': 'Sarah Dubois'
     };
-    const chosenName = mockNames[provider] || 'Alex';
+    const chosenName = mockNames[provider] || 'Membre Club';
+    const email = `${chosenName.toLowerCase().replace(/\s+/g, '.')}@gmail.com`;
     
     sessionStorage.setItem('ciao_byebye_client_auth', 'true');
     sessionStorage.setItem('ciao_byebye_client_name', chosenName);
+    sessionStorage.setItem('ciao_byebye_client_email', email);
     
+    localStorage.setItem('ciao_guest_name', chosenName);
     setClientIdentity(chosenName, true);
     dismissClientAuth();
+    showToast(`Connecté avec succès via ${provider} (${chosenName}) ! 🌟`, 'success');
 }
 
 function dismissClientAuth() {

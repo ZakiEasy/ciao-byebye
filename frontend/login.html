@@ -399,17 +399,14 @@
             document.getElementById('lbl-demo-profile').innerText = t.demo_profile;
             
             if (document.getElementById('opt-superadmin')) document.getElementById('opt-superadmin').innerText = t.opt_superadmin;
-            document.getElementById('opt-chef').innerText = t.opt_chef;
-            document.getElementById('opt-maitre').innerText = t.opt_maitre;
-            document.getElementById('opt-david').innerText = t.opt_david;
-            document.getElementById('opt-sophie').innerText = t.opt_sophie;
-            document.getElementById('opt-boss').innerText = t.opt_boss;
-            document.getElementById('opt-pickup').innerText = t.opt_pickup;
-            document.getElementById('opt-barman').innerText = t.opt_barman;
+            if (document.getElementById('opt-chef')) document.getElementById('opt-chef').innerText = t.opt_chef;
+            if (document.getElementById('opt-serveur')) document.getElementById('opt-serveur').innerText = t.opt_serveur;
+            if (document.getElementById('opt-boss')) document.getElementById('opt-boss').innerText = t.opt_boss;
+            if (document.getElementById('opt-pickup')) document.getElementById('opt-pickup').innerText = t.opt_pickup;
 
-            document.getElementById('btn-sso-google').innerText = t.btn_google;
-            document.getElementById('btn-sso-apple').innerText = t.btn_apple;
-            document.getElementById('btn-sso-microsoft').innerText = t.btn_microsoft;
+            if (document.getElementById('btn-sso-google')) document.getElementById('btn-sso-google').innerText = t.btn_google;
+            if (document.getElementById('btn-sso-apple')) document.getElementById('btn-sso-apple').innerText = t.btn_apple;
+            if (document.getElementById('btn-sso-microsoft')) document.getElementById('btn-sso-microsoft').innerText = t.btn_microsoft;
 
             document.getElementById('separator-text').innerText = t.separator;
             document.getElementById('lbl-email').innerText = t.lbl_email;

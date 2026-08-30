@@ -33,18 +33,36 @@
             <div class="logo" style="font-size: 28px; margin-bottom: 12px; text-align: center;">
                 <span class="logo-accent">Ciao</span> Byebye
             </div>
-            <h2 data-i18n="splash_title">Bienvenue sur Ciao Byebye</h2>
-            <p data-i18n="splash_desc">Pour lier votre commande et retrouver vos reçus, connectez-vous ou continuez en tant qu'invité.</p>
+            <h2 data-i18n="splash_title">Bienvenue chez Don Roberto</h2>
+            <p data-i18n="splash_desc">Pour lier vos commandes et cumuler vos points, connectez-vous ou rejoignez la table en invité.</p>
+            
             <div class="auth-options">
+                <!-- SSO Authentication Buttons -->
                 <button class="auth-btn sso-google" onclick="clientSSO('Google')">
                     <i class="fa-brands fa-google"></i> <span data-i18n="btn_login_google">Se connecter avec Google</span>
                 </button>
                 <button class="auth-btn sso-apple" onclick="clientSSO('Apple')">
                     <i class="fa-brands fa-apple"></i> <span data-i18n="btn_login_apple">Se connecter avec Apple</span>
                 </button>
-                <button class="auth-btn guest-btn" onclick="dismissClientAuth()">
-                    <i class="fa-solid fa-user-clock"></i> <span data-i18n="btn_continue_guest">Continuer en tant qu'invité</span>
-                </button>
+
+                <div style="display:flex; align-items:center; text-align:center; color:var(--text-muted); font-size:12px; margin:14px 0;">
+                    <span style="flex:1; border-bottom:1px solid var(--glass-border);"></span>
+                    <span style="padding:0 10px;" data-i18n="or_guest_mode">ou connexion invité</span>
+                    <span style="flex:1; border-bottom:1px solid var(--glass-border);"></span>
+                </div>
+
+                <!-- Guest Name Input & Join Button -->
+                <div id="guest-name-prompt-section" style="text-align:left;">
+                    <label for="modal-guest-name-input" style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:6px;">
+                        <i class="fa-solid fa-user"></i> <span data-i18n="lbl_guest_name">Votre Prénom pour le service à table :</span>
+                    </label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="modal-guest-name-input" placeholder="Ex: Thomas, Sarah, Lucas..." style="flex:1; background:rgba(255,255,255,0.06); border:1px solid var(--glass-border); border-radius:8px; padding:10px 12px; color:#fff; font-size:13px; outline:none;" onkeydown="if(event.key==='Enter') submitGuestNameAndContinue()">
+                        <button class="auth-btn guest-btn" onclick="submitGuestNameAndContinue()" style="width:auto; padding:10px 16px; margin:0; background:var(--primary); color:#000; font-weight:700; border:none; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                            <span data-i18n="btn_join_table">Rejoindre</span> <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -144,7 +162,7 @@
             
             <div class="client-ident-input">
                 <label for="client-name"><i class="fa-solid fa-user"></i> <span data-i18n="name_label">Votre Prénom pour la commande :</span></label>
-                <input type="text" id="client-name" placeholder="Ex. Thomas, Sarah..." value="Alex">
+                <input type="text" id="client-name" placeholder="Ex. Thomas, Sarah..." value="">
             </div>
         </section>
 
