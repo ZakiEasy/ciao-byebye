@@ -5843,6 +5843,8 @@
             `);
             printWindow.document.close();
         }
+
+        function startKDSTour() {
             let overlay = document.getElementById('kds-walkthrough-overlay');
             if (!overlay) {
                 overlay = document.createElement('div');
@@ -6225,8 +6227,15 @@
                 <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px;">Ou saisie manuelle de l'URL / Token :</label>
                 <div style="display:flex; gap:8px;">
                     <input type="text" id="qr-audit-input" placeholder="Ex: https://don-roberto.ciao-byebye.store/?token=token_table_04" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 12px; color:#fff; font-size:12px;">
-                    <button class="action-btn" onclick="runQRAuditCheck()" style="padding:8px 14px; background:#c084fc; color:#0f172a; font-weight:700; border:none; font-size:12px;">Tester</button>
+                    <button class="action-btn" onclick="runQRAuditCheck()" style="padding:8px 14px; background:#c084fc; color:#0f172a; font-weight:700; border:none; font-size:12px; cursor:pointer;">Tester</button>
                 </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end;">
+                <button type="button" onclick="closeQRAuditModal()" style="padding:8px 16px; background:rgba(255,255,255,0.1); color:#fff; border:none; border-radius:8px; font-size:12px; cursor:pointer;">Fermer</button>
+            </div>
+        </div>
+    </div>
     <!-- ========================================== -->
     <!-- STUDIO & GÉNÉRATEUR DE QR CODES DON ROBERTO -->
     <!-- ========================================== -->
