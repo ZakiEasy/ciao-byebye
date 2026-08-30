@@ -660,13 +660,13 @@ function startClientOrderPolling() {
                     localStorage.setItem('ciao_active_order', JSON.stringify(activeOrder));
                     updateActiveOrderFloatingBar();
                     updateTrackerSteps(activeOrder.status);
-                    renderSuccessModal();
+                    populateSuccessModal();
                 }
             }
         } catch (err) {
             // Polling silencieux
         }
-    }, 4000);
+    }, 2000);
 }
 
 function saveActiveOrder(orderData) {
@@ -676,6 +676,8 @@ function saveActiveOrder(orderData) {
     };
     localStorage.setItem('ciao_active_order', JSON.stringify(activeOrder));
     updateActiveOrderFloatingBar();
+    updateTrackerSteps(activeOrder.status);
+    populateSuccessModal();
     startClientOrderPolling();
 }
 
@@ -688,6 +690,7 @@ function restoreActiveOrder() {
                 activeOrder = parsed;
                 updateActiveOrderFloatingBar();
                 updateTrackerSteps(activeOrder.status);
+                populateSuccessModal();
                 startClientOrderPolling();
             } else {
                 localStorage.removeItem('ciao_active_order');
@@ -721,8 +724,14 @@ function updateActiveOrderFloatingBar() {
     const statusTextEl = document.getElementById('tracker-bar-status-text');
     const iconEl = document.getElementById('tracker-bar-icon');
 
-    if (activeOrder.status === 'prete') {
-        if (statusTextEl) statusTextEl.innerText = t.status_ready_bar;
+    if (activeOrder.status === 'servie') {
+        if (statusTextEl) statusTextEl.innerHTML = `🍽️ <strong>Commande Servie à Table</strong> (Table ${activeOrder.tableNumber || '05'})`;
+        if (iconEl) {
+            iconEl.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+            iconEl.className = 'tracker-live-pulse ready';
+        }
+    } else if (activeOrder.status === 'prete') {
+        if (statusTextEl) statusTextEl.innerHTML = `🎉 <strong>Commande Prête !</strong> (Table ${activeOrder.tableNumber || '05'} - File #${activeOrder.queuePos || 1})`;
         if (iconEl) {
             iconEl.innerHTML = '<i class="fa-solid fa-mug-hot"></i>';
             iconEl.className = 'tracker-live-pulse ready';
@@ -751,11 +760,14 @@ function updateActiveOrderFloatingBar() {
         if (dOrderTable) dOrderTable.innerText = activeOrder.tableNumber || '05';
         if (dOrderQueue) dOrderQueue.innerText = `#Q-${activeOrder.queuePos || 1}`;
         if (dOrderStatus) {
-            if (activeOrder.status === 'prete') {
-                dOrderStatus.innerText = t.step_ready;
+            if (activeOrder.status === 'servie') {
+                dOrderStatus.innerText = 'Servie';
+                dOrderStatus.className = 'status-pill-ready';
+            } else if (activeOrder.status === 'prete') {
+                dOrderStatus.innerText = t.step_ready || 'Prête';
                 dOrderStatus.className = 'status-pill-ready';
             } else {
-                dOrderStatus.innerText = t.step_kitchen;
+                dOrderStatus.innerText = t.step_kitchen || 'En cuisine';
                 dOrderStatus.className = 'status-pill-cooking';
             }
         }
@@ -777,17 +789,12 @@ function toggleOrderDetailsAccordion() {
     }
 }
 
-function openActiveOrderModal() {
+function populateSuccessModal() {
     if (!activeOrder) return;
     const t = translations[currentLang] || translations.fr;
-    
-    const drawer = document.getElementById('account-drawer');
-    const drawerOverlay = document.getElementById('account-drawer-overlay');
-    if (drawer) drawer.classList.remove('active');
-    if (drawerOverlay) drawerOverlay.classList.remove('active');
 
     // Populate modal fields
-    if (successClientName) successClientName.innerText = activeOrder.clientName || 'Alex';
+    if (successClientName) successClientName.innerText = activeOrder.clientName || 'Invité';
     if (successTableNum) successTableNum.innerText = activeOrder.tableNumber || '05';
     if (successOrderId) {
         successOrderId.innerText = (activeOrder.orderId || '').substring(0, 8).toUpperCase();
@@ -905,6 +912,17 @@ function openActiveOrderModal() {
     }
 
     updateTrackerSteps(activeOrder.status);
+}
+
+function openActiveOrderModal() {
+    if (!activeOrder) return;
+    
+    const drawer = document.getElementById('account-drawer');
+    const drawerOverlay = document.getElementById('account-drawer-overlay');
+    if (drawer) drawer.classList.remove('active');
+    if (drawerOverlay) drawerOverlay.classList.remove('active');
+
+    populateSuccessModal();
 
     if (successModal) successModal.classList.add('active');
     if (successModalOverlay) successModalOverlay.classList.add('active');
@@ -927,38 +945,58 @@ function updateTrackerSteps(status) {
         if (stepCooking) {
             stepCooking.classList.add('active');
             const bullet = stepCooking.querySelector('.step-bullet');
-            if (bullet) bullet.classList.remove('progress-pulse');
+            if (bullet) {
+                bullet.classList.remove('progress-pulse');
+                bullet.innerHTML = '<i class="fa-solid fa-fire-burner"></i>';
+            }
         }
         if (stepReady) {
             stepReady.classList.add('active');
             const bullet = stepReady.querySelector('.step-bullet');
-            if (bullet) bullet.classList.remove('progress-pulse');
-            const titleEl = stepReady.querySelector('.step-title');
-            if (titleEl) titleEl.innerText = "✅ Commande Livrée";
-            const subEl = stepReady.querySelector('.step-subtitle');
-            if (subEl) subEl.innerText = "Bon appétit ! 🎉";
+            if (bullet) {
+                bullet.classList.remove('progress-pulse');
+                bullet.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+            }
+            const label = stepReady.querySelector('span');
+            if (label) label.innerText = "Servie 🎉";
         }
     } else if (status === 'prete') {
         if (stepCooking) {
             stepCooking.classList.add('active');
             const bullet = stepCooking.querySelector('.step-bullet');
-            if (bullet) bullet.classList.remove('progress-pulse');
+            if (bullet) {
+                bullet.classList.remove('progress-pulse');
+                bullet.innerHTML = '<i class="fa-solid fa-fire-burner"></i>';
+            }
         }
         if (stepReady) {
             stepReady.classList.add('active');
             const bullet = stepReady.querySelector('.step-bullet');
-            if (bullet) bullet.classList.add('progress-pulse');
+            if (bullet) {
+                bullet.classList.add('progress-pulse');
+                bullet.innerHTML = '<i class="fa-solid fa-mug-hot"></i>';
+            }
+            const label = stepReady.querySelector('span');
+            if (label) label.innerText = "Prête ! 🔔";
         }
     } else {
         if (stepCooking) {
             stepCooking.classList.add('active');
             const bullet = stepCooking.querySelector('.step-bullet');
-            if (bullet) bullet.classList.add('progress-pulse');
+            if (bullet) {
+                bullet.classList.add('progress-pulse');
+                bullet.innerHTML = '<i class="fa-solid fa-fire-burner"></i>';
+            }
         }
         if (stepReady) {
             stepReady.classList.remove('active');
             const bullet = stepReady.querySelector('.step-bullet');
-            if (bullet) bullet.classList.remove('progress-pulse');
+            if (bullet) {
+                bullet.classList.remove('progress-pulse');
+                bullet.innerHTML = '<i class="fa-solid fa-mug-hot"></i>';
+            }
+            const label = stepReady.querySelector('span');
+            if (label) label.innerText = "Prête";
         }
     }
 }
@@ -2651,38 +2689,48 @@ const socket = typeof io !== 'undefined' ? io() : null;
 
 if (socket) {
     socket.on('order_status_updated', (data) => {
-        if (activeOrder && (data.orderId === activeOrder.orderId)) {
+        if (!data || !data.orderId) return;
+        const incomingId = data.orderId.toString().toLowerCase();
+
+        if (activeOrder && activeOrder.orderId && activeOrder.orderId.toString().toLowerCase() === incomingId) {
             activeOrder.status = data.status;
             if (data.paymentStatus) activeOrder.paymentStatus = data.paymentStatus;
-            saveActiveOrder(activeOrder);
-            updateTrackerSteps(data.status);
+            
+            localStorage.setItem('ciao_active_order', JSON.stringify(activeOrder));
             updateActiveOrderFloatingBar();
+            updateTrackerSteps(data.status);
+            populateSuccessModal();
 
             const t = translations[currentLang] || translations.fr;
             if (data.status === 'prete') {
+                showToast(`🎉 ${activeOrder.clientName || 'Votre commande'} : vos plats sont prêts !`, 'success');
                 if ('Notification' in window && Notification.permission === 'granted') {
-                    new Notification(t.notif_ready_title, {
-                        body: `${activeOrder.clientName}, ${t.notif_ready_body}`,
+                    new Notification(t.notif_ready_title || 'Commande Prête !', {
+                        body: `${activeOrder.clientName || 'Cher client'}, vos plats sont prêts au comptoir de retrait !`,
                         icon: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=100'
                     });
                 }
+            } else if (data.status === 'servie') {
+                showToast(`🍽️ Commande servie à votre Table ${activeOrder.tableNumber || ''} ! Bon appétit !`, 'success');
             }
         }
     });
 
     socket.on('order_payment_confirmed', (data) => {
-        if (activeOrder && (data.orderId === activeOrder.orderId)) {
+        if (!data || !data.orderId) return;
+        const incomingId = data.orderId.toString().toLowerCase();
+
+        if (activeOrder && activeOrder.orderId && activeOrder.orderId.toString().toLowerCase() === incomingId) {
             activeOrder.paymentStatus = 'paye';
-            saveActiveOrder(activeOrder);
-            const payBadge = document.getElementById('success-payment-status-badge');
+            localStorage.setItem('ciao_active_order', JSON.stringify(activeOrder));
+            updateActiveOrderFloatingBar();
+            populateSuccessModal();
+
             const t = translations[currentLang] || translations.fr;
-            if (payBadge) {
-                payBadge.innerText = t.payment_status_cash_paid;
-                payBadge.className = 'paid-tag';
-            }
+            showToast('✅ Règlement encaissé avec succès en caisse ! Merci !', 'success');
             if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification(t.notif_cash_paid_title, {
-                    body: t.notif_cash_paid_body,
+                new Notification(t.notif_cash_paid_title || 'Paiement Validé', {
+                    body: t.notif_cash_paid_body || 'Votre paiement en espèces a été validé en caisse.',
                     icon: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=100'
                 });
             }
