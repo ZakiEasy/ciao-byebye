@@ -250,7 +250,8 @@ async function initDatabase() {
       ('inventory_bom', 'Stocks & Fiches Recettes (BOM)', 'Décompte automatique des ingrédients et gestion des ruptures 86', 'pro', true),
       ('waste_management', 'Gestion des Pertes & Gaspillage', 'Déclaration et traçabilité des pertes en cuisine', 'standard', true),
       ('waiter_assignment', 'Affectation des Rangs Serveurs', 'Répartition des tables et notifications ciblées', 'standard', true),
-      ('cash_collection', 'Encaissement Espèces au Comptoir', 'Validation des paiements physiques en caisse', 'starter', true)
+      ('cash_collection', 'Encaissement Espèces au Comptoir', 'Validation des paiements physiques en caisse', 'starter', true),
+      ('loyalty_program', 'Programme de Fidélité & Récompenses', 'Adhésion mobile, catalogue d''offres de récompenses et statuts VIP (dès l''offre Pro 99€)', 'pro', true)
       ON CONFLICT (id) DO NOTHING;
 
       INSERT INTO tables (number, name, qr_code_token, status, zone, shape, min_covers, max_covers, nominal_covers, pos_x, pos_y) VALUES 
@@ -754,7 +755,7 @@ app.post('/api/orders/mock-create', async (req, res) => {
 
     const safeClientName = (clientName && typeof clientName === 'string' ? clientName.trim() : '') || 'Alex';
 
-    const { tipAmountCents, tip } = req.body || {};
+    const { tipAmountCents, tip, customerPhone, customerEmail, appliedRewardId, loyaltyDiscountCents } = req.body || {};
     let safeTipCents = 0;
     if (typeof tipAmountCents === 'number' && tipAmountCents > 0) {
       safeTipCents = Math.round(tipAmountCents);
@@ -765,17 +766,139 @@ app.post('/api/orders/mock-create', async (req, res) => {
     const safeSplitCount = parseInt(splitCount, 10) > 0 ? parseInt(splitCount, 10) : 1;
     const safeSplitPart = parseInt(splitPartIndex, 10) > 0 ? parseInt(splitPartIndex, 10) : 1;
     const safeTicketRestoCents = parseInt(ticketRestoAmountCents, 10) > 0 ? parseInt(ticketRestoAmountCents, 10) : 0;
+    const safeLoyaltyDiscountCents = parseInt(loyaltyDiscountCents, 10) > 0 ? parseInt(loyaltyDiscountCents, 10) : 0;
 
-    const finalTotalAmountCents = priceSumCents + safeTipCents;
+    const finalTotalAmountCents = Math.max(0, priceSumCents - safeLoyaltyDiscountCents) + safeTipCents;
+
+    let loyaltyCustomerId = null;
+    let loyaltyPointsEarned = 0;
+    let loyaltyRewardId = null;
+    let loyaltyNewBalance = 0;
+    let rewardObj = null;
+
+    // Traitement fidélité (réservé à l'offre Pro 99€ et Multi-sites)
+    const lookupPhone = (customerPhone || '').replace(/\s+/g, '');
+    const lookupEmail = (customerEmail || '').trim().toLowerCase();
+
+    // Vérifier si le module fidélité est activé dans les modules de l'établissement
+    let isLoyaltyModuleActive = true;
+    try {
+      const modCheck = await pool.query("SELECT is_enabled FROM restaurant_modules WHERE id = 'loyalty_program'");
+      if (modCheck.rows.length > 0) {
+        isLoyaltyModuleActive = modCheck.rows[0].is_enabled;
+      }
+    } catch (e) {
+      isLoyaltyModuleActive = true;
+    }
+
+    if (isLoyaltyModuleActive && (lookupPhone || lookupEmail)) {
+      try {
+        let custRes = await pool.query(
+          'SELECT * FROM loyalty_customers WHERE (phone IS NOT NULL AND phone = $1) OR (email IS NOT NULL AND LOWER(email) = $2) LIMIT 1',
+          [lookupPhone || 'NONE', lookupEmail || 'NONE']
+        );
+
+        let customer = custRes.rows[0];
+        if (!customer && lookupPhone && lookupPhone.length >= 6) {
+          const settingsRes = await pool.query('SELECT * FROM loyalty_program_settings LIMIT 1');
+          const welcomeBonus = settingsRes.rows[0]?.welcome_bonus_points || 25;
+          const newCust = await pool.query(
+            `INSERT INTO loyalty_customers (phone, email, full_name, current_points, lifetime_points, visits_count)
+             VALUES ($1, $2, $3, $4, $4, 0)
+             ON CONFLICT (phone) DO UPDATE SET email = COALESCE(loyalty_customers.email, EXCLUDED.email)
+             RETURNING *`,
+            [lookupPhone, lookupEmail || null, safeClientName, welcomeBonus]
+          );
+          customer = newCust.rows[0];
+          await pool.query(
+            `INSERT INTO loyalty_transactions (customer_id, points_change, reason, notes)
+             VALUES ($1, $2, 'welcome_bonus', 'Bonus de bienvenue première visite')`,
+            [customer.id, welcomeBonus]
+          );
+        }
+
+        if (customer) {
+          loyaltyCustomerId = customer.id;
+          loyaltyNewBalance = customer.current_points;
+
+          // Déduction si une récompense a été appliquée
+          if (appliedRewardId && isUUID(appliedRewardId)) {
+            const rewRes = await pool.query('SELECT * FROM loyalty_rewards WHERE id = $1 AND is_active = TRUE', [appliedRewardId]);
+            if (rewRes.rows.length > 0) {
+              rewardObj = rewRes.rows[0];
+              if (customer.current_points >= rewardObj.points_cost) {
+                loyaltyRewardId = rewardObj.id;
+                loyaltyNewBalance -= rewardObj.points_cost;
+
+                await pool.query(
+                  'UPDATE loyalty_customers SET current_points = current_points - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+                  [rewardObj.points_cost, customer.id]
+                );
+                await pool.query(
+                  `INSERT INTO loyalty_transactions (customer_id, points_change, reason, notes)
+                   VALUES ($1, $2, 'reward_redeemed', $3)`,
+                  [customer.id, -rewardObj.points_cost, `Offre utilisée: ${rewardObj.title}`]
+                );
+                await pool.query(
+                  `INSERT INTO loyalty_redemptions (customer_id, reward_id, points_spent, discount_applied_cents)
+                   VALUES ($1, $2, $3, $4)`,
+                  [customer.id, rewardObj.id, rewardObj.points_cost, safeLoyaltyDiscountCents]
+                );
+                await pool.query('UPDATE loyalty_rewards SET usage_count = usage_count + 1 WHERE id = $1', [rewardObj.id]);
+              } else {
+                rewardObj = null;
+              }
+            } else {
+              rewardObj = null;
+            }
+          }
+
+          // Gain de points sur le montant net
+          const progRes = await pool.query('SELECT points_per_eur, tier_vip_threshold FROM loyalty_program_settings LIMIT 1');
+          const pointsPerEur = parseFloat(progRes.rows[0]?.points_per_eur || 1.0);
+          const vipThreshold = parseInt(progRes.rows[0]?.tier_vip_threshold || 300, 10);
+          const multiplier = (customer.vip_status || customer.lifetime_points >= vipThreshold) ? 1.5 : 1.0;
+          
+          const netSpentEur = Math.max(0, (priceSumCents - safeLoyaltyDiscountCents) / 100);
+          loyaltyPointsEarned = Math.floor(netSpentEur * pointsPerEur * multiplier);
+
+          if (loyaltyPointsEarned > 0) {
+            loyaltyNewBalance += loyaltyPointsEarned;
+            const isVipNow = customer.vip_status || (customer.lifetime_points + loyaltyPointsEarned >= vipThreshold);
+            await pool.query(
+              `UPDATE loyalty_customers 
+               SET current_points = current_points + $1,
+                   lifetime_points = lifetime_points + $1,
+                   total_spent_cents = total_spent_cents + $2,
+                   visits_count = visits_count + 1,
+                   vip_status = $3,
+                   last_visit_at = CURRENT_TIMESTAMP,
+                   updated_at = CURRENT_TIMESTAMP
+               WHERE id = $4`,
+              [loyaltyPointsEarned, finalTotalAmountCents, isVipNow, customer.id]
+            );
+            await pool.query(
+              `INSERT INTO loyalty_transactions (customer_id, points_change, reason, notes)
+               VALUES ($1, $2, 'order_earned', $3)`,
+              [customer.id, loyaltyPointsEarned, `Points cumulés sur commande (${(finalTotalAmountCents/100).toFixed(2)} €)`]
+            );
+          }
+        }
+      } catch (loyErr) {
+        console.error('[LOYALTY] Erreur traitement fidélité:', loyErr);
+      }
+    }
 
     const orderResult = await pool.query(
       `INSERT INTO orders (
         session_id, total_amount_cents, tip_amount_cents, payment_status, payment_method, 
-        order_status, client_name, split_count, split_part_index, ticket_resto_amount_cents
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+        order_status, client_name, split_count, split_part_index, ticket_resto_amount_cents,
+        loyalty_customer_id, loyalty_points_earned, loyalty_reward_id, loyalty_discount_cents
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`,
       [
         sessionId, finalTotalAmountCents, safeTipCents, paymentStatus, recordedMethod, 
-        'en_cuisine', safeClientName, safeSplitCount, safeSplitPart, safeTicketRestoCents
+        'en_cuisine', safeClientName, safeSplitCount, safeSplitPart, safeTicketRestoCents,
+        loyaltyCustomerId, loyaltyPointsEarned, loyaltyRewardId, safeLoyaltyDiscountCents
       ]
     );
     const orderId = orderResult.rows[0].id;
@@ -897,6 +1020,13 @@ app.post('/api/orders/mock-create', async (req, res) => {
       splitCount: safeSplitCount,
       splitPartIndex: safeSplitPart,
       ticketRestoAmountCents: safeTicketRestoCents,
+      loyaltyDiscountCents: safeLoyaltyDiscountCents,
+      loyalty: {
+        customerId: loyaltyCustomerId,
+        pointsEarned: loyaltyPointsEarned,
+        newBalance: loyaltyNewBalance,
+        rewardApplied: rewardObj ? { id: rewardObj.id, title: rewardObj.title, discountCents: safeLoyaltyDiscountCents } : null
+      },
       paymentStatus, 
       paymentMethod: recordedMethod
     });
@@ -2129,9 +2259,9 @@ app.post('/api/modules/vertical', async (req, res) => {
 
   const verticalConfigs = {
     cafe_bar: ['qr_ordering', 'cash_collection', 'kds_single', 'course_management', 'waiter_assignment'],
-    bistro: ['qr_ordering', 'cash_collection', 'kds_single', 'table_plan', 'course_management', 'allergy_alerts', 'temporal_alerts', 'waiter_assignment'],
-    gastro: ['qr_ordering', 'cash_collection', 'kds_single', 'table_plan', 'course_management', 'allergy_alerts', 'temporal_alerts', 'stock_bom_auto_86', 'waste_tracking', 'waiter_assignment', 'multi_kds_routing', 'seat_ordering'],
-    fast_casual: ['qr_ordering', 'cash_collection', 'kds_single', 'multi_kds_routing', 'stock_bom_auto_86', 'waste_tracking', 'temporal_alerts']
+    bistro: ['qr_ordering', 'cash_collection', 'kds_single', 'table_plan', 'course_management', 'allergy_alerts', 'temporal_alerts', 'waiter_assignment', 'loyalty_program'],
+    gastro: ['qr_ordering', 'cash_collection', 'kds_single', 'table_plan', 'course_management', 'allergy_alerts', 'temporal_alerts', 'stock_bom_auto_86', 'waste_tracking', 'waiter_assignment', 'multi_kds_routing', 'seat_ordering', 'loyalty_program'],
+    fast_casual: ['qr_ordering', 'cash_collection', 'kds_single', 'multi_kds_routing', 'stock_bom_auto_86', 'waste_tracking', 'temporal_alerts', 'loyalty_program']
   };
 
   const enabledModules = verticalConfigs[vertical] || [];
@@ -3104,6 +3234,540 @@ app.post('/api/crm/leads/:id/sync-hubspot', async (req, res) => {
     console.error('Erreur sync HubSpot:', err);
     res.status(500).json({ error: 'Erreur synchronisation HubSpot' });
   }
+});
+
+// ========================================================
+// 10. SYSTÈME DE FIDÉLITÉ & RÉCOMPENSES PARAMÉTRABLES
+// ========================================================
+
+// 10.1. Récupérer les paramètres du programme fidélité (Pro Tier 99€ minimum)
+app.get('/api/loyalty/program', async (req, res) => {
+  try {
+    let moduleCheck = await pool.query("SELECT is_enabled, tier FROM restaurant_modules WHERE id = 'loyalty_program'");
+    const isModuleAllowed = moduleCheck.rows.length > 0 ? moduleCheck.rows[0].is_enabled : true;
+
+    let result = await pool.query('SELECT * FROM loyalty_program_settings ORDER BY updated_at DESC LIMIT 1');
+    let settingsRow;
+    if (result.rows.length === 0) {
+      const init = await pool.query(
+        `INSERT INTO loyalty_program_settings (program_name, is_enabled, points_per_eur, welcome_bonus_points, min_points_to_redeem, tier_vip_threshold)
+         VALUES ('Club Privilège Fidélité', TRUE, 1.0, 25, 50, 300) RETURNING *`
+      );
+      settingsRow = init.rows[0];
+    } else {
+      settingsRow = result.rows[0];
+    }
+
+    // Si le restaurant est sur l'offre Essentiel (49€), le module est verrouillé
+    const responsePayload = {
+      ...settingsRow,
+      is_enabled: isModuleAllowed ? settingsRow.is_enabled : false,
+      tier_locked: !isModuleAllowed,
+      required_tier: 'pro',
+      required_tier_price_ht: 99,
+      tier_name: 'Offre Pro (99 € HT / mois)'
+    };
+
+    res.json(responsePayload);
+  } catch (err) {
+    console.error('Erreur récupération programme fidélité:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 10.2. Mettre à jour les paramètres du programme fidélité
+app.put('/api/loyalty/program', async (req, res) => {
+  const {
+    program_name, is_enabled, points_per_eur, welcome_bonus_points,
+    min_points_to_redeem, tier_vip_threshold, terms_and_conditions
+  } = req.body;
+
+  try {
+    let settings = await pool.query('SELECT id FROM loyalty_program_settings LIMIT 1');
+    let updated;
+    if (settings.rows.length === 0) {
+      updated = await pool.query(
+        `INSERT INTO loyalty_program_settings (
+          program_name, is_enabled, points_per_eur, welcome_bonus_points, min_points_to_redeem, tier_vip_threshold, terms_and_conditions
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        [
+          program_name || 'Club Privilège Fidélité',
+          is_enabled !== undefined ? is_enabled : true,
+          points_per_eur || 1.0,
+          welcome_bonus_points !== undefined ? welcome_bonus_points : 25,
+          min_points_to_redeem || 50,
+          tier_vip_threshold || 300,
+          terms_and_conditions || ''
+        ]
+      );
+    } else {
+      updated = await pool.query(
+        `UPDATE loyalty_program_settings SET
+          program_name = COALESCE($1, program_name),
+          is_enabled = COALESCE($2, is_enabled),
+          points_per_eur = COALESCE($3, points_per_eur),
+          welcome_bonus_points = COALESCE($4, welcome_bonus_points),
+          min_points_to_redeem = COALESCE($5, min_points_to_redeem),
+          tier_vip_threshold = COALESCE($6, tier_vip_threshold),
+          terms_and_conditions = COALESCE($7, terms_and_conditions),
+          updated_at = CURRENT_TIMESTAMP
+         WHERE id = $8 RETURNING *`,
+        [
+          program_name, is_enabled, points_per_eur, welcome_bonus_points,
+          min_points_to_redeem, tier_vip_threshold, terms_and_conditions, settings.rows[0].id
+        ]
+      );
+    }
+
+    io.emit('loyalty_program_updated', updated.rows[0]);
+    res.json({ success: true, settings: updated.rows[0] });
+  } catch (err) {
+    console.error('Erreur mise à jour programme fidélité:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 10.3. Liste des récompenses disponibles
+app.get('/api/loyalty/rewards', async (req, res) => {
+  const { active_only } = req.query;
+  try {
+    let query = 'SELECT * FROM loyalty_rewards';
+    if (active_only === 'true') {
+      query += ' WHERE is_active = TRUE';
+    }
+    query += ' ORDER BY points_cost ASC, created_at ASC';
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erreur récupération récompenses fidélité:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 10.4. Créer une nouvelle récompense
+app.post('/api/loyalty/rewards', async (req, res) => {
+  const {
+    title, description, points_cost, reward_type, discount_value,
+    product_id, icon, badge_color, is_active
+  } = req.body;
+
+  if (!title || !points_cost) {
+    return res.status(400).json({ error: 'Le titre et le coût en points sont obligatoires.' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO loyalty_rewards (
+        title, description, points_cost, reward_type, discount_value, product_id, icon, badge_color, is_active
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [
+        title, description || '', parseInt(points_cost, 10),
+        reward_type || 'percent_discount', parseFloat(discount_value || 0),
+        (product_id && isUUID(product_id)) ? product_id : null,
+        icon || 'fa-gift', badge_color || '#f59e0b',
+        is_active !== undefined ? is_active : true
+      ]
+    );
+
+    io.emit('loyalty_rewards_updated');
+    res.status(201).json({ success: true, reward: result.rows[0] });
+  } catch (err) {
+    console.error('Erreur création récompense:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 10.5. Mettre à jour une récompense
+app.put('/api/loyalty/rewards/:id', async (req, res) => {
+  const { id } = req.params;
+  const {
+    title, description, points_cost, reward_type, discount_value,
+    product_id, icon, badge_color, is_active
+  } = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE loyalty_rewards SET
+        title = COALESCE($1, title),
+        description = COALESCE($2, description),
+        points_cost = COALESCE($3, points_cost),
+        reward_type = COALESCE($4, reward_type),
+        discount_value = COALESCE($5, discount_value),
+        product_id = CASE WHEN $6 = 'CLEAR' THEN NULL WHEN $6 IS NOT NULL THEN $6::uuid ELSE product_id END,
+        icon = COALESCE($7, icon),
+        badge_color = COALESCE($8, badge_color),
+        is_active = COALESCE($9, is_active),
+        updated_at = CURRENT_TIMESTAMP
+       WHERE id = $10 RETURNING *`,
+      [
+        title, description, points_cost ? parseInt(points_cost, 10) : null,
+        reward_type, discount_value !== undefined ? parseFloat(discount_value) : null,
+        product_id, icon, badge_color, is_active, id
+      ]
+    );
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Récompense non trouvée' });
+    io.emit('loyalty_rewards_updated');
+    res.json({ success: true, reward: result.rows[0] });
+  } catch (err) {
+    console.error('Erreur mise à jour récompense:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 10.6. Supprimer une récompense
+app.delete('/api/loyalty/rewards/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Vérifier si elle a été utilisée
+    const redempCheck = await pool.query('SELECT id FROM loyalty_redemptions WHERE reward_id = $1 LIMIT 1', [id]);
+    if (redempCheck.rows.length > 0) {
+      // Soft-delete pour préserver l'historique
+      await pool.query('UPDATE loyalty_rewards SET is_active = FALSE WHERE id = $1', [id]);
+      io.emit('loyalty_rewards_updated');
+      return res.json({ success: true, message: 'Récompense désactivée (historique conservé).' });
+    }
+
+    const result = await pool.query('DELETE FROM loyalty_rewards WHERE id = $1 RETURNING id, title', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Récompense non trouvée' });
+    io.emit('loyalty_rewards_updated');
+    res.json({ success: true, message: `Récompense ${result.rows[0].title} supprimée avec succès.` });
+  } catch (err) {
+    console.error('Erreur suppression récompense:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 10.7. Recherche & vérification solde client (Client PWA & Caisse)
+app.post('/api/loyalty/lookup', async (req, res) => {
+  const { phone, email } = req.body;
+  const cleanPhone = (phone || '').replace(/\s+/g, '');
+  const cleanEmail = (email || '').trim().toLowerCase();
+
+  if (!cleanPhone && !cleanEmail) {
+    return res.status(400).json({ error: 'Numéro de téléphone ou email requis.' });
+  }
+
+  try {
+    const custRes = await pool.query(
+      'SELECT * FROM loyalty_customers WHERE (phone IS NOT NULL AND phone = $1) OR (email IS NOT NULL AND LOWER(email) = $2) LIMIT 1',
+      [cleanPhone || 'NONE', cleanEmail || 'NONE']
+    );
+
+    const progRes = await pool.query('SELECT * FROM loyalty_program_settings LIMIT 1');
+    const progSettings = progRes.rows[0] || { is_enabled: true, welcome_bonus_points: 25, points_per_eur: 1.0 };
+
+    if (custRes.rows.length === 0) {
+      return res.json({
+        found: false,
+        program_enabled: progSettings.is_enabled,
+        welcome_bonus_points: progSettings.welcome_bonus_points,
+        message: 'Client non inscrit au programme de fidélité.'
+      });
+    }
+
+    const customer = custRes.rows[0];
+
+    // Récupérer les offres débloquées éligibles
+    const rewardsRes = await pool.query(
+      'SELECT * FROM loyalty_rewards WHERE is_active = TRUE AND points_cost <= $1 ORDER BY points_cost DESC',
+      [customer.current_points]
+    );
+
+    // Dernières transactions
+    const txRes = await pool.query(
+      'SELECT * FROM loyalty_transactions WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 5',
+      [customer.id]
+    );
+
+    res.json({
+      found: true,
+      program_enabled: progSettings.is_enabled,
+      customer,
+      eligible_rewards: rewardsRes.rows,
+      recent_transactions: txRes.rows
+    });
+  } catch (err) {
+    console.error('Erreur lookup fidélité:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 10.8. Inscription d'un nouveau membre fidélité
+app.post('/api/loyalty/enroll', async (req, res) => {
+  const { phone, email, full_name } = req.body;
+  const cleanPhone = (phone || '').replace(/\s+/g, '');
+  const cleanEmail = (email || '').trim().toLowerCase();
+
+  if (!cleanPhone || cleanPhone.length < 6) {
+    return res.status(400).json({ error: 'Un numéro de téléphone valide est requis.' });
+  }
+
+  try {
+    const progRes = await pool.query('SELECT * FROM loyalty_program_settings LIMIT 1');
+    const welcomeBonus = progRes.rows[0]?.welcome_bonus_points || 25;
+
+    const result = await pool.query(
+      `INSERT INTO loyalty_customers (phone, email, full_name, current_points, lifetime_points, visits_count)
+       VALUES ($1, $2, $3, $4, $4, 1)
+       ON CONFLICT (phone) DO UPDATE SET
+         email = COALESCE(EXCLUDED.email, loyalty_customers.email),
+         full_name = COALESCE(EXCLUDED.full_name, loyalty_customers.full_name),
+         updated_at = CURRENT_TIMESTAMP
+       RETURNING *`,
+      [cleanPhone, cleanEmail || null, full_name || 'Nouveau Membre', welcomeBonus]
+    );
+
+    const customer = result.rows[0];
+    await pool.query(
+      `INSERT INTO loyalty_transactions (customer_id, points_change, reason, notes)
+       VALUES ($1, $2, 'welcome_bonus', 'Bonus de bienvenue à l''inscription')`,
+      [customer.id, welcomeBonus]
+    );
+
+    io.emit('loyalty_customer_updated', { customerId: customer.id, points: customer.current_points });
+    res.status(201).json({
+      success: true,
+      customer,
+      welcome_bonus_credited: welcomeBonus,
+      message: `Bienvenue dans le Club Fidélité ! ${welcomeBonus} points de bienvenue crédités.`
+    });
+  } catch (err) {
+    console.error('Erreur inscription fidélité:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 10.9. Vérifier et calculer une récompense pour le panier
+app.post('/api/loyalty/claim-reward', async (req, res) => {
+  const { customer_id, reward_id, cart_total_cents } = req.body;
+
+  if (!customer_id || !reward_id) {
+    return res.status(400).json({ error: 'Client et récompense sont requis.' });
+  }
+
+  try {
+    const custRes = await pool.query('SELECT * FROM loyalty_customers WHERE id = $1', [customer_id]);
+    if (custRes.rows.length === 0) return res.status(404).json({ error: 'Client non trouvé' });
+    const customer = custRes.rows[0];
+
+    const rewRes = await pool.query('SELECT * FROM loyalty_rewards WHERE id = $1 AND is_active = TRUE', [reward_id]);
+    if (rewRes.rows.length === 0) return res.status(404).json({ error: 'Offre non disponible' });
+    const reward = rewRes.rows[0];
+
+    if (customer.current_points < reward.points_cost) {
+      return res.status(400).json({
+        error: `Solde insuffisant : vous avez ${customer.current_points} pts, cette offre nécessite ${reward.points_cost} pts.`
+      });
+    }
+
+    // Calcul du montant de remise
+    const totalCents = parseInt(cart_total_cents || 0, 10);
+    let discountCents = 0;
+
+    if (reward.reward_type === 'percent_discount') {
+      discountCents = Math.round(totalCents * (parseFloat(reward.discount_value) / 100));
+    } else if (reward.reward_type === 'fixed_discount') {
+      discountCents = Math.round(parseFloat(reward.discount_value) * 100);
+    } else if (reward.reward_type === 'free_drink' || reward.reward_type === 'free_item') {
+      discountCents = Math.round(parseFloat(reward.discount_value || 5.0) * 100);
+    }
+
+    discountCents = Math.min(totalCents, discountCents);
+
+    res.json({
+      success: true,
+      eligible: true,
+      reward,
+      points_cost: reward.points_cost,
+      discount_cents: discountCents,
+      remaining_points: customer.current_points - reward.points_cost
+    });
+  } catch (err) {
+    console.error('Erreur claim reward:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 10.10. Liste de tous les clients membres (Dashboard Backoffice)
+app.get('/api/loyalty/customers', async (req, res) => {
+  const { search, vip_only, sort_by } = req.query;
+
+  try {
+    let query = 'SELECT * FROM loyalty_customers WHERE 1=1';
+    const params = [];
+
+    if (search) {
+      params.push(`%${search}%`);
+      query += ` AND (phone ILIKE $${params.length} OR email ILIKE $${params.length} OR full_name ILIKE $${params.length})`;
+    }
+    if (vip_only === 'true') {
+      query += ' AND vip_status = TRUE';
+    }
+
+    if (sort_by === 'points') {
+      query += ' ORDER BY current_points DESC';
+    } else if (sort_by === 'spent') {
+      query += ' ORDER BY total_spent_cents DESC';
+    } else if (sort_by === 'visits') {
+      query += ' ORDER BY visits_count DESC';
+    } else {
+      query += ' ORDER BY last_visit_at DESC, created_at DESC';
+    }
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erreur récupération clients fidélité:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 10.11. Ajustement manuel des points par le manager
+app.post('/api/loyalty/adjust-points', async (req, res) => {
+  const { customer_id, points_change, reason, notes } = req.body;
+  const change = parseInt(points_change, 10);
+
+  if (!customer_id || isNaN(change) || change === 0) {
+    return res.status(400).json({ error: 'Client et variation de points non nulle requis.' });
+  }
+
+  try {
+    const custRes = await pool.query('SELECT * FROM loyalty_customers WHERE id = $1', [customer_id]);
+    if (custRes.rows.length === 0) return res.status(404).json({ error: 'Client non trouvé' });
+    const customer = custRes.rows[0];
+
+    const newPoints = Math.max(0, customer.current_points + change);
+    const newLifetime = change > 0 ? customer.lifetime_points + change : customer.lifetime_points;
+
+    const progRes = await pool.query('SELECT tier_vip_threshold FROM loyalty_program_settings LIMIT 1');
+    const vipThreshold = parseInt(progRes.rows[0]?.tier_vip_threshold || 300, 10);
+    const isVip = newLifetime >= vipThreshold;
+
+    const updated = await pool.query(
+      `UPDATE loyalty_customers 
+       SET current_points = $1, lifetime_points = $2, vip_status = $3, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $4 RETURNING *`,
+      [newPoints, newLifetime, isVip, customer_id]
+    );
+
+    await pool.query(
+      `INSERT INTO loyalty_transactions (customer_id, points_change, reason, notes)
+       VALUES ($1, $2, $3, $4)`,
+      [customer_id, change, reason || 'manual_adjustment', notes || 'Ajustement manager']
+    );
+
+    io.emit('loyalty_customer_updated', { customerId: customer_id, points: newPoints });
+    res.json({
+      success: true,
+      customer: updated.rows[0],
+      message: `Solde ajusté avec succès : ${change > 0 ? '+' : ''}${change} pts (Nouveau solde : ${newPoints} pts)`
+    });
+  } catch (err) {
+    console.error('Erreur ajustement points:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 10.12. Statistiques et KPIs du programme fidélité
+app.get('/api/loyalty/stats', async (req, res) => {
+  try {
+    const custStats = await pool.query(`
+      SELECT 
+        COUNT(*) as total_members,
+        COUNT(CASE WHEN vip_status = TRUE THEN 1 END) as vip_members,
+        COALESCE(SUM(current_points), 0) as total_active_points,
+        COALESCE(SUM(lifetime_points), 0) as total_lifetime_points,
+        COALESCE(SUM(total_spent_cents), 0) as total_loyalty_revenue_cents,
+        COALESCE(AVG(visits_count), 0) as avg_visits
+      FROM loyalty_customers
+    `);
+
+    const rewardStats = await pool.query(`
+      SELECT 
+        COUNT(*) as total_rewards_count,
+        COALESCE(SUM(usage_count), 0) as total_redemptions_count
+      FROM loyalty_rewards
+    `);
+
+    const redemptionSum = await pool.query(`
+      SELECT COALESCE(SUM(discount_applied_cents), 0) as total_discounts_granted_cents
+      FROM loyalty_redemptions
+    `);
+
+    res.json({
+      success: true,
+      members: {
+        total: parseInt(custStats.rows[0]?.total_members || 0, 10),
+        vip: parseInt(custStats.rows[0]?.vip_members || 0, 10),
+        avg_visits: parseFloat(custStats.rows[0]?.avg_visits || 0).toFixed(1)
+      },
+      points: {
+        active: parseInt(custStats.rows[0]?.total_active_points || 0, 10),
+        lifetime_distributed: parseInt(custStats.rows[0]?.total_lifetime_points || 0, 10)
+      },
+      rewards: {
+        active_offers: parseInt(rewardStats.rows[0]?.total_rewards_count || 0, 10),
+        total_claimed: parseInt(rewardStats.rows[0]?.total_redemptions_count || 0, 10),
+        total_discounts_cents: parseInt(redemptionSum.rows[0]?.total_discounts_granted_cents || 0, 10)
+      },
+      revenue_generated_cents: parseInt(custStats.rows[0]?.total_loyalty_revenue_cents || 0, 10)
+    });
+  } catch (err) {
+    console.error('Erreur stats fidélité:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ========================================================
+// 11. MONITORING, OBSERVABILITÉ & GESTION DES INCIDENTS
+// ========================================================
+
+// 11.1. Healthcheck complet avec statut DB, mémoire et uptime
+app.get(['/health', '/api/health'], async (req, res) => {
+  const startTime = Date.now();
+  let dbStatus = 'healthy';
+  let dbLatencyMs = 0;
+
+  try {
+    const dbPing = await pool.query('SELECT 1 as ping');
+    dbLatencyMs = Date.now() - startTime;
+    if (!dbPing || dbPing.rows[0]?.ping !== 1) {
+      dbStatus = 'degraded';
+    }
+  } catch (dbErr) {
+    dbStatus = 'unhealthy';
+    dbLatencyMs = Date.now() - startTime;
+  }
+
+  const memoryUsage = process.memoryUsage();
+  const uptimeSeconds = Math.floor(process.uptime());
+  const socketsCount = io.sockets?.sockets?.size || 0;
+
+  const isHealthy = (dbStatus === 'healthy');
+
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'healthy' : 'degraded',
+    service: 'ciao-byebye-core-backend',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    uptime_seconds: uptimeSeconds,
+    database: {
+      status: dbStatus,
+      latency_ms: dbLatencyMs,
+      type: 'PostgreSQL (Supabase)'
+    },
+    system: {
+      memory_heap_used_mb: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+      memory_heap_total_mb: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+      memory_rss_mb: Math.round(memoryUsage.rss / 1024 / 1024),
+      node_version: process.version,
+      platform: process.platform
+    },
+    telemetry: {
+      connected_live_clients: socketsCount
+    }
+  });
 });
 
 // Connexion WebSocket pour le suivi en temps réel

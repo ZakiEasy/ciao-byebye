@@ -576,6 +576,9 @@
                 <button class="action-btn secondary" id="tab-btn-pos" onclick="switchMainTab('pos')" style="padding:6px 12px; font-size:12px;">
                     <i class="fa-solid fa-cash-register"></i> Logiciels de Caisse (POS)
                 </button>
+                <button class="action-btn secondary" id="tab-btn-loyalty" onclick="switchMainTab('loyalty')" style="padding:6px 12px; font-size:12px;">
+                    <i class="fa-solid fa-crown" style="color:#f59e0b;"></i> Fidélité & Récompenses
+                </button>
                 <button class="action-btn secondary" id="tab-btn-modules" onclick="switchMainTab('modules')" style="padding:6px 12px; font-size:12px; display:none;">
                     <i class="fa-solid fa-toggle-on"></i> Modules & Offres
                 </button>
@@ -1001,7 +1004,7 @@
             activeMainTab = tab;
             showMenuManagement = (tab === 'menu');
             
-            ['kds', 'floorplan', 'inventory', 'modules', 'menu', 'reviews', 'pos'].forEach(tName => {
+            ['kds', 'floorplan', 'inventory', 'modules', 'menu', 'reviews', 'pos', 'loyalty'].forEach(tName => {
                 const btn = document.getElementById(`tab-btn-${tName}`);
                 if (btn) {
                     if (tName === tab) {
@@ -1025,6 +1028,8 @@
                 renderCustomerReviewsView();
             } else if (tab === 'pos') {
                 renderPOSIntegrationsView();
+            } else if (tab === 'loyalty') {
+                renderLoyaltyManagementView();
             } else {
                 fetchOrders();
             }
@@ -2517,11 +2522,12 @@
                                     </div>
                                     <div class="tier-price">49 € <span style="font-size:13px; color:var(--text-muted); font-weight:400;">HT / mois</span></div>
                                     <p style="font-size:12px; color:var(--text-muted); line-height:1.4;">Idéal pour les cafés, bars et petits établissements souhaitant fluidifier la commande et le paiement sans complexité.</p>
-                                    <ul style="margin:14px 0; padding-left:18px; font-size:12px; color:#cbd5e1; display:flex; flex-direction:column; gap:6px;">
+                                    <ul style="margin:14px 0; padding-left:18px; font-size:12px; color:#cbd5e1; display:flex; display:flex; flex-direction:column; gap:6px;">
                                         <li><i class="fa-solid fa-check" style="color:#34d399;"></i> Commande & Paiement QR Code</li>
                                         <li><i class="fa-solid fa-check" style="color:#34d399;"></i> Encaissement CB Stripe & Espèces</li>
                                         <li><i class="fa-solid fa-check" style="color:#34d399;"></i> KDS Monoposte Cuisine avec son</li>
                                         <li><i class="fa-solid fa-check" style="color:#34d399;"></i> Gestion de Carte en temps réel</li>
+                                        <li><i class="fa-solid fa-xmark" style="color:var(--text-muted);"></i> <span style="color:var(--text-muted);">Programme Fidélité (dès l'offre Pro)</span></li>
                                     </ul>
                                 </div>
                                 <button class="action-btn" onclick="applyModulePreset('essentiel')" style="width:100%; margin-top:14px; background:rgba(52,211,153,0.2); border:1px solid #34d399; color:#fff;">
@@ -2537,9 +2543,10 @@
                                         <span class="vertical-badge" style="background:rgba(56,189,248,0.15); color:#38bdf8;">RECOMMANDÉ</span>
                                     </div>
                                     <div class="tier-price">99 € <span style="font-size:13px; color:var(--text-muted); font-weight:400;">HT / mois</span></div>
-                                    <p style="font-size:12px; color:var(--text-muted); line-height:1.4;">Pour les restaurants traditionnels, bistros et brasseries avec service à table complet et gestion des stocks.</p>
+                                    <p style="font-size:12px; color:var(--text-muted); line-height:1.4;">Pour les restaurants traditionnels, bistros et brasseries avec service à table complet, gestion des stocks et fidélisation client.</p>
                                     <ul style="margin:14px 0; padding-left:18px; font-size:12px; color:#cbd5e1; display:flex; flex-direction:column; gap:6px;">
                                         <li><i class="fa-solid fa-check" style="color:#38bdf8;"></i> <strong>Tout l'Essentiel inclus</strong></li>
+                                        <li><i class="fa-solid fa-crown" style="color:#f59e0b;"></i> <strong style="color:#f59e0b;">Programme Fidélité & Récompenses (inclus dès 99€)</strong></li>
                                         <li><i class="fa-solid fa-check" style="color:#38bdf8;"></i> <strong>Plan de Tables 2D Interactif</strong></li>
                                         <li><i class="fa-solid fa-check" style="color:#38bdf8;"></i> Gestion des Suites & Réclame (HOLD/FIRE)</li>
                                         <li><i class="fa-solid fa-check" style="color:#38bdf8;"></i> Alertes Allergies & Temporisation >20 min</li>
@@ -2548,7 +2555,7 @@
                                     </ul>
                                 </div>
                                 <button class="action-btn" onclick="applyModulePreset('pro')" style="width:100%; margin-top:14px; background:rgba(56,189,248,0.2); border:1px solid #38bdf8; color:#fff;">
-                                    <i class="fa-solid fa-fire"></i> Activer Formule Pro
+                                    <i class="fa-solid fa-fire"></i> Activer Formule Pro (99 €)
                                 </button>
                             </div>
 
@@ -2562,7 +2569,7 @@
                                     <div class="tier-price">199 € <span style="font-size:13px; color:var(--text-muted); font-weight:400;">HT / mois / site</span></div>
                                     <p style="font-size:12px; color:var(--text-muted); line-height:1.4;">Pour les groupes de restauration, franchises, food-courts et gastronomiques multi-postes à fort volume.</p>
                                     <ul style="margin:14px 0; padding-left:18px; font-size:12px; color:#cbd5e1; display:flex; flex-direction:column; gap:6px;">
-                                        <li><i class="fa-solid fa-check" style="color:#c084fc;"></i> <strong>Tout le Pro inclus</strong></li>
+                                        <li><i class="fa-solid fa-check" style="color:#c084fc;"></i> <strong>Tout le Pro inclus</strong> (dont Fidélité & Récompenses)</li>
                                         <li><i class="fa-solid fa-check" style="color:#c084fc;"></i> <strong>Routage Multi-KDS (Chaud, Froid, Bar, Passe)</strong></li>
                                         <li><i class="fa-solid fa-check" style="color:#c084fc;"></i> Numérotation & Couverts par Siège (S1, S2...)</li>
                                         <li><i class="fa-solid fa-check" style="color:#c084fc;"></i> Multi-zones & Pilotage centralisé</li>
@@ -4325,6 +4332,696 @@
                 desc: "Activez ou désactivez les modules à la carte en fonction de votre offre Ciao Byebye choisie (49€, 99€ ou 199€ HT/mois)."
             }
         ];
+
+        // ========================================================
+        // 7. PROGRAMME DE FIDÉLITÉ & RÉCOMPENSES (DASHBOARD)
+        // ========================================================
+        let loyaltyActiveSubTab = 'kpis';
+        let loyaltyProgramData = null;
+        let loyaltyRewardsData = [];
+        let loyaltyCustomersData = [];
+        let loyaltyStatsData = null;
+        let currentAdjustingCustomerId = null;
+
+        async function renderLoyaltyManagementView() {
+            const container = document.getElementById('dashboard-main-content');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1; height: 100%; display: flex; flex-direction: column; overflow-y: auto; padding: 10px; gap: 16px;">
+                    <!-- Header -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:rgba(18,18,24,0.7); border:1px solid var(--glass-border); padding:16px 20px; border-radius:14px;">
+                        <div>
+                            <h2 style="font-size:22px; font-weight:800; display:flex; align-items:center; gap:10px; margin:0;">
+                                <i class="fa-solid fa-crown" style="color:#f59e0b;"></i> Programme Fidélité & Récompenses
+                            </h2>
+                            <p style="font-size:13px; color:var(--text-muted); margin:4px 0 0 0;">
+                                Fidélisez vos clients, personnalisez vos offres de récompenses et suivez les points cumulés à chaque commande sur table.
+                            </p>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button class="action-btn" onclick="openRewardModal()" style="font-size:12px; padding:7px 14px; background:var(--primary); color:#000; font-weight:700;">
+                                <i class="fa-solid fa-circle-plus"></i> Créer une Offre Récompense
+                            </button>
+                            <button class="action-btn secondary" onclick="fetchLoyaltyDashboardData()" style="font-size:12px; padding:7px 14px;">
+                                <i class="fa-solid fa-rotate"></i> Actualiser
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sub-tabs Navigation -->
+                    <div style="display:flex; gap:8px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:10px;">
+                        <button class="action-btn ${loyaltyActiveSubTab === 'kpis' ? 'active' : 'secondary'}" id="subtab-btn-loyalty-kpis" onclick="switchLoyaltySubTab('kpis')" style="font-size:12px; padding:6px 14px;">
+                            <i class="fa-solid fa-chart-line"></i> Tableau de bord & KPIs
+                        </button>
+                        <button class="action-btn ${loyaltyActiveSubTab === 'rewards' ? 'active' : 'secondary'}" id="subtab-btn-loyalty-rewards" onclick="switchLoyaltySubTab('rewards')" style="font-size:12px; padding:6px 14px;">
+                            <i class="fa-solid fa-gift"></i> Catalogue des Récompenses
+                        </button>
+                        <button class="action-btn ${loyaltyActiveSubTab === 'settings' ? 'active' : 'secondary'}" id="subtab-btn-loyalty-settings" onclick="switchLoyaltySubTab('settings')" style="font-size:12px; padding:6px 14px;">
+                            <i class="fa-solid fa-sliders"></i> Paramètres du Programme
+                        </button>
+                        <button class="action-btn ${loyaltyActiveSubTab === 'customers' ? 'active' : 'secondary'}" id="subtab-btn-loyalty-customers" onclick="switchLoyaltySubTab('customers')" style="font-size:12px; padding:6px 14px;">
+                            <i class="fa-solid fa-users"></i> Annuaire des Membres
+                        </button>
+                    </div>
+
+                    <!-- Dynamic Subtab Content -->
+                    <div id="loyalty-subtab-content">
+                        <div style="text-align:center; padding:40px; color:var(--text-muted);">
+                            <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                            <p style="margin-top:10px;">Chargement du programme fidélité...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Création / Édition Offre Récompense -->
+                <div class="pos-modal-overlay" id="loyalty-reward-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px); z-index:999; align-items:center; justify-content:center;">
+                    <div style="background:#13131a; border:1px solid var(--glass-border); border-radius:16px; width:90%; max-width:540px; padding:24px; box-shadow:0 20px 50px rgba(0,0,0,0.6);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+                            <h3 id="loyalty-reward-modal-title" style="font-size:18px; font-weight:800; margin:0; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-gift" style="color:#f59e0b;"></i> Offre Récompense
+                            </h3>
+                            <button onclick="closeRewardModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:16px;"><i class="fa-solid fa-times"></i></button>
+                        </div>
+                        <form id="loyalty-reward-form" onsubmit="saveRewardForm(event)">
+                            <input type="hidden" id="reward-input-id">
+                            <div style="margin-bottom:12px;">
+                                <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px; font-weight:600;">Titre de la récompense * :</label>
+                                <input type="text" id="reward-input-title" placeholder="ex: Dessert Signature Offert" required style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 12px; color:#fff; box-sizing:border-box;">
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px; font-weight:600;">Description attractive :</label>
+                                <textarea id="reward-input-desc" placeholder="ex: Un dessert gourmand au choix offert avec votre commande" rows="2" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 12px; color:#fff; box-sizing:border-box;"></textarea>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                                <div>
+                                    <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px; font-weight:600;">Coût en points * :</label>
+                                    <input type="number" id="reward-input-cost" min="10" step="5" value="100" required style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 12px; color:#fff; box-sizing:border-box;">
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px; font-weight:600;">Type d'avantage * :</label>
+                                    <select id="reward-input-type" style="width:100%; background:#1a1a24; border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 12px; color:#fff; box-sizing:border-box;">
+                                        <option value="free_item">Plat / Dessert Offert</option>
+                                        <option value="free_drink">Boisson Offerte</option>
+                                        <option value="percent_discount">Réduction en %</option>
+                                        <option value="fixed_discount">Réduction en € fixe</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+                                <div>
+                                    <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px; font-weight:600;">Valeur remise (€ ou %) :</label>
+                                    <input type="number" id="reward-input-val" step="0.5" value="6.5" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 12px; color:#fff; box-sizing:border-box;">
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px; font-weight:600;">Icône visuelle :</label>
+                                    <select id="reward-input-icon" style="width:100%; background:#1a1a24; border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 12px; color:#fff; box-sizing:border-box;">
+                                        <option value="fa-cake-candles">🎂 Dessert / Gâteau</option>
+                                        <option value="fa-mug-hot">☕ Café / Boisson chaude</option>
+                                        <option value="fa-utensils">🍽️ Plat / Plat du jour</option>
+                                        <option value="fa-wine-glass">🍷 Verre de vin / Apéritif</option>
+                                        <option value="fa-percent">🏷️ Pourcentage (%)</option>
+                                        <option value="fa-gift">🎁 Cadeau / Bon d'achat</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="margin-bottom:20px;">
+                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+                                    <input type="checkbox" id="reward-input-active" checked style="accent-color:var(--primary);">
+                                    <span>Activer immédiatement cette offre pour les clients sur table</span>
+                                </label>
+                            </div>
+                            <div style="display:flex; justify-content:flex-end; gap:8px;">
+                                <button type="button" class="action-btn secondary" onclick="closeRewardModal()" style="font-size:12px; padding:8px 16px;">Annuler</button>
+                                <button type="submit" class="action-btn" style="font-size:12px; padding:8px 20px; background:var(--primary); color:#000; font-weight:700;">Enregistrer l'offre</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Modal Ajustement Manuel de Points -->
+                <div class="pos-modal-overlay" id="loyalty-adjust-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px); z-index:999; align-items:center; justify-content:center;">
+                    <div style="background:#13131a; border:1px solid var(--glass-border); border-radius:16px; width:90%; max-width:440px; padding:24px; box-shadow:0 20px 50px rgba(0,0,0,0.6);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                            <h3 style="font-size:17px; font-weight:800; margin:0; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-coins" style="color:#f59e0b;"></i> Ajuster les Points
+                            </h3>
+                            <button onclick="closeAdjustPointsModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i class="fa-solid fa-times"></i></button>
+                        </div>
+                        <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">
+                            Membre : <strong id="adjust-cust-name" style="color:#fff;">--</strong><br>
+                            Solde actuel : <strong id="adjust-cust-points" style="color:#f59e0b;">0 pts</strong>
+                        </p>
+                        <form id="loyalty-adjust-form" onsubmit="submitAdjustPointsForm(event)">
+                            <div style="margin-bottom:12px;">
+                                <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px;">Variation de points (+ ou -) :</label>
+                                <input type="number" id="adjust-input-points" placeholder="ex: 50 ou -20" required style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 12px; color:#fff; box-sizing:border-box;">
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px;">Motif de l'ajustement :</label>
+                                <select id="adjust-input-reason" style="width:100%; background:#1a1a24; border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 12px; color:#fff; box-sizing:border-box;">
+                                    <option value="manual_adjustment">Geste commercial / Ajustement</option>
+                                    <option value="promo_bonus">Bonus opération promotionnelle</option>
+                                    <option value="referral">Parrainage d'un proche</option>
+                                    <option value="compensation">Compensation incident de service</option>
+                                </select>
+                            </div>
+                            <div style="margin-bottom:18px;">
+                                <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px;">Note interne :</label>
+                                <input type="text" id="adjust-input-note" placeholder="ex: Anniversaire du client" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 12px; color:#fff; box-sizing:border-box;">
+                            </div>
+                            <div style="display:flex; justify-content:flex-end; gap:8px;">
+                                <button type="button" class="action-btn secondary" onclick="closeAdjustPointsModal()">Annuler</button>
+                                <button type="submit" class="action-btn" style="background:var(--primary); color:#000; font-weight:700;">Valider l'ajustement</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+
+            await fetchLoyaltyDashboardData();
+        }
+
+        function switchLoyaltySubTab(subTab) {
+            loyaltyActiveSubTab = subTab;
+            ['kpis', 'rewards', 'settings', 'customers'].forEach(s => {
+                const btn = document.getElementById(`subtab-btn-loyalty-${s}`);
+                if (btn) btn.className = `action-btn ${s === subTab ? 'active' : 'secondary'}`;
+            });
+
+            const container = document.getElementById('loyalty-subtab-content');
+            if (loyaltyProgramData && loyaltyProgramData.tier_locked) {
+                if (container) {
+                    container.innerHTML = `
+                        <div class="glass-panel" style="padding:48px 24px; border-radius:18px; text-align:center; border:1px solid rgba(245,158,11,0.3); background:rgba(245,158,11,0.04); max-width:650px; margin:30px auto;">
+                            <div style="font-size:52px; margin-bottom:16px;">👑</div>
+                            <h3 style="font-size:22px; font-weight:800; color:#fff; margin:0 0 10px 0;">Module Fidélité & Récompenses réservé à l'Offre Pro</h3>
+                            <p style="font-size:13px; color:var(--text-muted); line-height:1.6; margin:0 auto 24px auto; max-width:520px;">
+                                Le système de fidélité paramétrable, l'accumulation automatique de points (1€ = 1 pt), les statuts VIP et le catalogue de récompenses clients sont accessibles <strong>à partir de l'offre Pro à 99 € HT / mois</strong>.
+                            </p>
+                            <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+                                <button class="action-btn" onclick="applyModulePreset('pro'); setTimeout(fetchLoyaltyDashboardData, 300);" style="background:var(--primary); color:#000; font-weight:800; font-size:13px; padding:12px 24px; border-radius:10px;">
+                                    <i class="fa-solid fa-crown"></i> Débloquer avec l'Offre Pro (99 € / mois)
+                                </button>
+                                <button class="action-btn secondary" onclick="switchMainTab('modules')" style="font-size:13px; padding:12px 20px;">
+                                    <i class="fa-solid fa-layer-group"></i> Voir toutes les formules
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            if (subTab === 'kpis') renderLoyaltyKPIsSubTab();
+            else if (subTab === 'rewards') renderLoyaltyRewardsSubTab();
+            else if (subTab === 'settings') renderLoyaltySettingsSubTab();
+            else if (subTab === 'customers') renderLoyaltyCustomersSubTab();
+        }
+
+        async function fetchLoyaltyDashboardData() {
+            try {
+                const [progRes, rewRes, statsRes] = await Promise.all([
+                    fetch('/api/loyalty/program').then(r => r.json()),
+                    fetch('/api/loyalty/rewards').then(r => r.json()),
+                    fetch('/api/loyalty/stats').then(r => r.json())
+                ]);
+
+                loyaltyProgramData = progRes;
+                loyaltyRewardsData = rewRes;
+                loyaltyStatsData = statsRes;
+
+                switchLoyaltySubTab(loyaltyActiveSubTab);
+            } catch (err) {
+                console.error('Erreur chargement dashboard fidélité:', err);
+            }
+        }
+
+        function renderLoyaltyKPIsSubTab() {
+            const container = document.getElementById('loyalty-subtab-content');
+            if (!container || !loyaltyStatsData) return;
+
+            const m = loyaltyStatsData.members || {};
+            const p = loyaltyStatsData.points || {};
+            const r = loyaltyStatsData.rewards || {};
+            const revEur = ((loyaltyStatsData.revenue_generated_cents || 0) / 100).toFixed(2);
+            const discEur = ((r.total_discounts_cents || 0) / 100).toFixed(2);
+
+            container.innerHTML = `
+                <div style="display:flex; flex-direction:column; gap:16px;">
+                    <!-- KPI Cards Grid -->
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
+                        <div class="glass-panel" style="padding:16px; border-radius:14px; border:1px solid var(--glass-border);">
+                            <div style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">MEMBRES INSCRITS</div>
+                            <div style="font-size:28px; font-weight:900; color:#38bdf8; margin:4px 0;">${m.total || 0}</div>
+                            <div style="font-size:11px; color:#34d399;"><i class="fa-solid fa-crown" style="color:#f59e0b;"></i> ${m.vip || 0} membres VIP (${m.avg_visits || 0} visites/moy)</div>
+                        </div>
+                        <div class="glass-panel" style="padding:16px; border-radius:14px; border:1px solid var(--glass-border);">
+                            <div style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">POINTS ACTIFS EN CIRCULATION</div>
+                            <div style="font-size:28px; font-weight:900; color:#f59e0b; margin:4px 0;">${p.active || 0} pts</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Cumulés à vie : ${p.lifetime_distributed || 0} pts</div>
+                        </div>
+                        <div class="glass-panel" style="padding:16px; border-radius:14px; border:1px solid var(--glass-border);">
+                            <div style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">RÉCOMPENSES CONSOMMÉES</div>
+                            <div style="font-size:28px; font-weight:900; color:#ec4899; margin:4px 0;">${r.total_claimed || 0}</div>
+                            <div style="font-size:11px; color:#34d399;">${discEur} € de remises accordées</div>
+                        </div>
+                        <div class="glass-panel" style="padding:16px; border-radius:14px; border:1px solid var(--glass-border);">
+                            <div style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">CA GÉNÉRÉ PAR LES MEMBRES</div>
+                            <div style="font-size:28px; font-weight:900; color:#10b981; margin:4px 0;">${revEur} €</div>
+                            <div style="font-size:11px; color:#34d399;"><i class="fa-solid fa-arrow-trend-up"></i> +28% de panier moyen constaté</div>
+                        </div>
+                    </div>
+
+                    <!-- Programme Status & Quick Summary -->
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:16px;">
+                        <div class="glass-panel" style="padding:20px; border-radius:14px; border:1px solid var(--glass-border);">
+                            <h3 style="font-size:16px; font-weight:800; margin:0 0 12px 0; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-gift" style="color:#f59e0b;"></i> Performance des Offres Récompenses
+                            </h3>
+                            <div style="display:flex; flex-direction:column; gap:10px;">
+                                ${loyaltyRewardsData.map(r => `
+                                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); padding:10px 14px; border-radius:10px;">
+                                        <div style="display:flex; align-items:center; gap:10px;">
+                                            <i class="fa-solid ${r.icon || 'fa-gift'}" style="color:${r.badge_color || '#f59e0b'}; font-size:16px;"></i>
+                                            <div>
+                                                <strong style="font-size:13px; color:#fff;">${r.title}</strong>
+                                                <span style="display:block; font-size:11px; color:var(--text-muted);">${r.points_cost} points requis • ${r.reward_type === 'percent_discount' ? `${r.discount_value}% remise` : `${r.discount_value}€ offert`}</span>
+                                            </div>
+                                        </div>
+                                        <div style="text-align:right;">
+                                            <span style="font-weight:800; font-size:14px; color:#34d399;">${r.usage_count || 0}</span>
+                                            <span style="font-size:11px; color:var(--text-muted); display:block;">utilisations</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="glass-panel" style="padding:20px; border-radius:14px; border:1px solid var(--glass-border); display:flex; flex-direction:column; justify-content:space-between;">
+                            <div>
+                                <h3 style="font-size:16px; font-weight:800; margin:0 0 12px 0; display:flex; align-items:center; gap:8px;">
+                                    <i class="fa-solid fa-sliders" style="color:#38bdf8;"></i> État du Programme
+                                </h3>
+                                <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+                                    <div style="display:flex; justify-content:space-between;">
+                                        <span style="color:var(--text-muted);">Statut :</span>
+                                        <strong style="color:${loyaltyProgramData?.is_enabled ? '#34d399' : '#ef4444'};">${loyaltyProgramData?.is_enabled ? '🟢 Actif sur table' : '🔴 Désactivé'}</strong>
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between;">
+                                        <span style="color:var(--text-muted);">Taux d'accumulation :</span>
+                                        <strong>1 € = ${loyaltyProgramData?.points_per_eur || 1} pt</strong>
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between;">
+                                        <span style="color:var(--text-muted);">Cadeau de bienvenue :</span>
+                                        <strong style="color:#f59e0b;">+${loyaltyProgramData?.welcome_bonus_points || 25} pts</strong>
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between;">
+                                        <span style="color:var(--text-muted);">Seuil Statut VIP :</span>
+                                        <strong>${loyaltyProgramData?.tier_vip_threshold || 300} pts (x1.5)</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="action-btn" onclick="switchLoyaltySubTab('settings')" style="margin-top:16px; width:100%; font-size:12px; padding:10px; background:rgba(255,255,255,0.06); border:1px solid var(--glass-border);">
+                                <i class="fa-solid fa-pen-to-square"></i> Modifier les règles
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderLoyaltyRewardsSubTab() {
+            const container = document.getElementById('loyalty-subtab-content');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div style="display:flex; flex-direction:column; gap:16px;">
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+                        ${loyaltyRewardsData.map(r => `
+                            <div class="glass-panel" style="padding:18px; border-radius:14px; border:1px solid ${r.is_active ? 'var(--glass-border)' : 'rgba(239,68,68,0.3)'}; display:flex; flex-direction:column; justify-content:space-between; position:relative; opacity:${r.is_active ? '1' : '0.6'};">
+                                <div>
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                                        <div style="width:40px; height:40px; border-radius:10px; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center; font-size:18px; color:${r.badge_color || '#f59e0b'};">
+                                            <i class="fa-solid ${r.icon || 'fa-gift'}"></i>
+                                        </div>
+                                        <span style="font-size:12px; font-weight:800; color:#f59e0b; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); padding:3px 10px; border-radius:12px;">
+                                            ${r.points_cost} pts
+                                        </span>
+                                    </div>
+                                    <h4 style="font-size:15px; font-weight:800; color:#fff; margin:0 0 6px 0;">${r.title}</h4>
+                                    <p style="font-size:12px; color:var(--text-muted); margin:0 0 12px 0; line-height:1.4;">${r.description || 'Avantage fidélité exclusif'}</p>
+                                    <div style="font-size:11px; color:#34d399; margin-bottom:14px;">
+                                        <i class="fa-solid fa-check"></i> ${r.reward_type === 'percent_discount' ? `Remise immédiate de ${r.discount_value}%` : `Valeur offerte: ${r.discount_value} €`}
+                                        <span style="color:var(--text-muted); margin-left:8px;">(${r.usage_count || 0}x réclamée)</span>
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:8px; border-top:1px solid rgba(255,255,255,0.06); padding-top:12px;">
+                                    <button class="action-btn secondary" onclick="openRewardModal('${r.id}')" style="flex:1; font-size:11px; padding:6px 10px;">
+                                        <i class="fa-solid fa-pen"></i> Modifier
+                                    </button>
+                                    <button class="action-btn secondary" onclick="toggleRewardStatus('${r.id}', ${r.is_active})" style="font-size:11px; padding:6px 10px; color:${r.is_active ? '#fbbf24' : '#34d399'};">
+                                        <i class="fa-solid ${r.is_active ? 'fa-pause' : 'fa-play'}"></i> ${r.is_active ? 'Désactiver' : 'Activer'}
+                                    </button>
+                                    <button class="action-btn secondary" onclick="deleteReward('${r.id}')" style="font-size:11px; padding:6px 10px; color:#ef4444;">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderLoyaltySettingsSubTab() {
+            const container = document.getElementById('loyalty-subtab-content');
+            if (!container || !loyaltyProgramData) return;
+
+            container.innerHTML = `
+                <div class="glass-panel" style="padding:24px; border-radius:14px; border:1px solid var(--glass-border); max-width:700px;">
+                    <h3 style="font-size:17px; font-weight:800; margin:0 0 16px 0; display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-gear" style="color:#38bdf8;"></i> Configuration du Programme de Fidélité
+                    </h3>
+                    <form id="loyalty-settings-form" onsubmit="saveLoyaltySettings(event)">
+                        <div style="margin-bottom:14px;">
+                            <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px; font-weight:600;">Nom officiel du programme :</label>
+                            <input type="text" id="settings-prog-name" value="${loyaltyProgramData.program_name || 'Club Privilège Fidélité'}" required style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:10px 12px; color:#fff; box-sizing:border-box;">
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+                            <div>
+                                <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px; font-weight:600;">Points par Euro dépensé :</label>
+                                <input type="number" id="settings-points-eur" step="0.1" value="${loyaltyProgramData.points_per_eur || 1.0}" required style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:10px 12px; color:#fff; box-sizing:border-box;">
+                                <span style="font-size:11px; color:var(--text-muted);">1.0 = 1 pt par euro payé</span>
+                            </div>
+                            <div>
+                                <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px; font-weight:600;">Bonus de bienvenue à l'adhésion :</label>
+                                <input type="number" id="settings-welcome-bonus" value="${loyaltyProgramData.welcome_bonus_points || 25}" required style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:10px 12px; color:#fff; box-sizing:border-box;">
+                                <span style="font-size:11px; color:var(--text-muted);">Offert dès la première commande</span>
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+                            <div>
+                                <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px; font-weight:600;">Seuil d'utilisation minimum (pts) :</label>
+                                <input type="number" id="settings-min-points" value="${loyaltyProgramData.min_points_to_redeem || 50}" required style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:10px 12px; color:#fff; box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px; font-weight:600;">Seuil Statut VIP (points à vie) :</label>
+                                <input type="number" id="settings-vip-threshold" value="${loyaltyProgramData.tier_vip_threshold || 300}" required style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:10px 12px; color:#fff; box-sizing:border-box;">
+                                <span style="font-size:11px; color:#f59e0b;">Multiplicateur x1.5 points</span>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px; font-weight:600;">Conditions & Mentions d'affichage client :</label>
+                            <textarea id="settings-terms" rows="2" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 12px; color:#fff; box-sizing:border-box;">${loyaltyProgramData.terms_and_conditions || ''}</textarea>
+                        </div>
+
+                        <div style="margin-bottom:24px;">
+                            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:13px;">
+                                <input type="checkbox" id="settings-enabled" ${loyaltyProgramData.is_enabled ? 'checked' : ''} style="accent-color:var(--primary); width:18px; height:18px;">
+                                <span><strong>Activer le système de fidélité sur les QR Codes de table</strong></span>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="action-btn" style="background:var(--primary); color:#000; font-weight:800; padding:12px 24px; font-size:13px;">
+                            <i class="fa-solid fa-floppy-disk"></i> Enregistrer les Paramètres
+                        </button>
+                    </form>
+                </div>
+            `;
+        }
+
+        async function renderLoyaltyCustomersSubTab() {
+            const container = document.getElementById('loyalty-subtab-content');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div style="display:flex; flex-direction:column; gap:14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <div style="display:flex; align-items:center; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:0 12px; flex:1; max-width:400px;">
+                            <i class="fa-solid fa-magnifying-glass" style="color:var(--text-muted); margin-right:8px;"></i>
+                            <input type="text" id="cust-search-input" placeholder="Rechercher par nom, n° mobile ou email..." oninput="filterLoyaltyCustomers(this.value)" style="background:transparent; border:none; color:#fff; font-size:13px; width:100%; padding:10px 0; outline:none;">
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="action-btn secondary" onclick="loadLoyaltyCustomers('points')" style="font-size:11px; padding:6px 12px;">Trier par Points</button>
+                            <button class="action-btn secondary" onclick="loadLoyaltyCustomers('spent')" style="font-size:11px; padding:6px 12px;">Trier par CA</button>
+                            <button class="action-btn secondary" onclick="loadLoyaltyCustomers('visits')" style="font-size:11px; padding:6px 12px;">Trier par Visites</button>
+                        </div>
+                    </div>
+
+                    <div style="background:rgba(18,18,24,0.7); border:1px solid var(--glass-border); border-radius:14px; overflow:hidden;">
+                        <table style="width:100%; border-collapse:collapse; text-align:left; font-size:13px;">
+                            <thead>
+                                <tr style="background:rgba(255,255,255,0.04); border-bottom:1px solid var(--glass-border); font-size:11px; text-transform:uppercase; color:var(--text-muted);">
+                                    <th style="padding:12px 16px;">Client</th>
+                                    <th style="padding:12px 16px;">Contact</th>
+                                    <th style="padding:12px 16px;">Solde Actuel</th>
+                                    <th style="padding:12px 16px;">Points Cumulés</th>
+                                    <th style="padding:12px 16px;">Visites</th>
+                                    <th style="padding:12px 16px;">Total Dépensé</th>
+                                    <th style="padding:12px 16px; text-align:right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="loyalty-customers-table-body">
+                                <tr>
+                                    <td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Chargement des membres...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            await loadLoyaltyCustomers();
+        }
+
+        async function loadLoyaltyCustomers(sortBy = null, search = null) {
+            try {
+                let url = '/api/loyalty/customers?1=1';
+                if (sortBy) url += `&sort_by=${sortBy}`;
+                if (search) url += `&search=${encodeURIComponent(search)}`;
+                const res = await fetch(url);
+                loyaltyCustomersData = await res.json();
+
+                const tbody = document.getElementById('loyalty-customers-table-body');
+                if (!tbody) return;
+
+                if (loyaltyCustomersData.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Aucun client fidélité trouvé.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = loyaltyCustomersData.map(c => `
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                        <td style="padding:12px 16px;">
+                            <strong style="color:#fff;">${c.full_name || 'Client Anonyme'}</strong>
+                            ${c.vip_status ? '<span style="display:inline-block; margin-left:6px; font-size:10px; background:rgba(245,158,11,0.2); color:#f59e0b; padding:2px 6px; border-radius:8px; font-weight:700;">VIP ⭐</span>' : ''}
+                        </td>
+                        <td style="padding:12px 16px; color:var(--text-muted);">
+                            <div>📱 ${c.phone}</div>
+                            ${c.email ? `<div style="font-size:11px;">✉️ ${c.email}</div>` : ''}
+                        </td>
+                        <td style="padding:12px 16px;">
+                            <strong style="font-size:15px; color:#f59e0b;">${c.current_points}</strong> <span style="font-size:11px; color:var(--text-muted);">pts</span>
+                        </td>
+                        <td style="padding:12px 16px; color:var(--text-muted);">${c.lifetime_points} pts</td>
+                        <td style="padding:12px 16px;">${c.visits_count || 0} commandes</td>
+                        <td style="padding:12px 16px; font-weight:700; color:#34d399;">${((c.total_spent_cents || 0)/100).toFixed(2)} €</td>
+                        <td style="padding:12px 16px; text-align:right;">
+                            <button class="action-btn secondary" onclick="openAdjustPointsModal('${c.id}', '${(c.full_name || c.phone).replace(/'/g, "\\'")}', ${c.current_points})" style="font-size:11px; padding:5px 10px;">
+                                <i class="fa-solid fa-coins" style="color:#f59e0b;"></i> Ajuster
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error('Erreur chargement clients fidélité:', err);
+            }
+        }
+
+        let searchTimeout = null;
+        function filterLoyaltyCustomers(val) {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                loadLoyaltyCustomers(null, val.trim());
+            }, 300);
+        }
+
+        async function saveLoyaltySettings(event) {
+            event.preventDefault();
+            const body = {
+                program_name: document.getElementById('settings-prog-name').value.trim(),
+                points_per_eur: parseFloat(document.getElementById('settings-points-eur').value),
+                welcome_bonus_points: parseInt(document.getElementById('settings-welcome-bonus').value, 10),
+                min_points_to_redeem: parseInt(document.getElementById('settings-min-points').value, 10),
+                tier_vip_threshold: parseInt(document.getElementById('settings-vip-threshold').value, 10),
+                terms_and_conditions: document.getElementById('settings-terms').value.trim(),
+                is_enabled: document.getElementById('settings-enabled').checked
+            };
+
+            try {
+                const res = await fetch('/api/loyalty/program', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loyaltyProgramData = data.settings;
+                    alert('Paramètres du programme fidélité enregistrés avec succès !');
+                    fetchLoyaltyDashboardData();
+                }
+            } catch (err) {
+                console.error('Erreur sauvegarde paramètres fidélité:', err);
+                alert('Erreur lors de l\'enregistrement des paramètres.');
+            }
+        }
+
+        function openRewardModal(rewardId = null) {
+            editingRewardId = rewardId;
+            const modal = document.getElementById('loyalty-reward-modal-overlay');
+            const titleEl = document.getElementById('loyalty-reward-modal-title');
+            if (modal) modal.style.display = 'flex';
+
+            if (rewardId) {
+                const reward = loyaltyRewardsData.find(r => r.id === rewardId);
+                if (reward) {
+                    if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-pen-to-square" style="color:#f59e0b;"></i> Modifier l\'Offre Récompense';
+                    document.getElementById('reward-input-id').value = reward.id;
+                    document.getElementById('reward-input-title').value = reward.title;
+                    document.getElementById('reward-input-desc').value = reward.description || '';
+                    document.getElementById('reward-input-cost').value = reward.points_cost;
+                    document.getElementById('reward-input-type').value = reward.reward_type;
+                    document.getElementById('reward-input-val').value = reward.discount_value || 0;
+                    document.getElementById('reward-input-icon').value = reward.icon || 'fa-gift';
+                    document.getElementById('reward-input-active').checked = reward.is_active;
+                }
+            } else {
+                if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-circle-plus" style="color:#f59e0b;"></i> Créer une Offre Récompense';
+                document.getElementById('reward-input-id').value = '';
+                document.getElementById('reward-input-title').value = '';
+                document.getElementById('reward-input-desc').value = '';
+                document.getElementById('reward-input-cost').value = '100';
+                document.getElementById('reward-input-type').value = 'free_item';
+                document.getElementById('reward-input-val').value = '6.5';
+                document.getElementById('reward-input-icon').value = 'fa-cake-candles';
+                document.getElementById('reward-input-active').checked = true;
+            }
+        }
+
+        function closeRewardModal() {
+            const modal = document.getElementById('loyalty-reward-modal-overlay');
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function saveRewardForm(event) {
+            event.preventDefault();
+            const id = document.getElementById('reward-input-id').value;
+            const body = {
+                title: document.getElementById('reward-input-title').value.trim(),
+                description: document.getElementById('reward-input-desc').value.trim(),
+                points_cost: parseInt(document.getElementById('reward-input-cost').value, 10),
+                reward_type: document.getElementById('reward-input-type').value,
+                discount_value: parseFloat(document.getElementById('reward-input-val').value || 0),
+                icon: document.getElementById('reward-input-icon').value,
+                is_active: document.getElementById('reward-input-active').checked
+            };
+
+            try {
+                const url = id ? `/api/loyalty/rewards/${id}` : '/api/loyalty/rewards';
+                const method = id ? 'PUT' : 'POST';
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeRewardModal();
+                    fetchLoyaltyDashboardData();
+                } else {
+                    alert(data.error || 'Erreur lors de l\'enregistrement de l\'offre.');
+                }
+            } catch (err) {
+                console.error('Erreur sauvegarde offre récompense:', err);
+                alert('Erreur serveur lors de l\'enregistrement.');
+            }
+        }
+
+        async function toggleRewardStatus(rewardId, currentActive) {
+            try {
+                const res = await fetch(`/api/loyalty/rewards/${rewardId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_active: !currentActive })
+                });
+                if (res.ok) fetchLoyaltyDashboardData();
+            } catch (err) {
+                console.error('Erreur toggle statut offre:', err);
+            }
+        }
+
+        async function deleteReward(rewardId) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette offre récompense ?')) return;
+            try {
+                const res = await fetch(`/api/loyalty/rewards/${rewardId}`, { method: 'DELETE' });
+                if (res.ok) fetchLoyaltyDashboardData();
+            } catch (err) {
+                console.error('Erreur suppression offre:', err);
+            }
+        }
+
+        function openAdjustPointsModal(customerId, name, currentPts) {
+            currentAdjustingCustomerId = customerId;
+            const modal = document.getElementById('loyalty-adjust-modal-overlay');
+            if (modal) modal.style.display = 'flex';
+            document.getElementById('adjust-cust-name').innerText = name;
+            document.getElementById('adjust-cust-points').innerText = `${currentPts} pts`;
+            document.getElementById('adjust-input-points').value = '';
+            document.getElementById('adjust-input-note').value = '';
+        }
+
+        function closeAdjustPointsModal() {
+            const modal = document.getElementById('loyalty-adjust-modal-overlay');
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function submitAdjustPointsForm(event) {
+            event.preventDefault();
+            if (!currentAdjustingCustomerId) return;
+
+            const pointsChange = parseInt(document.getElementById('adjust-input-points').value, 10);
+            const reason = document.getElementById('adjust-input-reason').value;
+            const notes = document.getElementById('adjust-input-note').value.trim();
+
+            try {
+                const res = await fetch('/api/loyalty/adjust-points', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        customer_id: currentAdjustingCustomerId,
+                        points_change: pointsChange,
+                        reason,
+                        notes
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeAdjustPointsModal();
+                    alert(data.message);
+                    loadLoyaltyCustomers();
+                    fetchLoyaltyDashboardData();
+                } else {
+                    alert(data.error || 'Erreur lors de l\'ajustement.');
+                }
+            } catch (err) {
+                console.error('Erreur ajustement points:', err);
+                alert('Erreur serveur.');
+            }
+        }
 
         function startKDSTour() {
             kdsTourStep = 0;

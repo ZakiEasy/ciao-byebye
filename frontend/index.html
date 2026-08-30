@@ -202,14 +202,83 @@
             <div class="empty-cart-message" data-i18n="cart_empty">Votre panier est vide.</div>
         </div>
 
+        <!-- Loyalty Program & Rewards Section in Cart -->
+        <div class="cart-loyalty-section" id="cart-loyalty-section">
+            <div class="loyalty-card-header">
+                <div class="loyalty-title-wrap">
+                    <i class="fa-solid fa-crown" style="color:#f59e0b;"></i>
+                    <span class="loyalty-title">Programme Fidélité</span>
+                </div>
+                <span class="loyalty-badge-status" id="loyalty-badge-status">1€ = 1 pt</span>
+            </div>
+            
+            <!-- Phone / Email Lookup Box -->
+            <div id="loyalty-lookup-box" class="loyalty-box">
+                <div class="loyalty-input-row">
+                    <div class="loyalty-input-wrapper">
+                        <i class="fa-solid fa-mobile-screen"></i>
+                        <input type="tel" id="loyalty-phone-input" placeholder="Votre n° mobile (ex: 06 12 34 56 78)" onkeydown="if(event.key==='Enter') lookupLoyaltyCustomer()">
+                    </div>
+                    <button type="button" class="loyalty-lookup-btn" onclick="lookupLoyaltyCustomer()" title="Vérifier mes points">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+                <div class="loyalty-join-hint" id="loyalty-join-hint">
+                    <i class="fa-solid fa-gift" style="color:#ec4899;"></i> Nouveau ? +25 pts offerts dès votre 1ère commande !
+                </div>
+            </div>
+
+            <!-- Member Active Profile & Rewards Box -->
+            <div id="loyalty-member-box" class="loyalty-box" style="display: none;">
+                <div class="member-header">
+                    <div class="member-info">
+                        <span class="member-name" id="loyalty-member-name">Thomas Dubois</span>
+                        <span class="member-tier" id="loyalty-member-tier"><i class="fa-solid fa-gem"></i> Membre Privilège</span>
+                    </div>
+                    <div class="member-balance">
+                        <span class="pts-val" id="loyalty-member-points">145</span>
+                        <span class="pts-lbl">points ⭐</span>
+                    </div>
+                </div>
+
+                <!-- Unlocked Rewards Picker -->
+                <div class="rewards-picker-container" id="rewards-picker-container">
+                    <label class="rewards-picker-label"><i class="fa-solid fa-wand-magic-sparkles"></i> Récompenses débloquées :</label>
+                    <div class="rewards-chips-list" id="rewards-chips-list">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- Active Reward Applied Alert -->
+                <div id="loyalty-applied-alert" class="loyalty-applied-alert" style="display:none;">
+                    <div class="applied-alert-left">
+                        <i class="fa-solid fa-circle-check" style="color:#10b981;"></i>
+                        <div>
+                            <strong id="applied-reward-title">Dessert Signature Offert</strong>
+                            <span id="applied-reward-desc" style="display:block; font-size:11px; color:#94a3b8;">-100 pts déduits</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-remove-reward" onclick="removeAppliedReward()" title="Retirer l'offre"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+        </div>
+
         <div class="cart-summary">
             <div class="summary-line">
                 <span data-i18n="cart_subtotal">Sous-total</span>
                 <span id="summary-subtotal">0.00 €</span>
             </div>
+            <div class="summary-line loyalty-discount-row" id="summary-loyalty-discount-row" style="display:none; color:#34d399; font-weight:600;">
+                <span><i class="fa-solid fa-tag"></i> Remise Fidélité (<span id="summary-loyalty-discount-name">Offre</span>)</span>
+                <span id="summary-loyalty-discount-val">-0.00 €</span>
+            </div>
             <div class="summary-line total">
                 <span data-i18n="cart_total">Total</span>
                 <span id="summary-total">0.00 €</span>
+            </div>
+            <div class="loyalty-order-gain" id="loyalty-order-gain" style="font-size:12px; color:#f59e0b; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; background:rgba(245,158,11,0.08); border:1px dashed rgba(245,158,11,0.3); padding:8px 12px; border-radius:8px;">
+                <span><i class="fa-solid fa-coins"></i> Gain sur cette commande :</span>
+                <strong id="loyalty-order-gain-pts">+0 pts</strong>
             </div>
             
             <button class="pay-btn" onclick="proceedToPayment()">
@@ -459,6 +528,9 @@
             <p><strong><span data-i18n="order_prefix">Commande</span> :</strong> #<span id="success-order-id">M-8492</span></p>
             <p><strong><span data-i18n="queue_prefix">Position File d'Attente</span> :</strong> <span id="success-queue-pos" style="color:var(--primary); font-weight:700;">#Q-1</span></p>
             <p id="success-payment-status-row"><strong><span data-i18n="payment_status_label">Règlement</span> :</strong> <span id="success-payment-status-badge" class="paid-tag">✅ Payé Stripe</span></p>
+            <p id="success-loyalty-row" style="display:none; color:#f59e0b; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3); padding:6px 10px; border-radius:6px;">
+                <strong><i class="fa-solid fa-star"></i> Points Fidélité :</strong> <span id="success-loyalty-text">+0 pts cumulés</span>
+            </p>
             <p class="pickup-notif-toast"><i class="fa-solid fa-bell"></i> <span data-i18n="pickup_toast">Vous recevrez une alerte sur votre écran dès qu'elle sera prête au comptoir de retrait !</span></p>
         </div>
 

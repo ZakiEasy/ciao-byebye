@@ -729,6 +729,24 @@ function openActiveOrderModal() {
         }
     }
 
+    const loyaltyRow = document.getElementById('success-loyalty-row');
+    const loyaltyText = document.getElementById('success-loyalty-text');
+    if (loyaltyRow && activeOrder.loyalty) {
+        loyaltyRow.style.display = 'block';
+        if (loyaltyText) {
+            let msg = `+${activeOrder.loyalty.pointsEarned || 0} pts cumulés`;
+            if (activeOrder.loyalty.newBalance !== undefined) {
+                msg += ` (Nouveau solde : ${activeOrder.loyalty.newBalance} pts ⭐)`;
+            }
+            if (activeOrder.loyalty.rewardApplied) {
+                msg += ` — Offre "${activeOrder.loyalty.rewardApplied.title}" appliquée !`;
+            }
+            loyaltyText.innerText = msg;
+        }
+    } else if (loyaltyRow) {
+        loyaltyRow.style.display = 'none';
+    }
+
     // Populate Order Items in Accordion
     const itemsCountEl = document.getElementById('success-items-count');
     const itemsListEl = document.getElementById('success-order-items-list');
@@ -936,6 +954,7 @@ document.addEventListener('DOMContentLoaded', () => {
     requestNotificationPermission();
     loadMenu();
     initClientSession();
+    fetchLoyaltyProgram();
 });
 
 async function loadMenu() {
@@ -1526,13 +1545,201 @@ function updateCartItemQty(cartItemId, delta) {
     renderMenu();
 }
 
+let currentLoyaltyCustomer = null;
+let currentLoyaltyProgram = { is_enabled: true, points_per_eur: 1.0, welcome_bonus_points: 25 };
+let currentAppliedReward = null;
+let currentLoyaltyDiscountAmount = 0;
+let eligibleRewardsList = [];
+
+async function fetchLoyaltyProgram() {
+    try {
+        const res = await fetch('/api/loyalty/program');
+        if (res.ok) {
+            currentLoyaltyProgram = await res.json();
+            const loyaltySection = document.getElementById('cart-loyalty-section');
+            if (loyaltySection) {
+                if (!currentLoyaltyProgram.is_enabled || currentLoyaltyProgram.tier_locked) {
+                    loyaltySection.style.display = 'none';
+                    return;
+                } else {
+                    loyaltySection.style.display = 'block';
+                }
+            }
+            const badge = document.getElementById('loyalty-badge-status');
+            if (badge) {
+                badge.innerText = `1€ = ${currentLoyaltyProgram.points_per_eur || 1} pt${(currentLoyaltyProgram.points_per_eur > 1) ? 's' : ''}`;
+            }
+            const hint = document.getElementById('loyalty-join-hint');
+            if (hint) {
+                hint.innerHTML = `<i class="fa-solid fa-gift" style="color:#ec4899;"></i> Nouveau ? +${currentLoyaltyProgram.welcome_bonus_points || 25} pts offerts dès votre 1ère commande !`;
+            }
+        }
+    } catch (e) {
+        console.warn('[LOYALTY] Erreur chargement programme:', e);
+    }
+}
+
+async function lookupLoyaltyCustomer() {
+    const input = document.getElementById('loyalty-phone-input');
+    const phone = input ? input.value.trim() : '';
+    if (!phone || phone.length < 6) {
+        alert('Veuillez renseigner un numéro de téléphone valide (ex: 06 12 34 56 78).');
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/loyalty/lookup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone })
+        });
+        const data = await res.json();
+
+        if (data.found && data.customer) {
+            currentLoyaltyCustomer = data.customer;
+            eligibleRewardsList = data.eligible_rewards || [];
+            renderLoyaltyMemberUI();
+        } else {
+            const clientName = (clientNameInput && clientNameInput.value ? clientNameInput.value.trim() : '') || 'Nouveau Membre';
+            const doEnroll = confirm(`Le numéro ${phone} n'est pas encore membre. Souhaitez-vous adhérer gratuitement et recevoir +${data.welcome_bonus_points || 25} points de bienvenue immédiatement ?`);
+            if (doEnroll) {
+                const enrollRes = await fetch('/api/loyalty/enroll', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, full_name: clientName })
+                });
+                const enrollData = await enrollRes.json();
+                if (enrollData.success) {
+                    currentLoyaltyCustomer = enrollData.customer;
+                    eligibleRewardsList = [];
+                    renderLoyaltyMemberUI();
+                    alert(`🎉 Félicitations ${currentLoyaltyCustomer.full_name} ! Vous avez reçu ${enrollData.welcome_bonus_credited || 25} points de bienvenue.`);
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Erreur lookup fidélité:', err);
+        alert('Erreur lors de la recherche du compte fidélité.');
+    }
+}
+
+function renderLoyaltyMemberUI() {
+    const lookupBox = document.getElementById('loyalty-lookup-box');
+    const memberBox = document.getElementById('loyalty-member-box');
+    if (lookupBox) lookupBox.style.display = 'none';
+    if (memberBox) memberBox.style.display = 'block';
+
+    const nameEl = document.getElementById('loyalty-member-name');
+    if (nameEl) nameEl.innerText = currentLoyaltyCustomer.full_name || 'Membre Club';
+
+    const tierEl = document.getElementById('loyalty-member-tier');
+    if (tierEl) {
+        tierEl.innerHTML = currentLoyaltyCustomer.vip_status ? '<i class="fa-solid fa-crown" style="color:#f59e0b;"></i> Membre VIP (Points x1.5)' : '<i class="fa-solid fa-gem" style="color:#38bdf8;"></i> Membre Privilège';
+    }
+
+    const ptsEl = document.getElementById('loyalty-member-points');
+    if (ptsEl) ptsEl.innerText = currentLoyaltyCustomer.current_points;
+
+    renderEligibleRewardsChips();
+    updateCartUI();
+}
+
+function renderEligibleRewardsChips() {
+    const container = document.getElementById('rewards-chips-list');
+    if (!container) return;
+
+    if (!eligibleRewardsList || eligibleRewardsList.length === 0) {
+        container.innerHTML = `<div style="font-size:11px; color:#94a3b8; padding:6px 0;">Aucune offre débloquée pour le moment (dès 50 pts).</div>`;
+        return;
+    }
+
+    container.innerHTML = eligibleRewardsList.map(r => {
+        const isSelected = currentAppliedReward && currentAppliedReward.id === r.id;
+        return `
+            <button type="button" class="reward-chip-btn ${isSelected ? 'active' : ''}" onclick="selectLoyaltyReward('${r.id}')">
+                <div>
+                    <i class="fa-solid ${r.icon || 'fa-gift'}" style="color:${r.badge_color || '#f59e0b'}; margin-right:6px;"></i>
+                    <strong>${r.title}</strong>
+                </div>
+                <span class="reward-cost-tag">${r.points_cost} pts</span>
+            </button>
+        `;
+    }).join('');
+}
+
+async function selectLoyaltyReward(rewardId) {
+    const reward = eligibleRewardsList.find(r => r.id === rewardId);
+    if (!reward || !currentLoyaltyCustomer) return;
+
+    if (currentAppliedReward && currentAppliedReward.id === rewardId) {
+        removeAppliedReward();
+        return;
+    }
+
+    const fullSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const cartCents = Math.round(fullSubtotal * 100);
+
+    try {
+        const res = await fetch('/api/loyalty/claim-reward', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                customer_id: currentLoyaltyCustomer.id,
+                reward_id: reward.id,
+                cart_total_cents: cartCents
+            })
+        });
+        const data = await res.json();
+        if (data.success && data.eligible) {
+            currentAppliedReward = reward;
+            currentLoyaltyDiscountAmount = data.discount_cents / 100;
+
+            const alertEl = document.getElementById('loyalty-applied-alert');
+            if (alertEl) alertEl.style.display = 'flex';
+            const titleEl = document.getElementById('applied-reward-title');
+            if (titleEl) titleEl.innerText = reward.title;
+            const descEl = document.getElementById('applied-reward-desc');
+            if (descEl) descEl.innerText = `-${reward.points_cost} pts (Remise: -${formatPrice(currentLoyaltyDiscountAmount)})`;
+
+            renderEligibleRewardsChips();
+            updateCartUI();
+        } else {
+            alert(data.error || 'Cette récompense ne peut pas être appliquée.');
+        }
+    } catch (e) {
+        console.error('Erreur claim reward:', e);
+    }
+}
+
+function removeAppliedReward() {
+    currentAppliedReward = null;
+    currentLoyaltyDiscountAmount = 0;
+    const alertEl = document.getElementById('loyalty-applied-alert');
+    if (alertEl) alertEl.style.display = 'none';
+    renderEligibleRewardsChips();
+    updateCartUI();
+}
+
 function updateCartUI() {
     const t = translations[currentLang] || translations.fr;
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const rawTotalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    // Recalcul de la réduction fidélité si une offre est active
+    if (currentAppliedReward) {
+        if (currentAppliedReward.reward_type === 'percent_discount') {
+            currentLoyaltyDiscountAmount = rawTotalPrice * (parseFloat(currentAppliedReward.discount_value) / 100);
+        } else if (currentAppliedReward.reward_type === 'fixed_discount' || currentAppliedReward.reward_type === 'free_drink' || currentAppliedReward.reward_type === 'free_item') {
+            currentLoyaltyDiscountAmount = Math.min(rawTotalPrice, parseFloat(currentAppliedReward.discount_value || 0));
+        }
+    } else {
+        currentLoyaltyDiscountAmount = 0;
+    }
+
+    const effectiveTotal = Math.max(0, rawTotalPrice - currentLoyaltyDiscountAmount);
 
     cartBadge.innerText = totalItems;
-    cartBtnTotal.innerText = formatPrice(totalPrice);
+    cartBtnTotal.innerText = formatPrice(effectiveTotal);
 
     if (totalItems > 0) {
         cartFloatingBtn.classList.add('active');
@@ -1585,8 +1792,29 @@ function updateCartUI() {
         }).join('');
     }
 
-    summarySubtotal.innerText = formatPrice(totalPrice);
-    summaryTotal.innerText = formatPrice(totalPrice);
+    summarySubtotal.innerText = formatPrice(rawTotalPrice);
+
+    const loyaltyDiscRow = document.getElementById('summary-loyalty-discount-row');
+    const loyaltyDiscName = document.getElementById('summary-loyalty-discount-name');
+    const loyaltyDiscVal = document.getElementById('summary-loyalty-discount-val');
+    if (loyaltyDiscRow) {
+        if (currentLoyaltyDiscountAmount > 0 && currentAppliedReward) {
+            loyaltyDiscRow.style.display = 'flex';
+            if (loyaltyDiscName) loyaltyDiscName.innerText = currentAppliedReward.title;
+            if (loyaltyDiscVal) loyaltyDiscVal.innerText = `-${formatPrice(currentLoyaltyDiscountAmount)}`;
+        } else {
+            loyaltyDiscRow.style.display = 'none';
+        }
+    }
+
+    summaryTotal.innerText = formatPrice(effectiveTotal);
+
+    // Calcul du gain de points estimé sur cette commande
+    const pointsPerEur = currentLoyaltyProgram?.points_per_eur || 1.0;
+    const vipMult = (currentLoyaltyCustomer?.vip_status) ? 1.5 : 1.0;
+    const estimatedGain = Math.floor(effectiveTotal * pointsPerEur * vipMult);
+    const gainPtsEl = document.getElementById('loyalty-order-gain-pts');
+    if (gainPtsEl) gainPtsEl.innerText = `+${estimatedGain} pts`;
 }
 
 function toggleCart() {
@@ -1819,6 +2047,11 @@ async function simulatePaymentSuccess() {
     const tipAmountCents = Math.round(tipAmount * 100);
     const ticketRestoCents = selectedPaymentMethod === 'titre_restaurant' ? Math.round(currentTicketRestoAmount * 100) : 0;
 
+    const customerPhone = currentLoyaltyCustomer?.phone || (document.getElementById('loyalty-phone-input') ? document.getElementById('loyalty-phone-input').value.trim() : null);
+    const customerEmail = currentLoyaltyCustomer?.email || null;
+    const appliedRewardId = currentAppliedReward ? currentAppliedReward.id : null;
+    const loyaltyDiscountCents = Math.round((currentLoyaltyDiscountAmount || 0) * 100);
+
     try {
         const response = await fetch('/api/orders/mock-create', {
             method: 'POST',
@@ -1831,6 +2064,10 @@ async function simulatePaymentSuccess() {
                 splitCount: currentSplitCount,
                 splitPartIndex: currentSplitPart,
                 ticketRestoAmountCents: ticketRestoCents,
+                customerPhone,
+                customerEmail,
+                appliedRewardId,
+                loyaltyDiscountCents,
                 items: cart.map(item => ({
                     id: item.id,
                     name: item.name,
@@ -1879,9 +2116,22 @@ async function simulatePaymentSuccess() {
             subtotal: splitPartBase,
             tipAmount: tipAmount,
             ticketRestoAmount: selectedPaymentMethod === 'titre_restaurant' ? currentTicketRestoAmount : 0,
+            loyalty: data.loyalty,
             totalAmount: splitPartBase + tipAmount,
             createdAt: Date.now()
         });
+
+        if (data.loyalty && currentLoyaltyCustomer) {
+            currentLoyaltyCustomer.current_points = data.loyalty.newBalance;
+            const ptsEl = document.getElementById('loyalty-member-points');
+            if (ptsEl) ptsEl.innerText = data.loyalty.newBalance;
+        }
+
+        // Reset applied reward
+        currentAppliedReward = null;
+        currentLoyaltyDiscountAmount = 0;
+        const alertEl = document.getElementById('loyalty-applied-alert');
+        if (alertEl) alertEl.style.display = 'none';
 
         openActiveOrderModal();
         

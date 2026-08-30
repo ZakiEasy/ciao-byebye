@@ -533,16 +533,16 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         assert.strictEqual(presetData.success, true);
         assert.ok(presetData.modules.every(m => m.is_enabled === true));
 
-        // Tester l'application d'une verticale métier (Café / Bar)
+        // Tester l'application d'une verticale métier (Café / Bar puis Bistro)
         const vertRes = await fetch(`${BASE_URL}/api/modules/vertical`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ vertical: 'cafe_bar' })
+            body: JSON.stringify({ vertical: 'bistro' })
         });
         assert.strictEqual(vertRes.status, 200);
         const vertData = await vertRes.json();
         assert.strictEqual(vertData.success, true);
-        assert.strictEqual(vertData.vertical, 'cafe_bar');
+        assert.strictEqual(vertData.vertical, 'bistro');
     });
 
     test('28. POST /api/orders/mock-create with seats, allergies, modifiers & course suites', async () => {
@@ -1123,6 +1123,230 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         const bumpedOrder = orders.find(o => o.id === orderData.orderId);
         assert.ok(bumpedOrder);
         assert.strictEqual(bumpedOrder.order_status, 'prete');
+    });
+
+    test('45. GET /api/health and GET /health - should return infrastructure health and database latency', async () => {
+        const res = await fetch(`${BASE_URL}/api/health`);
+        assert.strictEqual(res.status, 200);
+        const data = await res.json();
+        assert.strictEqual(data.status, 'healthy');
+        assert.ok(data.database.status === 'healthy' || data.database.status === 'connected');
+        assert.ok(typeof data.database.latency_ms === 'number');
+        assert.ok(data.system.memory_heap_used_mb);
+        assert.ok(data.telemetry);
+
+        const rootRes = await fetch(`${BASE_URL}/health`);
+        assert.strictEqual(rootRes.status, 200);
+    });
+
+    test('46. GET & PUT /api/loyalty/program - should fetch and update loyalty program settings', async () => {
+        const getRes = await fetch(`${BASE_URL}/api/loyalty/program`);
+        assert.strictEqual(getRes.status, 200);
+        const prog = await getRes.json();
+        assert.ok(prog.program_name);
+        assert.ok(prog.points_per_eur >= 1);
+
+        const putRes = await fetch(`${BASE_URL}/api/loyalty/program`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                program_name: 'Club Privilège Atelier Chris',
+                points_per_eur: 1.0,
+                welcome_bonus_points: 30
+            })
+        });
+        assert.strictEqual(putRes.status, 200);
+        const putData = await putRes.json();
+        assert.strictEqual(putData.success, true);
+        assert.strictEqual(putData.settings.welcome_bonus_points, 30);
+    });
+
+    test('47. GET & POST & DELETE /api/loyalty/rewards - should manage loyalty reward offers', async () => {
+        const getRes = await fetch(`${BASE_URL}/api/loyalty/rewards`);
+        assert.strictEqual(getRes.status, 200);
+        const rewards = await getRes.json();
+        assert.ok(Array.isArray(rewards));
+        assert.ok(rewards.length >= 3);
+
+        // Create new reward
+        const postRes = await fetch(`${BASE_URL}/api/loyalty/rewards`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: 'Digestif du Chef Offert',
+                description: 'Limoncello artisanal offert',
+                points_cost: 75,
+                reward_type: 'free_drink',
+                discount_value: 5.0,
+                icon: 'fa-wine-glass'
+            })
+        });
+        assert.strictEqual(postRes.status, 201);
+        const postData = await postRes.json();
+        assert.strictEqual(postData.success, true);
+        assert.ok(postData.reward.id);
+
+        // Delete test reward
+        const delRes = await fetch(`${BASE_URL}/api/loyalty/rewards/${postData.reward.id}`, {
+            method: 'DELETE'
+        });
+        assert.strictEqual(delRes.status, 200);
+    });
+
+    test('48. POST /api/loyalty/lookup - should find existing customer by phone and return eligible rewards', async () => {
+        const res = await fetch(`${BASE_URL}/api/loyalty/lookup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: '0612345678' })
+        });
+        assert.strictEqual(res.status, 200);
+        const data = await res.json();
+        assert.strictEqual(data.found, true);
+        assert.strictEqual(data.customer.full_name, 'Thomas Dubois');
+        assert.ok(data.customer.current_points >= 100);
+        assert.ok(Array.isArray(data.eligible_rewards));
+        assert.ok(data.eligible_rewards.length > 0);
+    });
+
+    test('49. POST /api/loyalty/enroll - should create new member with welcome bonus', async () => {
+        const testPhone = `0699${Math.floor(100000 + Math.random() * 900000)}`;
+        const res = await fetch(`${BASE_URL}/api/loyalty/enroll`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phone: testPhone,
+                full_name: 'Test Nouvel Adhérent',
+                email: 'nouveau@test.fr'
+            })
+        });
+        assert.strictEqual(res.status, 201);
+        const data = await res.json();
+        assert.strictEqual(data.success, true);
+        assert.strictEqual(data.customer.phone, testPhone);
+        assert.ok(data.customer.current_points >= 25);
+    });
+
+    test('50. POST /api/loyalty/claim-reward - should calculate discount for eligible customer', async () => {
+        const lookupRes = await fetch(`${BASE_URL}/api/loyalty/lookup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: '0612345678' })
+        });
+        const lookupData = await lookupRes.json();
+        assert.ok(lookupData.customer);
+        const reward = lookupData.eligible_rewards[0];
+        assert.ok(reward);
+
+        const claimRes = await fetch(`${BASE_URL}/api/loyalty/claim-reward`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                customer_id: lookupData.customer.id,
+                reward_id: reward.id,
+                cart_total_cents: 3500
+            })
+        });
+        assert.strictEqual(claimRes.status, 200);
+        const claimData = await claimRes.json();
+        assert.strictEqual(claimData.success, true);
+        assert.strictEqual(claimData.eligible, true);
+        assert.ok(claimData.discount_cents > 0);
+    });
+
+    test('51. POST /api/loyalty/adjust-points - should adjust member balance and record transaction ledger', async () => {
+        const lookupRes = await fetch(`${BASE_URL}/api/loyalty/lookup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: '0612345678' })
+        });
+        const lookupData = await lookupRes.json();
+        const initialPoints = lookupData.customer.current_points;
+
+        const adjustRes = await fetch(`${BASE_URL}/api/loyalty/adjust-points`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                customer_id: lookupData.customer.id,
+                points_change: 25,
+                reason: 'promo_bonus',
+                notes: 'Test geste fidélité'
+            })
+        });
+        assert.strictEqual(adjustRes.status, 200);
+        const adjustData = await adjustRes.json();
+        assert.strictEqual(adjustData.success, true);
+        assert.strictEqual(adjustData.customer.current_points, initialPoints + 25);
+    });
+
+    test('52. POST /api/orders/mock-create with Loyalty - should earn points and deduct reward discount', async () => {
+        // Garantir que l'offre Pro est active
+        await fetch(`${BASE_URL}/api/modules/preset`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tier: 'pro' })
+        });
+
+        const phone = '0612345678'; // Thomas Dubois (solde initial 145+ pts)
+        const rewardsRes = await fetch(`${BASE_URL}/api/loyalty/rewards`);
+        const rewards = await rewardsRes.json();
+        const coffeeReward = rewards.find(r => r.reward_type === 'free_drink' && r.points_cost <= 50) || rewards[0];
+
+        const orderRes = await fetch(`${BASE_URL}/api/orders/mock-create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: '12',
+                clientName: 'Thomas Dubois',
+                customerPhone: phone,
+                appliedRewardId: coffeeReward.id,
+                loyaltyDiscountCents: 250,
+                items: [
+                    { name: 'Burger Maison', price: 18.0, quantity: 1, station: 'chaud' },
+                    { name: 'Café Espresso', price: 2.5, quantity: 1, station: 'bar' }
+                ]
+            })
+        });
+
+        assert.strictEqual(orderRes.status, 200);
+        const orderData = await orderRes.json();
+        assert.ok(orderData.orderId);
+        assert.ok(orderData.loyalty);
+        assert.ok(orderData.loyalty.pointsEarned > 0);
+        assert.ok(orderData.loyalty.newBalance !== undefined);
+        assert.ok(orderData.loyalty.rewardApplied);
+        assert.strictEqual(orderData.loyalty.rewardApplied.title, coffeeReward.title);
+    });
+
+    test('53. GET /api/loyalty/program - should enforce Pro tier (99€) requirement and lock for Essentiel tier (49€)', async () => {
+        // 1. Switch to Essentiel preset
+        const essRes = await fetch(`${BASE_URL}/api/modules/preset`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tier: 'essentiel' })
+        });
+        assert.strictEqual(essRes.status, 200);
+
+        // Check loyalty program is now locked
+        const progEssRes = await fetch(`${BASE_URL}/api/loyalty/program`);
+        const progEss = await progEssRes.json();
+        assert.strictEqual(progEss.tier_locked, true);
+        assert.strictEqual(progEss.is_enabled, false);
+        assert.strictEqual(progEss.required_tier, 'pro');
+        assert.strictEqual(progEss.required_tier_price_ht, 99);
+
+        // 2. Switch back to Pro preset (99€)
+        const proRes = await fetch(`${BASE_URL}/api/modules/preset`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tier: 'pro' })
+        });
+        assert.strictEqual(proRes.status, 200);
+
+        // Check loyalty program is unlocked
+        const progProRes = await fetch(`${BASE_URL}/api/loyalty/program`);
+        const progPro = await progProRes.json();
+        assert.strictEqual(progPro.tier_locked, false);
+        assert.strictEqual(progPro.is_enabled, true);
     });
 });
 
