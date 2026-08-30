@@ -5073,3 +5073,31 @@ input:checked + .switch-slider:before {
     width: 16px;
     height: 16px;
 }
+
+/* QR Code Live Camera Scanner */
+#qr-camera-reader {
+    width: 100% !important;
+    max-width: 360px !important;
+    margin: 0 auto;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(192, 132, 252, 0.4);
+    position: relative;
+}
+
+#qr-camera-reader video {
+    width: 100% !important;
+    height: auto !important;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+#qr-camera-reader__scan_region {
+    background: transparent !important;
+}
+
+#qr-camera-reader__dashboard {
+    display: none !important;
+}
