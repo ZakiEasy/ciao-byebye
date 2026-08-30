@@ -390,7 +390,7 @@ function formatPrice(euroAmount) {
     return curr.position === 'before' ? `${curr.symbol} ${formattedNum}` : `${formattedNum} ${curr.symbol}`;
 }
 
-let paymentGateways = { stripe_card_enabled: false, cash_collection_enabled: true, ticket_restaurant_enabled: true };
+let paymentGateways = { stripe_card_enabled: false, cash_collection_enabled: true, ticket_restaurant_enabled: false };
 
 async function fetchPaymentGateways() {
     try {
@@ -406,21 +406,39 @@ async function fetchPaymentGateways() {
 
 function applyPaymentGatewaysUI() {
     const tabCard = document.getElementById('tab-pay-card');
+    const tabResto = document.getElementById('tab-pay-ticket-resto');
+
+    // 1. Carte bancaire Stripe
     if (paymentGateways && !paymentGateways.stripe_card_enabled) {
-        if (tabCard) {
-            tabCard.style.display = 'none';
-        }
-        if (selectedPaymentMethod === 'carte' || !selectedPaymentMethod) {
+        if (tabCard) tabCard.style.display = 'none';
+        if (selectedPaymentMethod === 'carte') {
             setPaymentMethod('especes');
         }
     } else if (tabCard) {
         tabCard.style.display = 'inline-flex';
+    }
+
+    // 2. Titres-Restaurant (CONECS / Edenred / Swile / Pluxee)
+    if (paymentGateways && !paymentGateways.ticket_restaurant_enabled) {
+        if (tabResto) tabResto.style.display = 'none';
+        if (selectedPaymentMethod === 'titre_restaurant') {
+            setPaymentMethod('especes');
+        }
+    } else if (tabResto) {
+        tabResto.style.display = 'inline-flex';
+    }
+
+    if (!selectedPaymentMethod) {
+        setPaymentMethod('especes');
     }
 }
 
 // Payment method switcher
 function setPaymentMethod(method) {
     if (method === 'carte' && paymentGateways && !paymentGateways.stripe_card_enabled) {
+        method = 'especes';
+    }
+    if (method === 'titre_restaurant' && paymentGateways && !paymentGateways.ticket_restaurant_enabled) {
         method = 'especes';
     }
 

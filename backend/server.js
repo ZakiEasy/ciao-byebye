@@ -154,7 +154,7 @@ async function initDatabase() {
         thefork_url TEXT DEFAULT '',
         auto_redirect_positive_reviews BOOLEAN DEFAULT true,
         min_rating_for_redirect INT DEFAULT 4,
-        ticket_restaurant_enabled BOOLEAN DEFAULT true,
+        ticket_restaurant_enabled BOOLEAN DEFAULT false,
         ticket_restaurant_max_daily_cents INT DEFAULT 2500,
         bill_splitting_enabled BOOLEAN DEFAULT true,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -782,7 +782,7 @@ app.get('/api/tables/:number/shared-orders', async (req, res) => {
   }
 });
 
-// 2.8. État des passerelles de paiement (Blocage CB si Stripe non configuré)
+// 2.8. État des passerelles de paiement (Blocage CB si Stripe non configuré, Blocage Titres-Resto si non configuré)
 app.get('/api/settings/payment-gateways', async (req, res) => {
   const stripeKey = process.env.STRIPE_SECRET_KEY || '';
   const isStripeConfigured = Boolean(
@@ -793,14 +793,28 @@ app.get('/api/settings/payment-gateways', async (req, res) => {
     process.env.STRIPE_ACCOUNT_CONNECTED === 'true'
   );
 
+  let isTicketRestoConfigured = false;
+  try {
+    const settingsRes = await pool.query('SELECT ticket_restaurant_enabled FROM restaurant_settings WHERE id = $1', ['default']);
+    if (settingsRes.rows.length > 0) {
+      isTicketRestoConfigured = Boolean(settingsRes.rows[0].ticket_restaurant_enabled);
+    }
+  } catch (e) {
+    isTicketRestoConfigured = false;
+  }
+
+  if (process.env.TICKET_RESTAURANT_ENABLED !== undefined) {
+    isTicketRestoConfigured = process.env.TICKET_RESTAURANT_ENABLED === 'true';
+  }
+
   res.json({
     stripe_card_enabled: isStripeConfigured,
     cash_collection_enabled: true,
-    ticket_restaurant_enabled: true,
+    ticket_restaurant_enabled: isTicketRestoConfigured,
     mode: isStripeConfigured ? 'production_stripe' : 'demo_cash_only',
     message: isStripeConfigured 
       ? 'Paiements par carte bancaire Stripe activés' 
-      : 'Compte Stripe non configuré — Paiements par carte désactivés, règlement en espèces au comptoir ou auprès du serveur.'
+      : 'Compte de paiement en ligne non configuré — Règlement en espèces au comptoir ou auprès du serveur.'
   });
 });
 

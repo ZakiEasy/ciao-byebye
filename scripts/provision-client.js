@@ -758,6 +758,15 @@ async function provisionClient(config = donRobertoDefaultConfig) {
       ON CONFLICT (id) DO UPDATE SET is_enabled = EXCLUDED.is_enabled
     `);
 
+    // Configuration des paramètres généraux du restaurant (blocage titres-restaurant non configurés)
+    await pool.query(`
+      INSERT INTO restaurant_settings (id, ticket_restaurant_enabled, bill_splitting_enabled)
+      VALUES ('default', FALSE, TRUE)
+      ON CONFLICT (id) DO UPDATE SET 
+        ticket_restaurant_enabled = EXCLUDED.ticket_restaurant_enabled,
+        bill_splitting_enabled = EXCLUDED.bill_splitting_enabled
+    `);
+
     // Configuration du programme de fidélité Pro
     await pool.query(`
       INSERT INTO loyalty_program_settings (program_name, is_enabled, points_per_eur, welcome_bonus_points, min_points_to_redeem, tier_vip_threshold)
