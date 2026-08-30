@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert');
 const { spawn } = require('child_process');
@@ -33,6 +34,33 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
                 if (res.ok) break;
             } catch (err) {}
         }
+
+        // Initialiser les fixtures de test dans la base
+        const { Pool } = require('pg');
+        const testPool = new Pool({
+            connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/ciao_byebye_db'
+        });
+        try {
+            await testPool.query(`
+                INSERT INTO loyalty_customers (phone, email, full_name, current_points, lifetime_points, visits_count)
+                VALUES ('0612345678', 'thomas.dubois@test.fr', 'Thomas Dubois', 120, 120, 4)
+                ON CONFLICT (phone) DO UPDATE SET current_points = 120, lifetime_points = 120, full_name = 'Thomas Dubois';
+            `).catch(() => {});
+
+            await testPool.query(`
+                INSERT INTO loyalty_rewards (title, description, points_cost, discount_type, discount_value, min_order_cents, is_active)
+                VALUES ('Dessert Offert', 'Un tiramisu ou dessert au choix', 50, 'free_item', 0, 1500, TRUE)
+                ON CONFLICT DO NOTHING;
+            `).catch(() => {});
+
+            await testPool.query(`
+                INSERT INTO staff_users (email, role, assigned_tables)
+                VALUES ('chef@atelier-chris.fr', 'cuisine', '{}')
+                ON CONFLICT (email) DO NOTHING;
+            `).catch(() => {});
+
+            await testPool.end();
+        } catch (e) {}
     });
 
     after(async () => {
@@ -1194,6 +1222,18 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
     });
 
     test('48. POST /api/loyalty/lookup - should find existing customer by phone and return eligible rewards', async () => {
+        const { Pool } = require('pg');
+        const p = new Pool({ connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/ciao_byebye_db' });
+        await p.query(`
+            INSERT INTO loyalty_customers (phone, email, full_name, current_points, lifetime_points, visits_count)
+            VALUES ('0612345678', 'thomas.dubois@test.fr', 'Thomas Dubois', 120, 120, 4)
+            ON CONFLICT (phone) DO UPDATE SET current_points = 120, lifetime_points = 120;
+            INSERT INTO loyalty_rewards (title, description, points_cost, reward_type, discount_value, icon, badge_color, is_active)
+            VALUES ('Dessert Offert', 'Un tiramisu ou dessert au choix', 50, 'free_dessert', 3.9, 'fa-cake', '#10b981', TRUE)
+            ON CONFLICT DO NOTHING;
+        `).catch(() => {});
+        await p.end();
+
         const res = await fetch(`${BASE_URL}/api/loyalty/lookup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

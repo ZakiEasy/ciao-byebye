@@ -259,28 +259,9 @@ async function initDatabase() {
       ('loyalty_program', 'Programme de Fidélité & Récompenses', 'Adhésion mobile, catalogue d''offres de récompenses et statuts VIP (dès l''offre Pro 99€)', 'pro', true)
       ON CONFLICT (id) DO NOTHING;
 
-      INSERT INTO tables (number, name, qr_code_token, status, zone, shape, min_covers, max_covers, nominal_covers, pos_x, pos_y) VALUES 
-      ('01', 'Table 01', 'token_table_01', 'libre', 'salle', 'square', 2, 4, 4, 100, 100),
-      ('02', 'Table 02', 'token_table_02', 'libre', 'salle', 'square', 2, 4, 4, 250, 100),
-      ('03', 'Table 03', 'token_table_03', 'libre', 'terrasse', 'round', 2, 2, 2, 400, 100),
-      ('04', 'Table 04', 'token_table_04', 'libre', 'terrasse', 'round', 2, 2, 2, 550, 100),
-      ('05', 'Table 05', 'token_table_05', 'libre', 'mezzanine', 'rect', 4, 8, 6, 100, 280)
-      ON CONFLICT (qr_code_token) DO NOTHING;
-
       INSERT INTO staff_users (email, role, assigned_tables) VALUES 
-      ('superadmin@ciao-byebye.fr', 'superadmin', '{"01","02","03","04","05","06","07","08","09","10","11","12","14","15"}'),
-      ('chef@atelier-chris.fr', 'cuisine', '{}'),
-      ('maitre@atelier-chris.fr', 'chef_de_salle', '{}'),
-      ('david@atelier-chris.fr', 'serveur', '{"05","08","12"}'),
-      ('sophie@atelier-chris.fr', 'serveur', '{"01","02","03","04"}'),
-      ('boss@atelier-chris.fr', 'gestionnaire', '{}'),
-      ('barman@atelier-chris.fr', 'bar', '{}'),
-      ('pickup@atelier-chris.fr', 'technique', '{}'),
-      ('manager@atelier-chris.fr', 'chef_de_salle', '{}'),
-      ('bar@atelier-chris.fr', 'bar', '{}'),
-      ('admin@atelier-chris.fr', 'gestionnaire', '{}'),
-      ('kiosk@atelier-chris.fr', 'technique', '{}')
-      ON CONFLICT (email) DO UPDATE SET role = EXCLUDED.role, assigned_tables = EXCLUDED.assigned_tables;
+      ('superadmin@ciao-byebye.fr', 'superadmin', '{}')
+      ON CONFLICT (email) DO NOTHING;
 
       CREATE TABLE IF NOT EXISTS pos_integrations (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -510,8 +491,12 @@ app.get('/api/tables/:qr_token/display', async (req, res) => {
   const { qr_token } = req.params;
 
   try {
-    // Trouver la table correspondante
-    const tableResult = await pool.query('SELECT id, number FROM tables WHERE qr_code_token = $1', [qr_token]);
+    // Trouver la table correspondante (supporte token complet, suffixe ou numéro)
+    const cleanNum = qr_token.replace(/^token_(.*_)?table_/i, '').replace(/^token_/i, '');
+    const tableResult = await pool.query(
+      'SELECT id, number FROM tables WHERE qr_code_token = $1 OR qr_code_token LIKE $2 OR number = $3 OR number = $4 LIMIT 1',
+      [qr_token, '%' + qr_token, cleanNum, cleanNum.padStart(2, '0')]
+    );
     if (tableResult.rows.length === 0) {
       return res.status(404).json({ error: 'Table non trouvée' });
     }
