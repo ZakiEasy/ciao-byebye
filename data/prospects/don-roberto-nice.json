@@ -1,0 +1,59 @@
+{
+  "business_name": "Don Roberto Pizzeria Trattoria",
+  "legal": {
+    "company_name": "SARL DON ROBERTO",
+    "legal_form": "SARL à associé unique",
+    "siren": "883157273",
+    "siret": "88315727300011",
+    "vat_number": "FR57883157273",
+    "naf_ape": "5610C (Restauration de type rapide)",
+    "creation_date": "2020-05-11",
+    "manager_name": "Erik Shaldjyan",
+    "estimated_revenue_eur": 340000,
+    "headcount": "1 à 2 salariés + gérant"
+  },
+  "capacity": {
+    "total_tables": 12,
+    "total_covers": 50,
+    "seated_tables_4p": 11,
+    "counter_tables_6p": 1,
+    "layout_zones": ["salle", "comptoir"]
+  },
+  "contact": {
+    "address": "158 Avenue de la Californie",
+    "postal_code": "06200",
+    "city": "Nice",
+    "phone": "04 83 93 60 40",
+    "email": "erik@donrobertonice.com",
+    "website": "https://www.donrobertonice.com/"
+  },
+  "technical": {
+    "cms": "Wix Website Builder",
+    "hosting": "Wix Inc. / Google Cloud Fastly",
+    "domain": "donrobertonice.com",
+    "third_party_channels": ["UberEats", "Deliveroo", "Just Eat"],
+    "estimated_pos": "Caisse tactile TPE SumUp/Tiller",
+    "subdomain_demo": "https://don-roberto.ciao-byebye.store"
+  },
+  "reputation": {
+    "google_maps_rating": 4.7,
+    "google_maps_reviews_count": 431,
+    "sluurpy_score": 85,
+    "facebook": "@donrobertonice"
+  },
+  "demo_accounts": {
+    "manager": "gerant.don-roberto@ciao-byebye.fr",
+    "waiter": "serveur.don-roberto@ciao-byebye.fr",
+    "kitchen": "cuisine.don-roberto@ciao-byebye.fr",
+    "counter": "comptoir.don-roberto@ciao-byebye.fr"
+  },
+  "contract": {
+    "reference": "CB-2026-NICE-0883",
+    "path": "docs/contrats/CONTRAT_PRE_REMPLI_DON_ROBERTO_NICE.md",
+    "plan_tier": "pro",
+    "monthly_price_ht_eur": 99,
+    "status": "draft",
+    "storage_location": "database/crm_leads + /data/contracts/ + Espace Gérant Dashboard",
+    "signing_methods": ["electronic_yousign_sms", "tablet_signature_pad", "manual_scan"]
+  }
+}

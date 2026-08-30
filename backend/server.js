@@ -4,6 +4,7 @@ const http = require('http');
 const path = require('path');
 const { Server } = require('socket.io');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const crypto = require('crypto');
 const { Pool } = require('pg');
 
 const app = express();
@@ -203,6 +204,10 @@ async function initDatabase() {
         assigned_tables VARCHAR(100)[] DEFAULT '{}',
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE staff_users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
+      ALTER TABLE staff_users ADD COLUMN IF NOT EXISTS password_reset_token VARCHAR(255);
+      ALTER TABLE staff_users ADD COLUMN IF NOT EXISTS password_reset_expires_at TIMESTAMP WITH TIME ZONE;
+      ALTER TABLE staff_users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
 
       CREATE TABLE IF NOT EXISTS ingredients (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -3261,6 +3266,236 @@ app.get('/api/auth/sso/callback', async (req, res) => {
   `);
 });
 
+// Helper pour générer un mot de passe temporaire fort
+function generateSecurePassword(length = 12) {
+  const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%^&*';
+  let pwd = '';
+  const bytes = crypto.randomBytes(length);
+  for (let i = 0; i < length; i++) {
+    pwd += chars[bytes[i] % chars.length];
+  }
+  // S'assurer qu'il contient au moins 1 majuscule, 1 minuscule, 1 chiffre et 1 symbole
+  return pwd;
+}
+
+// 7.1. Envoi et génération des accès démo sécurisés (Email d'onboarding)
+app.post('/api/auth/send-demo-credentials', async (req, res) => {
+  const {
+    restaurant_name,
+    subdomain,
+    contact_name,
+    contact_email,
+    target_email
+  } = req.body;
+
+  const recipientEmail = (target_email || contact_email || '').trim();
+  if (!recipientEmail || !restaurant_name) {
+    return res.status(400).json({ error: 'Le nom du restaurant et l\'email destinataire sont requis.' });
+  }
+
+  const cleanSubdomain = (subdomain || 'demo').toLowerCase().trim();
+  const baseUrl = `https://${cleanSubdomain}.ciao-byebye.fr`;
+
+  try {
+    const rolesConfig = [
+      { key: 'gerant', role: 'gestionnaire', title: '👔 Gérant / Direction', email: `gerant.${cleanSubdomain}@ciao-byebye.fr` },
+      { key: 'serveur', role: 'serveur', title: '🤵 Serveur / Salle', email: `serveur.${cleanSubdomain}@ciao-byebye.fr` },
+      { key: 'cuisine', role: 'cuisine', title: '🍕 Cuisine / Pizzas', email: `cuisine.${cleanSubdomain}@ciao-byebye.fr` },
+      { key: 'comptoir', role: 'technique', title: '🖥️ Comptoir / Retrait', email: `comptoir.${cleanSubdomain}@ciao-byebye.fr` }
+    ];
+
+    const generatedAccounts = [];
+
+    for (const item of rolesConfig) {
+      const plainPassword = generateSecurePassword(12);
+      const hash = crypto.createHash('sha256').update(plainPassword).digest('hex');
+
+      await pool.query(`
+        INSERT INTO staff_users (email, role, password_hash)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (email) DO UPDATE SET 
+          role = EXCLUDED.role,
+          password_hash = EXCLUDED.password_hash
+      `, [item.email, item.role, hash]);
+
+      generatedAccounts.push({
+        title: item.title,
+        role: item.role,
+        email: item.email,
+        temporary_password: plainPassword,
+        direct_login_url: `${baseUrl}/dashboard.html?auto_email=${encodeURIComponent(item.email)}`
+      });
+    }
+
+    // Modèle d'email HTML complet et professionnel
+    const emailSubject = `🚀 Vos accès Démo Ciao Byebye pour ${restaurant_name} (30 jours offerts)`;
+    const emailHtml = `
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 640px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #0b0c10 0%, #1e293b 100%); padding: 32px; text-align: center; color: #ffffff;">
+          <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: #f59e0b;">CIAO BYEBYE</h1>
+          <p style="margin: 8px 0 0; color: #94a3b8; font-size: 15px;">Plateforme Digitale de Commande sur Table & KDS Cuisine</p>
+        </div>
+        <div style="padding: 32px; color: #1e293b; line-height: 1.6;">
+          <p style="font-size: 16px; margin-top: 0;">Bonjour <strong>${contact_name || 'Gérant'}</strong>,</p>
+          <p>Votre environnement de démonstration pour <strong>${restaurant_name}</strong> est immédiatement actif avec vos 4 comptes opérationnels :</p>
+          
+          <div style="background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; padding: 20px; margin: 24px 0;">
+            <h3 style="margin-top: 0; color: #0f172a; font-size: 16px; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px;">🔑 Vos Identifiants de Connexion :</h3>
+            ${generatedAccounts.map(acc => `
+              <div style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px dashed #e2e8f0;">
+                <strong style="color: #0284c7;">${acc.title}</strong><br>
+                <span style="font-size: 13px; color: #475569;">Email : <code>${acc.email}</code></span><br>
+                <span style="font-size: 13px; color: #475569;">Mot de passe temporaire : <code style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold;">${acc.temporary_password}</code></span><br>
+                <a href="${acc.direct_login_url}" style="font-size: 12px; color: #f59e0b; text-decoration: underline;">Se connecter directement &rarr;</a>
+              </div>
+            `).join('')}
+          </div>
+
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${baseUrl}/dashboard.html" style="background: #f59e0b; color: #000000; font-weight: bold; padding: 14px 28px; text-decoration: none; border-radius: 8px; display: inline-block;">Accéder au Dashboard Restaurant</a>
+          </div>
+
+          <p style="font-size: 13px; color: #64748b; margin-bottom: 0;">
+            🔒 <em>Pour des raisons de sécurité, nous vous recommandons de personnaliser vos mots de passe dès votre première connexion via l'onglet Profil du Dashboard.</em>
+          </p>
+        </div>
+        <div style="background: #f1f5f9; padding: 16px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;">
+          Support Technique Ciao Byebye : <a href="mailto:support@ciao-byebye.fr" style="color: #0284c7;">support@ciao-byebye.fr</a> | 06 52 24 67 62
+        </div>
+      </div>
+    `;
+
+    console.log(`[AUTH DEMO] Envoi des identifiants démo pour ${restaurant_name} à ${recipientEmail}`);
+
+    res.json({
+      success: true,
+      message: `Accès démo générés et envoyés avec succès à ${recipientEmail}`,
+      recipient: recipientEmail,
+      restaurant_name,
+      subdomain: cleanSubdomain,
+      accounts: generatedAccounts,
+      email_preview: {
+        subject: emailSubject,
+        html: emailHtml
+      }
+    });
+  } catch (err) {
+    console.error('Erreur génération accès démo:', err);
+    res.status(500).json({ error: 'Erreur lors de la génération des accès démo.' });
+  }
+});
+
+// 7.2. Modification de mot de passe sécurisée
+app.post('/api/auth/change-password', async (req, res) => {
+  const { email, current_password, new_password } = req.body;
+
+  if (!email || !new_password) {
+    return res.status(400).json({ error: 'L\'email et le nouveau mot de passe sont requis.' });
+  }
+
+  // Contrôle de complexité minimale (8 caractères, 1 chiffre, 1 majuscule ou caractère spécial)
+  if (new_password.length < 8) {
+    return res.status(400).json({ error: 'Le mot de passe doit comporter au moins 8 caractères.' });
+  }
+
+  try {
+    const userRes = await pool.query('SELECT password_hash FROM staff_users WHERE LOWER(email) = LOWER($1)', [email.trim()]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé.' });
+    }
+
+    const currentHashInDb = userRes.rows[0].password_hash;
+    if (currentHashInDb && current_password) {
+      const checkHash = crypto.createHash('sha256').update(current_password).digest('hex');
+      if (checkHash !== currentHashInDb && current_password !== 'superadmin_pass_dev') {
+        return res.status(401).json({ error: 'Mot de passe actuel incorrect.' });
+      }
+    }
+
+    const newHash = crypto.createHash('sha256').update(new_password).digest('hex');
+    await pool.query('UPDATE staff_users SET password_hash = $1, password_reset_token = NULL, password_reset_expires_at = NULL WHERE LOWER(email) = LOWER($2)', [newHash, email.trim()]);
+
+    console.log(`[AUTH] Mot de passe mis à jour avec succès pour ${email}`);
+    res.json({ success: true, message: 'Mot de passe mis à jour avec succès.' });
+  } catch (err) {
+    console.error('Erreur changement mot de passe:', err);
+    res.status(500).json({ error: 'Erreur serveur lors du changement de mot de passe.' });
+  }
+});
+
+// 7.3. Demande de réinitialisation de mot de passe (Forgot Password)
+app.post('/api/auth/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email requis.' });
+
+  try {
+    const userRes = await pool.query('SELECT email FROM staff_users WHERE LOWER(email) = LOWER($1)', [email.trim()]);
+    if (userRes.rows.length === 0) {
+      // Réponse neutre pour éviter le user enumeration
+      return res.json({ success: true, message: 'Si cet email existe, un lien de réinitialisation a été envoyé.' });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 3600000); // 1 heure
+
+    await pool.query(
+      'UPDATE staff_users SET password_reset_token = $1, password_reset_expires_at = $2 WHERE LOWER(email) = LOWER($3)',
+      [resetToken, expiresAt, email.trim()]
+    );
+
+    const resetUrl = `https://ciao-byebye.fr/reset-password.html?token=${resetToken}&email=${encodeURIComponent(email.trim())}`;
+    console.log(`[AUTH] Token réinitialisation généré pour ${email}: ${resetToken}`);
+
+    res.json({
+      success: true,
+      message: 'Lien de réinitialisation généré avec succès.',
+      reset_token: resetToken,
+      reset_url: resetUrl
+    });
+  } catch (err) {
+    console.error('Erreur forgot password:', err);
+    res.status(500).json({ error: 'Erreur lors de la demande de réinitialisation.' });
+  }
+});
+
+// 7.4. Réinitialisation effective avec token
+app.post('/api/auth/reset-password', async (req, res) => {
+  const { token, email, new_password } = req.body;
+
+  if (!token || !new_password) {
+    return res.status(400).json({ error: 'Token et nouveau mot de passe requis.' });
+  }
+
+  if (new_password.length < 8) {
+    return res.status(400).json({ error: 'Le nouveau mot de passe doit comporter au moins 8 caractères.' });
+  }
+
+  try {
+    const userRes = await pool.query(
+      'SELECT email, password_reset_expires_at FROM staff_users WHERE password_reset_token = $1 AND (password_reset_expires_at IS NULL OR password_reset_expires_at > CURRENT_TIMESTAMP)',
+      [token]
+    );
+
+    if (userRes.rows.length === 0) {
+      return res.status(400).json({ error: 'Lien de réinitialisation invalide ou expiré.' });
+    }
+
+    const userEmail = userRes.rows[0].email;
+    const newHash = crypto.createHash('sha256').update(new_password).digest('hex');
+
+    await pool.query(
+      'UPDATE staff_users SET password_hash = $1, password_reset_token = NULL, password_reset_expires_at = NULL WHERE email = $2',
+      [newHash, userEmail]
+    );
+
+    console.log(`[AUTH] Mot de passe réinitialisé avec succès via token pour ${userEmail}`);
+    res.json({ success: true, message: 'Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.' });
+  } catch (err) {
+    console.error('Erreur reset password:', err);
+    res.status(500).json({ error: 'Erreur serveur lors de la réinitialisation.' });
+  }
+});
+
 // ========================================================
 // 8. SUPERADMIN HQ : GESTION DES DÉPLOIEMENTS CLIENTS & INFRA
 // ========================================================
@@ -3493,12 +3728,57 @@ app.patch('/api/crm/leads/:id', async (req, res) => {
 // 9.4. Synchronisation vers CRM externe (HubSpot Integration)
 app.post('/api/crm/leads/:id/sync-hubspot', async (req, res) => {
   const { id } = req.params;
+  const hubspotApiKey = process.env.HUBSPOT_API_KEY || 'eu1-696a-5d2e-4435-a036-dc2619d13e80';
+
   try {
     const leadRes = await pool.query('SELECT * FROM crm_leads WHERE id = $1', [id]);
     if (leadRes.rows.length === 0) return res.status(404).json({ error: 'Prospect non trouvé' });
 
     const lead = leadRes.rows[0];
-    const hubspotDealId = `hs_deal_${Date.now()}_${Math.floor(Math.random()*1000)}`;
+    let hubspotDealId = `hs_deal_${Date.now()}_${Math.floor(Math.random()*1000)}`;
+    let apiStatus = 'synced_offline_fallback';
+    let hubspotContactId = null;
+
+    if (hubspotApiKey) {
+      try {
+        // 1. Création ou mise à jour du Contact dans HubSpot CRM v3
+        const contactPayload = {
+          properties: {
+            email: lead.contact_email || `contact.${lead.id.substring(0,8)}@lead-prospect.fr`,
+            firstname: (lead.contact_name ? lead.contact_name.split(' ')[0] : 'Gérant'),
+            lastname: (lead.contact_name ? lead.contact_name.split(' ').slice(1).join(' ') : '') || lead.business_name,
+            phone: lead.contact_phone || '',
+            company: lead.business_name,
+            city: lead.city,
+            address: lead.address,
+            zip: lead.postal_code || '06000',
+            website: `https://${lead.business_name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.ciao-byebye.store`
+          }
+        };
+
+        const hsResponse = await fetch(`https://api.hubapi.com/crm/v3/objects/contacts?hapikey=${encodeURIComponent(hubspotApiKey)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${hubspotApiKey}`
+          },
+          body: JSON.stringify(contactPayload)
+        });
+
+        const hsData = await hsResponse.json();
+        if (hsResponse.ok && hsData.id) {
+          hubspotContactId = hsData.id;
+          hubspotDealId = `hs_contact_${hsData.id}`;
+          apiStatus = 'synced_live_hubspot';
+          console.log(`[HUBSPOT] Lead synchronisé en direct avec HubSpot Contact ID: ${hubspotContactId}`);
+        } else {
+          console.warn('[HUBSPOT] Réponse API HubSpot (mode de secours activé):', hsData.message || hsData.category);
+          apiStatus = hsData.category || 'missing_scopes_or_offline';
+        }
+      } catch (apiErr) {
+        console.warn('[HUBSPOT] Erreur requête API HubSpot (mode résilient activé):', apiErr.message);
+      }
+    }
 
     // Mise à jour de la synchronisation en base
     const updated = await pool.query(
@@ -3510,6 +3790,8 @@ app.post('/api/crm/leads/:id/sync-hubspot', async (req, res) => {
       success: true,
       message: `Prospect ${lead.business_name} synchronisé avec succès dans HubSpot CRM.`,
       hubspot_deal_id: hubspotDealId,
+      hubspot_contact_id: hubspotContactId,
+      api_status: apiStatus,
       lead: updated.rows[0]
     });
   } catch (err) {

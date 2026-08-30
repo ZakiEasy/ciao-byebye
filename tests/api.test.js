@@ -1442,5 +1442,65 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         assert.strictEqual(fakeData.securityStatus, 'fraud_suspicion');
         assert.ok(fakeData.alertMessage.includes('ATTENTION FRAUDE'));
     });
+
+    test('58. POST /api/auth/send-demo-credentials & /api/auth/change-password & reset-password - should manage secure onboarding credentials and password lifecycle', async () => {
+        // 1. Envoi et génération des accès démo sécurisés pour Don Roberto Nice
+        const demoRes = await fetch(`${BASE_URL}/api/auth/send-demo-credentials`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                restaurant_name: 'Don Roberto Pizzeria Trattoria',
+                subdomain: 'don-roberto',
+                contact_name: 'Erik Shaldjyan',
+                contact_email: 'erik@donrobertonice.com'
+            })
+        });
+
+        assert.strictEqual(demoRes.status, 200);
+        const demoData = await demoRes.json();
+        assert.strictEqual(demoData.success, true);
+        assert.strictEqual(demoData.accounts.length, 4);
+        assert.ok(demoData.accounts[0].temporary_password.length >= 12);
+        assert.ok(demoData.email_preview.html.includes('Don Roberto Pizzeria Trattoria'));
+
+        // 2. Modification de mot de passe par le gérant
+        const changeRes = await fetch(`${BASE_URL}/api/auth/change-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: 'gerant.don-roberto@ciao-byebye.fr',
+                current_password: demoData.accounts[0].temporary_password,
+                new_password: 'NouveauSuperSecret2026!'
+            })
+        });
+
+        assert.strictEqual(changeRes.status, 200);
+        const changeData = await changeRes.json();
+        assert.strictEqual(changeData.success, true);
+
+        // 3. Demande de mot de passe oublié et reset par token
+        const forgotRes = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: 'gerant.don-roberto@ciao-byebye.fr' })
+        });
+        assert.strictEqual(forgotRes.status, 200);
+        const forgotData = await forgotRes.json();
+        assert.strictEqual(forgotData.success, true);
+        assert.ok(forgotData.reset_token);
+
+        const resetRes = await fetch(`${BASE_URL}/api/auth/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                token: forgotData.reset_token,
+                email: 'gerant.don-roberto@ciao-byebye.fr',
+                new_password: 'ResetSecurise2026!#Expert'
+            })
+        });
+        assert.strictEqual(resetRes.status, 200);
+        const resetData = await resetRes.json();
+        assert.strictEqual(resetData.success, true);
+    });
 });
 
