@@ -389,8 +389,40 @@ function formatPrice(euroAmount) {
     return curr.position === 'before' ? `${curr.symbol} ${formattedNum}` : `${formattedNum} ${curr.symbol}`;
 }
 
+let paymentGateways = { stripe_card_enabled: true, cash_collection_enabled: true, ticket_restaurant_enabled: true };
+
+async function fetchPaymentGateways() {
+    try {
+        const res = await fetch('/api/settings/payment-gateways');
+        if (res.ok) {
+            paymentGateways = await res.json();
+            applyPaymentGatewaysUI();
+        }
+    } catch (e) {
+        console.warn('Erreur chargement passerelles paiement:', e);
+    }
+}
+
+function applyPaymentGatewaysUI() {
+    const tabCard = document.getElementById('tab-pay-card');
+    if (paymentGateways && !paymentGateways.stripe_card_enabled) {
+        if (tabCard) {
+            tabCard.style.display = 'none';
+        }
+        if (selectedPaymentMethod === 'carte') {
+            setPaymentMethod('especes');
+        }
+    } else if (tabCard) {
+        tabCard.style.display = 'inline-flex';
+    }
+}
+
 // Payment method switcher
 function setPaymentMethod(method) {
+    if (method === 'carte' && paymentGateways && !paymentGateways.stripe_card_enabled) {
+        method = 'especes';
+    }
+
     selectedPaymentMethod = method;
     const tabCard = document.getElementById('tab-pay-card');
     const tabResto = document.getElementById('tab-pay-ticket-resto');
@@ -955,6 +987,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMenu();
     initClientSession();
     fetchLoyaltyProgram();
+    fetchPaymentGateways();
+    trackTableQRScan();
 });
 
 async function loadMenu() {
@@ -2484,3 +2518,153 @@ function dismissClientAuth() {
         authOverlay.classList.remove('active');
     }
 }
+
+// ==========================================
+// TABLE COMPANION & COMMANDES PARTAGÉES
+// ==========================================
+let currentTableGuestsData = { totalGuestsConnected: 1, sharedOrders: [] };
+
+async function trackTableQRScan() {
+    try {
+        const tableNumEl = document.getElementById('table-number');
+        const tableNum = tableNumEl ? tableNumEl.innerText.trim() : '05';
+
+        let deviceId = localStorage.getItem('kz_visitor_device_id');
+        if (!deviceId) {
+            deviceId = 'dev_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
+            localStorage.setItem('kz_visitor_device_id', deviceId);
+        }
+
+        const res = await fetch('/api/tables/scan-event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: tableNum,
+                deviceId: deviceId,
+                clientName: localStorage.getItem('kz_client_name') || ''
+            })
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            currentTableGuestsData = data;
+            const guestsCountEl = document.getElementById('header-guests-count');
+            if (guestsCountEl) guestsCountEl.innerText = data.totalGuestsConnected || 1;
+        }
+    } catch (err) {
+        console.warn('[QR SCAN] Erreur tracking scan:', err);
+    }
+}
+
+async function openSharedTableOrdersModal() {
+    const modal = document.getElementById('shared-orders-modal-overlay');
+    const tableNumEl = document.getElementById('table-number');
+    const tableNum = tableNumEl ? tableNumEl.innerText.trim() : '05';
+    
+    const modalTableNum = document.getElementById('shared-modal-table-num');
+    if (modalTableNum) modalTableNum.innerText = tableNum;
+
+    if (modal) modal.style.display = 'flex';
+
+    const body = document.getElementById('shared-orders-modal-body');
+    const subtitle = document.getElementById('shared-modal-guests-subtitle');
+
+    try {
+        const res = await fetch(`/api/tables/${tableNum}/shared-orders`);
+        if (!res.ok) throw new Error('Erreur API');
+        const data = await res.json();
+        currentTableGuestsData = data;
+
+        if (subtitle) {
+            const count = data.totalGuestsConnected || 1;
+            subtitle.innerText = `${count} convive${count > 1 ? 's' : ''} connecté${count > 1 ? 's' : ''} · Synchronisation en direct`;
+        }
+
+        renderSharedTableOrders(data.orders || []);
+    } catch (e) {
+        if (body) {
+            body.innerHTML = `
+                <div style="text-align:center; padding:24px; color:var(--text-muted);">
+                    <i class="fa-solid fa-chair fa-2x" style="color:var(--primary); margin-bottom:8px;"></i>
+                    <p style="font-size:13px; margin:0;">Aucune commande n'a encore été envoyée pour cette table.</p>
+                    <p style="font-size:11px; margin-top:4px;">Composez votre commande ci-dessous et validez !</p>
+                </div>
+            `;
+        }
+    }
+}
+
+function renderSharedTableOrders(orders) {
+    const body = document.getElementById('shared-orders-modal-body');
+    if (!body) return;
+
+    if (!orders || orders.length === 0) {
+        body.innerHTML = `
+            <div style="text-align:center; padding:30px 10px; color:var(--text-muted);">
+                <div style="font-size:32px; margin-bottom:10px;">🍽️</div>
+                <h4 style="font-size:15px; color:#fff; margin:0 0 6px 0;">Table prête pour la commande</h4>
+                <p style="font-size:12px; margin:0; line-height:1.5;">Aucun plat n'a encore été commandé par vos convives. Vous pouvez commander en toute tranquillité !</p>
+            </div>
+        `;
+        return;
+    }
+
+    let totalCents = 0;
+    let html = '';
+
+    orders.forEach((order, idx) => {
+        totalCents += parseInt(order.totalAmountCents || 0, 10);
+        const isPaid = order.paymentStatus === 'paye';
+        const statusBadge = isPaid
+            ? '<span style="background:rgba(16,185,129,0.2); color:#34d399; font-size:10px; padding:2px 8px; border-radius:8px; font-weight:700;">Payé</span>'
+            : '<span style="background:rgba(245,158,11,0.2); color:#f59e0b; font-size:10px; padding:2px 8px; border-radius:8px; font-weight:700;">En cours</span>';
+
+        html += `
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px 14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="width:24px; height:24px; border-radius:50%; background:var(--primary); color:#000; font-weight:800; font-size:11px; display:flex; align-items:center; justify-content:center;">
+                            ${idx + 1}
+                        </div>
+                        <strong style="font-size:13px; color:#fff;">${order.clientName || 'Convive'}</strong>
+                    </div>
+                    <div>${statusBadge}</div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:6px; padding-left:32px;">
+        `;
+
+        (order.items || []).forEach(it => {
+            const seatLabel = it.seat_number ? `<span style="font-size:10px; color:#38bdf8; background:rgba(56,189,248,0.15); padding:1px 5px; border-radius:6px; font-weight:700;">Place ${it.seat_number}</span>` : '';
+            html += `
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#cbd5e1;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="font-weight:700; color:var(--primary);">${it.quantity}x</span>
+                        <span>${it.product_name || 'Article'}</span>
+                        ${seatLabel}
+                    </div>
+                    <span style="font-weight:600; color:#fff;">${((it.unit_price_cents * it.quantity) / 100).toFixed(2)} €</span>
+                </div>
+            `;
+        });
+
+        html += `
+                </div>
+            </div>
+        `;
+    });
+
+    html += `
+        <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.2); border-radius:12px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+            <span style="font-size:12px; font-weight:700; color:#38bdf8;">Total cumulé table :</span>
+            <strong style="font-size:15px; color:#fff;">${(totalCents / 100).toFixed(2)} €</strong>
+        </div>
+    `;
+
+    body.innerHTML = html;
+}
+
+function closeSharedTableOrdersModal() {
+    const modal = document.getElementById('shared-orders-modal-overlay');
+    if (modal) modal.style.display = 'none';
+}
+

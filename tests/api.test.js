@@ -1348,5 +1348,99 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         assert.strictEqual(progPro.tier_locked, false);
         assert.strictEqual(progPro.is_enabled, true);
     });
+
+    test('54. POST /api/tables/scan-event - should detect new table scan, count connected guests and trigger bell arrival', async () => {
+        const device1 = `dev_test_1_${Date.now()}`;
+        const device2 = `dev_test_2_${Date.now()}`;
+
+        // 1. Premier scan (Convive 1)
+        const scan1Res = await fetch(`${BASE_URL}/api/tables/scan-event`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: '03',
+                deviceId: device1,
+                clientName: 'Sophie'
+            })
+        });
+        assert.strictEqual(scan1Res.status, 200);
+        const scan1Data = await scan1Res.json();
+        assert.strictEqual(scan1Data.success, true);
+        assert.strictEqual(scan1Data.isNewArrival, true);
+        assert.ok(scan1Data.totalGuestsConnected >= 1);
+
+        // 2. Rescan par le même convive (même deviceId) -> pas de nouvelle arrivée
+        const scan1RepeatRes = await fetch(`${BASE_URL}/api/tables/scan-event`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: '03',
+                deviceId: device1,
+                clientName: 'Sophie'
+            })
+        });
+        assert.strictEqual(scan1RepeatRes.status, 200);
+        const scan1RepeatData = await scan1RepeatRes.json();
+        assert.strictEqual(scan1RepeatData.isNewArrival, false);
+
+        // 3. Arrivée d'un 2ème convive sur la même table (nouveau deviceId)
+        const scan2Res = await fetch(`${BASE_URL}/api/tables/scan-event`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: '03',
+                deviceId: device2,
+                clientName: 'Lucas'
+            })
+        });
+        assert.strictEqual(scan2Res.status, 200);
+        const scan2Data = await scan2Res.json();
+        assert.strictEqual(scan2Data.isNewArrival, true);
+        assert.strictEqual(scan2Data.totalGuestsConnected >= 2, true);
+    });
+
+    test('55. GET /api/tables/:number/shared-orders - should return live shared table orders and connected guests', async () => {
+        const sharedRes = await fetch(`${BASE_URL}/api/tables/03/shared-orders`);
+        assert.strictEqual(sharedRes.status, 200);
+        const sharedData = await sharedRes.json();
+        assert.strictEqual(sharedData.tableNumber, '03');
+        assert.ok(sharedData.totalGuestsConnected >= 2);
+        assert.ok(Array.isArray(sharedData.orders));
+    });
+
+    test('56. GET /api/settings/payment-gateways - should check Stripe connection and fallback to cash/counter payment', async () => {
+        const res = await fetch(`${BASE_URL}/api/settings/payment-gateways`);
+        assert.strictEqual(res.status, 200);
+        const data = await res.json();
+        assert.strictEqual(typeof data.stripe_card_enabled, 'boolean');
+        assert.strictEqual(data.cash_collection_enabled, true);
+        assert.ok(['production_stripe', 'demo_cash_only'].includes(data.mode));
+    });
+
+    test('57. POST /api/tables/verify-qr - should authenticate valid table QR codes and flag counterfeit/phishing QR codes', async () => {
+        // 1. Audit d'une table valide (ex: Table 01)
+        const validCheck = await fetch(`${BASE_URL}/api/tables/verify-qr`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tableNumber: '01' })
+        });
+        assert.strictEqual(validCheck.status, 200);
+        const validData = await validCheck.json();
+        assert.strictEqual(validData.verified, true);
+        assert.strictEqual(validData.securityStatus, 'authentic');
+        assert.strictEqual(validData.tableNumber, '01');
+
+        // 2. Audit d'un faux QR code / sticker frauduleux
+        const fakeCheck = await fetch(`${BASE_URL}/api/tables/verify-qr`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scannedUrl: 'https://fake-phishing-payment.com/pay?hacked=true' })
+        });
+        assert.strictEqual(fakeCheck.status, 200);
+        const fakeData = await fakeCheck.json();
+        assert.strictEqual(fakeData.verified, false);
+        assert.strictEqual(fakeData.securityStatus, 'fraud_suspicion');
+        assert.ok(fakeData.alertMessage.includes('ATTENTION FRAUDE'));
+    });
 });
 

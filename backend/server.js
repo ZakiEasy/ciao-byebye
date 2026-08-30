@@ -568,6 +568,288 @@ app.get('/api/tables/:qr_token/display', async (req, res) => {
   }
 });
 
+// Map en mémoire pour le décompte en temps réel des convives connectés par table (session active)
+const activeTableGuests = new Map(); // key: tableNumber (e.g. '04'), value: Set(deviceIds)
+
+// 2.6. Enregistrement d'un scan de QR Code (Détection d'arrivée, Cloche & Anti-Doublons)
+app.post('/api/tables/scan-event', async (req, res) => {
+  const { tableNumber, deviceId, clientName } = req.body;
+  if (!tableNumber) {
+    return res.status(400).json({ error: 'Numéro de table requis.' });
+  }
+
+  const cleanDigits = (tableNumber + '').replace(/[^0-9]/g, '');
+  const paddedNum = cleanDigits ? (cleanDigits.length === 1 ? '0' + cleanDigits : cleanDigits) : (tableNumber + '').trim();
+  const guestDeviceId = deviceId || `guest_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+  try {
+    const tableRes = await pool.query('SELECT * FROM tables WHERE number = $1 OR name = $2', [paddedNum, `Table ${paddedNum}`]);
+    if (tableRes.rows.length === 0) {
+      return res.status(404).json({ error: `Table ${paddedNum} introuvable.` });
+    }
+    const table = tableRes.rows[0];
+
+    // Trouver ou créer la session active de table
+    let sessionRes = await pool.query(
+      "SELECT id FROM table_sessions WHERE table_id = $1 AND status = 'active' ORDER BY started_at DESC LIMIT 1",
+      [table.id]
+    );
+    let sessionId;
+    if (sessionRes.rows.length === 0) {
+      const newSession = await pool.query(
+        "INSERT INTO table_sessions (table_id, status) VALUES ($1, 'active') RETURNING id",
+        [table.id]
+      );
+      sessionId = newSession.rows[0].id;
+      // Nouvelle session = réinitialisation des convives connectés
+      activeTableGuests.set(paddedNum, new Set());
+    } else {
+      sessionId = sessionRes.rows[0].id;
+    }
+
+    if (!activeTableGuests.has(paddedNum)) {
+      activeTableGuests.set(paddedNum, new Set());
+    }
+    const guestsSet = activeTableGuests.get(paddedNum);
+    const isNewGuest = !guestsSet.has(guestDeviceId);
+    guestsSet.add(guestDeviceId);
+
+    // Si nouveau convive assis à la table : émission de l'alerte sonore (Cloche) et mise à jour de la salle
+    if (isNewGuest) {
+      // Si la table était libre, elle passe en consultation de carte
+      if (table.service_status === 'libre' || table.status === 'libre') {
+        await pool.query(
+          "UPDATE tables SET service_status = 'en_consultation', actual_covers = GREATEST(COALESCE(actual_covers, 0), $1), updated_at = CURRENT_TIMESTAMP WHERE id = $2",
+          [guestsSet.size, table.id]
+        );
+      } else {
+        await pool.query(
+          "UPDATE tables SET actual_covers = GREATEST(COALESCE(actual_covers, 0), $1), updated_at = CURRENT_TIMESTAMP WHERE id = $2",
+          [guestsSet.size, table.id]
+        );
+      }
+
+      io.emit('table_guest_scanned', {
+        tableNumber: paddedNum,
+        tableId: table.id,
+        tableName: table.name || `Table ${paddedNum}`,
+        deviceId: guestDeviceId,
+        clientName: clientName || `Convive ${guestsSet.size}`,
+        totalGuestsConnected: guestsSet.size,
+        maxCovers: table.max_covers || 4,
+        isNewArrival: true,
+        timestamp: Date.now()
+      });
+
+      io.emit('table_layout_updated', {
+        tableNumber: paddedNum,
+        serviceStatus: 'en_consultation',
+        guestsCount: guestsSet.size
+      });
+    }
+
+    // Récupérer les commandes en direct de la table pour la vue partagée convive
+    const ordersResult = await pool.query(
+      `SELECT id, client_name, payment_status, order_status, total_amount_cents, tip_amount_cents, created_at
+       FROM orders
+       WHERE session_id = $1
+       ORDER BY created_at ASC`,
+      [sessionId]
+    );
+
+    const sharedOrders = [];
+    for (const order of ordersResult.rows) {
+      const itemsRes = await pool.query(
+        `SELECT oi.id, oi.quantity, oi.unit_price_cents, oi.seat_number, oi.course_step, oi.course_status, oi.station, p.name as product_name
+         FROM order_items oi
+         LEFT JOIN products p ON oi.product_id = p.id
+         WHERE oi.order_id = $1
+         ORDER BY oi.seat_number ASC, oi.id ASC`,
+        [order.id]
+      );
+      sharedOrders.push({
+        id: order.id,
+        clientName: order.client_name || 'Convive',
+        paymentStatus: order.payment_status,
+        orderStatus: order.order_status,
+        totalAmountCents: order.total_amount_cents,
+        createdAt: order.created_at,
+        items: itemsRes.rows
+      });
+    }
+
+    res.json({
+      success: true,
+      tableNumber: paddedNum,
+      tableName: table.name || `Table ${paddedNum}`,
+      sessionId,
+      isNewArrival: isNewGuest,
+      totalGuestsConnected: guestsSet.size,
+      maxCovers: table.max_covers || 4,
+      sharedOrders
+    });
+  } catch (err) {
+    console.error('Erreur scan event table:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 2.7. Récupérer les commandes partagées en temps réel d'une table
+app.get('/api/tables/:number/shared-orders', async (req, res) => {
+  const { number } = req.params;
+  const cleanDigits = (number + '').replace(/[^0-9]/g, '');
+  const paddedNum = cleanDigits ? (cleanDigits.length === 1 ? '0' + cleanDigits : cleanDigits) : (number + '').trim();
+
+  try {
+    const tableRes = await pool.query('SELECT * FROM tables WHERE number = $1 OR name = $2', [paddedNum, `Table ${paddedNum}`]);
+    if (tableRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Table non trouvée' });
+    }
+    const table = tableRes.rows[0];
+
+    const sessionRes = await pool.query(
+      "SELECT id FROM table_sessions WHERE table_id = $1 AND status = 'active' ORDER BY started_at DESC LIMIT 1",
+      [table.id]
+    );
+
+    if (sessionRes.rows.length === 0) {
+      return res.json({
+        tableNumber: paddedNum,
+        activeSession: false,
+        totalGuestsConnected: activeTableGuests.get(paddedNum)?.size || 0,
+        orders: []
+      });
+    }
+    const sessionId = sessionRes.rows[0].id;
+
+    const ordersResult = await pool.query(
+      `SELECT id, client_name, payment_status, order_status, total_amount_cents, created_at
+       FROM orders
+       WHERE session_id = $1
+       ORDER BY created_at ASC`,
+      [sessionId]
+    );
+
+    const orders = [];
+    for (const order of ordersResult.rows) {
+      const itemsRes = await pool.query(
+        `SELECT oi.id, oi.quantity, oi.unit_price_cents, oi.seat_number, oi.course_step, oi.course_status, oi.station, p.name as product_name
+         FROM order_items oi
+         LEFT JOIN products p ON oi.product_id = p.id
+         WHERE oi.order_id = $1
+         ORDER BY oi.seat_number ASC, oi.id ASC`,
+        [order.id]
+      );
+      orders.push({
+        id: order.id,
+        clientName: order.client_name || 'Convive',
+        paymentStatus: order.payment_status,
+        orderStatus: order.order_status,
+        totalAmountCents: order.total_amount_cents,
+        createdAt: order.created_at,
+        items: itemsRes.rows
+      });
+    }
+
+    res.json({
+      tableNumber: paddedNum,
+      tableName: table.name || `Table ${paddedNum}`,
+      sessionId,
+      activeSession: true,
+      totalGuestsConnected: activeTableGuests.get(paddedNum)?.size || 1,
+      orders
+    });
+  } catch (err) {
+    console.error('Erreur shared orders table:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// 2.8. État des passerelles de paiement (Blocage CB si Stripe non configuré)
+app.get('/api/settings/payment-gateways', async (req, res) => {
+  const stripeKey = process.env.STRIPE_SECRET_KEY || '';
+  const isStripeConfigured = Boolean(
+    stripeKey && 
+    stripeKey.startsWith('sk_') && 
+    !stripeKey.includes('placeholder') &&
+    process.env.STRIPE_ACCOUNT_CONNECTED !== 'false'
+  );
+
+  res.json({
+    stripe_card_enabled: isStripeConfigured,
+    cash_collection_enabled: true,
+    ticket_restaurant_enabled: true,
+    mode: isStripeConfigured ? 'production_stripe' : 'demo_cash_only',
+    message: isStripeConfigured 
+      ? 'Paiements par carte bancaire Stripe activés' 
+      : 'Compte Stripe non relié — Paiements par carte désactivés, règlement au comptoir/serveur uniquement.'
+  });
+});
+
+// 2.9. Audit de sécurité Anti-Fraude QR Code (Vérification par le serveur / chef de salle)
+app.post('/api/tables/verify-qr', async (req, res) => {
+  const { qrToken, scannedUrl, tableNumber } = req.body || {};
+
+  let lookupToken = qrToken;
+  let lookupNumber = tableNumber;
+
+  if (scannedUrl) {
+    try {
+      const parsedUrl = new URL(scannedUrl.startsWith('http') ? scannedUrl : `https://${scannedUrl}`);
+      lookupToken = parsedUrl.searchParams.get('token') || parsedUrl.searchParams.get('t') || lookupToken;
+      lookupNumber = parsedUrl.searchParams.get('table') || lookupNumber;
+    } catch (e) {
+      lookupToken = (scannedUrl + '').trim();
+    }
+  }
+
+  try {
+    let result = null;
+    if (lookupToken) {
+      result = await pool.query('SELECT id, number, name, qr_code_token, service_status, zone FROM tables WHERE qr_code_token = $1', [lookupToken]);
+    }
+    if ((!result || result.rows.length === 0) && lookupNumber) {
+      const cleanDigits = (lookupNumber + '').replace(/[^0-9]/g, '');
+      const paddedNum = cleanDigits ? (cleanDigits.length === 1 ? '0' + cleanDigits : cleanDigits) : (lookupNumber + '').trim();
+      result = await pool.query('SELECT id, number, name, qr_code_token, service_status, zone FROM tables WHERE number = $1', [paddedNum]);
+    }
+
+    if (result && result.rows.length > 0) {
+      const table = result.rows[0];
+      return res.json({
+        verified: true,
+        securityStatus: 'authentic',
+        tableNumber: table.number,
+        tableName: table.name || `Table ${table.number}`,
+        zone: table.zone || 'salle',
+        serviceStatus: table.service_status || 'libre',
+        qrToken: table.qr_code_token,
+        checkedAt: new Date().toISOString(),
+        message: `✅ QR Code Officiel Certifié : Table ${table.number} (${table.name || 'Salle'})`
+      });
+    }
+
+    // Alerte sécurité si faux QR code
+    io.emit('security_qr_alert', {
+      type: 'fraud_detected',
+      scannedValue: lookupToken || lookupNumber || scannedUrl,
+      timestamp: Date.now(),
+      message: '🚨 ALERTE SÉCURITÉ : Tentative de scan d\'un QR code invalide ou frauduleux non répertorié !'
+    });
+
+    res.status(200).json({
+      verified: false,
+      securityStatus: 'fraud_suspicion',
+      scannedValue: lookupToken || lookupNumber || scannedUrl,
+      checkedAt: new Date().toISOString(),
+      alertMessage: '🚨 ATTENTION FRAUDE : Ce QR code n\'appartient pas à l\'établissement ! Risque de faux sticker/phishing.'
+    });
+  } catch (err) {
+    console.error('Erreur vérification QR Code:', err);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // 3. Webhook Stripe pour confirmer le paiement
 app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
