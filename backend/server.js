@@ -1940,12 +1940,12 @@ app.get('/api/orders', async (req, res) => {
       JOIN tables t ON ts.table_id = t.id
       LEFT JOIN order_items oi ON o.id = oi.order_id
       LEFT JOIN products p ON oi.product_id = p.id
-      WHERE o.order_status IN ('en_cuisine', 'prete')
+      WHERE (o.order_status IN ('en_cuisine', 'prete') OR (o.payment_status IN ('a_payer_en_caisse', 'en_attente_paiement') AND o.created_at >= CURRENT_TIMESTAMP - INTERVAL '12 hours'))
     `;
 
     const queryParams = [];
 
-    if (userRole === 'serveur') {
+    if (userRole === 'serveur' && assignedTables && Array.isArray(assignedTables) && assignedTables.length > 0) {
       queryParams.push(assignedTables);
       queryText += ` AND t.number = ANY($${queryParams.length})`;
     }

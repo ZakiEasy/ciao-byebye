@@ -87,19 +87,128 @@
             margin-top: 8px;
         }
 
-        @media (max-width: 1200px) {
-            .kds-columns-grid {
-                grid-template-columns: 1fr 1fr;
-                overflow-y: auto;
-            }
+        /* Barre d'accès rapide mobile / montre pour les 3 colonnes KDS */
+        .kds-mobile-col-tabs {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            margin: 6px 0 10px 0;
+            overflow-x: auto;
+            padding: 4px 2px 6px;
+            -webkit-overflow-scrolling: touch;
         }
-        @media (max-width: 800px) {
+
+        .kds-col-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: var(--text-muted);
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+
+        .kds-col-tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .kds-col-tab.active {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+            font-weight: 700;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
+        }
+
+        .kds-col-tab.cooking.active {
+            background: #ef4444;
+            color: #fff;
+            border-color: #ef4444;
+            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+        }
+
+        .kds-col-tab.ready.active {
+            background: #10b981;
+            color: #fff;
+            border-color: #10b981;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+        }
+
+        .kds-col-tab.unpaid.active {
+            background: #f59e0b;
+            color: #000;
+            border-color: #f59e0b;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+        }
+
+        .tab-badge {
+            font-size: 11px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            color: inherit;
+        }
+
+        .kds-col-tab.active .tab-badge {
+            background: rgba(0, 0, 0, 0.25);
+            color: #fff;
+        }
+
+        .kds-col-tab.cooking.active .tab-badge {
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+        }
+
+        @media (max-width: 1100px) {
+            .kds-mobile-col-tabs {
+                display: flex;
+            }
             .kds-columns-grid {
-                grid-template-columns: 1fr;
+                display: flex;
+                flex-direction: column;
                 overflow-y: auto;
+                height: 100%;
+                gap: 12px;
+            }
+            .kds-columns-grid.show-only-cooking #col-ready,
+            .kds-columns-grid.show-only-cooking #col-unpaid {
+                display: none !important;
+            }
+            .kds-columns-grid.show-only-ready #col-cooking,
+            .kds-columns-grid.show-only-ready #col-unpaid {
+                display: none !important;
+            }
+            .kds-columns-grid.show-only-unpaid #col-cooking,
+            .kds-columns-grid.show-only-unpaid #col-ready {
+                display: none !important;
             }
             .kds-column {
-                min-height: 380px;
+                min-height: 480px;
+                height: auto;
+                flex: 1;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .kds-col-tab {
+                padding: 6px 10px;
+                font-size: 11.5px;
+            }
+            .kds-column {
+                min-height: 360px;
+                padding: 12px;
+            }
+            .order-card {
+                padding: 14px;
             }
         }
 
@@ -756,6 +865,7 @@
                 col_cooking: "En Préparation",
                 col_ready: "Prêtes / À Retirer",
                 col_unpaid: "À Payer",
+                tab_all: "Toutes",
                 btn_ready: "Prête à servir !",
                 btn_served: "Commande Livrée",
                 btn_manage_menu: "Gérer le Menu",
@@ -814,6 +924,7 @@
                 col_cooking: "In Preparation",
                 col_ready: "Ready / To Pickup",
                 col_unpaid: "Unpaid Orders",
+                tab_all: "All",
                 btn_ready: "Ready to serve!",
                 btn_served: "Order Delivered",
                 btn_manage_menu: "Manage Menu",
@@ -872,6 +983,7 @@
                 col_cooking: "قيد التحضير في المطبخ",
                 col_ready: "جاهزة للاستلام والتقديم",
                 col_unpaid: "في انتظار الدفع",
+                tab_all: "الكل",
                 btn_ready: "جاهزة للتقديم !",
                 btn_served: "تم تسليم الطلب",
                 btn_manage_menu: "إدارة قائمة الطعام",
@@ -930,6 +1042,7 @@
                 col_cooking: "En Preparación",
                 col_ready: "Listos / Para Servir",
                 col_unpaid: "Pendientes de Pago",
+                tab_all: "Todas",
                 btn_ready: "¡Listo para servir!",
                 btn_served: "Pedido Entregado",
                 btn_manage_menu: "Gestión de Menú",
@@ -1313,6 +1426,24 @@
             renderKdsView(false);
         }
 
+        let kdsMobileActiveCol = 'all';
+
+        function setKdsMobileCol(col) {
+            kdsMobileActiveCol = col;
+            const grid = document.getElementById('kds-columns-grid-container');
+            if (grid) {
+                grid.classList.remove('show-only-cooking', 'show-only-ready', 'show-only-unpaid');
+                if (col !== 'all') {
+                    grid.classList.add(`show-only-${col}`);
+                }
+            }
+            const tabs = document.querySelectorAll('.kds-col-tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            const activeTab = document.getElementById(`kds-tab-${col}`);
+            if (activeTab) activeTab.classList.add('active');
+        }
+        window.setKdsMobileCol = setKdsMobileCol;
+
         function clearKdsSearch() {
             kdsSearchQuery = '';
             const input = document.getElementById('kds-search-input');
@@ -1527,10 +1658,26 @@
                             </div>
                         </div>
 
+                        <!-- KDS Mobile Quick-Access Tabs (Écran Mobile & Montre Connectée) -->
+                        <div class="kds-mobile-col-tabs" id="kds-mobile-col-tabs">
+                            <button id="kds-tab-all" class="kds-col-tab ${kdsMobileActiveCol === 'all' ? 'active' : ''}" onclick="setKdsMobileCol('all')">
+                                <i class="fa-solid fa-table-columns"></i> ${t.tab_all || 'Toutes'}
+                            </button>
+                            <button id="kds-tab-cooking" class="kds-col-tab cooking ${kdsMobileActiveCol === 'cooking' ? 'active' : ''}" onclick="setKdsMobileCol('cooking')">
+                                <i class="fa-solid fa-fire-burner"></i> ${t.col_cooking} <span class="tab-badge" id="tab-count-cooking">0</span>
+                            </button>
+                            <button id="kds-tab-ready" class="kds-col-tab ready ${kdsMobileActiveCol === 'ready' ? 'active' : ''}" onclick="setKdsMobileCol('ready')">
+                                <i class="fa-solid fa-circle-check"></i> ${t.col_ready} <span class="tab-badge ready" id="tab-count-ready">0</span>
+                            </button>
+                            <button id="kds-tab-unpaid" class="kds-col-tab unpaid ${kdsMobileActiveCol === 'unpaid' ? 'active' : ''}" onclick="setKdsMobileCol('unpaid')">
+                                <i class="fa-solid fa-hand-holding-dollar"></i> ${t.col_unpaid || 'À Payer'} <span class="tab-badge unpaid" id="tab-count-unpaid">0</span>
+                            </button>
+                        </div>
+
                         <!-- Grille 3 Colonnes : En préparation | Prêtes / À retirer | À payer -->
-                        <div class="kds-columns-grid">
+                        <div class="kds-columns-grid ${kdsMobileActiveCol !== 'all' ? 'show-only-' + kdsMobileActiveCol : ''}" id="kds-columns-grid-container">
                             <!-- Colonne 1 : En préparation -->
-                            <section class="kds-column">
+                            <section class="kds-column" id="col-cooking">
                                 <div class="column-header">
                                     <h2><i class="fa-solid fa-fire-burner" style="color: #ef4444;"></i> ${t.col_cooking}</h2>
                                     <span class="count" id="count-cooking" style="background:#ef4444; color:#fff;">0</span>
@@ -1539,7 +1686,7 @@
                             </section>
 
                             <!-- Colonne 2 : Prêtes / À retirer -->
-                            <section class="kds-column">
+                            <section class="kds-column" id="col-ready">
                                 <div class="column-header">
                                     <h2><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> ${t.col_ready}</h2>
                                     <span class="count" id="count-ready" style="background:#10b981; color:#fff;">0</span>
@@ -1548,7 +1695,7 @@
                             </section>
 
                             <!-- Colonne 3 : À payer -->
-                            <section class="kds-column" style="border-color: rgba(245, 158, 11, 0.25); background: rgba(245, 158, 11, 0.02);">
+                            <section class="kds-column" id="col-unpaid" style="border-color: rgba(245, 158, 11, 0.25); background: rgba(245, 158, 11, 0.02);">
                                 <div class="column-header">
                                     <h2><i class="fa-solid fa-hand-holding-dollar" style="color: #f59e0b;"></i> ${t.col_unpaid || 'À Payer'}</h2>
                                     <span class="count" id="count-unpaid" style="background:#f59e0b; color:#000; font-weight:800;">0</span>
@@ -1595,16 +1742,22 @@
             if (statCookEl) statCookEl.innerText = rawCooking.length;
             const countCookEl = document.getElementById('count-cooking');
             if (countCookEl) countCookEl.innerText = kdsSearchQuery ? `${cookingOrders.length}/${rawCooking.length}` : cookingOrders.length;
+            const tabCookEl = document.getElementById('tab-count-cooking');
+            if (tabCookEl) tabCookEl.innerText = rawCooking.length;
 
             const statReadyEl = document.getElementById('stat-ready');
             if (statReadyEl) statReadyEl.innerText = rawReady.length;
             const countReadyEl = document.getElementById('count-ready');
             if (countReadyEl) countReadyEl.innerText = kdsSearchQuery ? `${readyOrders.length}/${rawReady.length}` : readyOrders.length;
+            const tabReadyEl = document.getElementById('tab-count-ready');
+            if (tabReadyEl) tabReadyEl.innerText = rawReady.length;
 
             const statUnpaidEl = document.getElementById('stat-unpaid');
             if (statUnpaidEl) statUnpaidEl.innerText = rawUnpaid.length;
             const countUnpaidEl = document.getElementById('count-unpaid');
             if (countUnpaidEl) countUnpaidEl.innerText = kdsSearchQuery ? `${unpaidOrders.length}/${rawUnpaid.length}` : unpaidOrders.length;
+            const tabUnpaidEl = document.getElementById('tab-count-unpaid');
+            if (tabUnpaidEl) tabUnpaidEl.innerText = rawUnpaid.length;
 
             // Rendu de la colonne 1 : En préparation
             if (cookingOrders.length === 0) {
