@@ -77,6 +77,32 @@
             box-sizing: border-box;
         }
 
+        .kds-columns-grid {
+            flex: 1;
+            min-height: 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 1200px) {
+            .kds-columns-grid {
+                grid-template-columns: 1fr 1fr;
+                overflow-y: auto;
+            }
+        }
+        @media (max-width: 800px) {
+            .kds-columns-grid {
+                grid-template-columns: 1fr;
+                overflow-y: auto;
+            }
+            .kds-column {
+                min-height: 380px;
+            }
+        }
+
         .kds-column {
             display: flex;
             flex-direction: column;
@@ -648,10 +674,13 @@
             <div id="header-btn-container"></div>
             
             <div class="stat-badge">
-                <i class="fa-solid fa-fire-burner"></i> <span id="stat-cooking-label">En Cuisine :</span> <span id="stat-cooking">0</span>
+                <i class="fa-solid fa-fire-burner" style="color:#ef4444;"></i> <span id="stat-cooking-label">En Cuisine :</span> <span id="stat-cooking">0</span>
             </div>
             <div class="stat-badge">
-                <i class="fa-solid fa-mug-hot"></i> <span id="stat-ready-label">Prêtes :</span> <span id="stat-ready">0</span>
+                <i class="fa-solid fa-circle-check" style="color:#10b981;"></i> <span id="stat-ready-label">Prêtes :</span> <span id="stat-ready">0</span>
+            </div>
+            <div class="stat-badge" style="border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.08);">
+                <i class="fa-solid fa-hand-holding-dollar" style="color:#f59e0b;"></i> <span id="stat-unpaid-label">À Payer :</span> <span id="stat-unpaid" style="color:#f59e0b; font-weight:800;">0</span>
             </div>
             
             <div class="user-profile" style="display: flex; align-items: center; gap: 12px; border-left: 1px solid var(--glass-border); padding-left: 15px;">
@@ -723,8 +752,10 @@
                 title_kds: "Tableau de Bord",
                 stat_cooking: "En Cuisine :",
                 stat_ready: "Prêtes :",
+                stat_unpaid: "À Payer :",
                 col_cooking: "En Préparation",
                 col_ready: "Prêtes / À Retirer",
+                col_unpaid: "À Payer",
                 btn_ready: "Prête à servir !",
                 btn_served: "Commande Livrée",
                 btn_manage_menu: "Gérer le Menu",
@@ -738,6 +769,7 @@
                 timer_min: "min",
                 empty_cooking: "Aucune commande en préparation.",
                 empty_ready: "Aucune commande en attente de retrait.",
+                empty_unpaid: "Aucun règlement en attente.",
                 menu_mgmt_title: "Gestion du Menu & Création de Plats",
                 menu_mgmt_desc: "Gérez votre carte, créez des plats manuellement ou importez un menu scanné par photo.",
                 menu_tab_catalog: "📋 Catalogue & Stock",
@@ -778,8 +810,10 @@
                 title_kds: "Dashboard",
                 stat_cooking: "In Kitchen:",
                 stat_ready: "Ready:",
+                stat_unpaid: "Unpaid:",
                 col_cooking: "In Preparation",
                 col_ready: "Ready / To Pickup",
+                col_unpaid: "Unpaid Orders",
                 btn_ready: "Ready to serve!",
                 btn_served: "Order Delivered",
                 btn_manage_menu: "Manage Menu",
@@ -793,6 +827,7 @@
                 timer_min: "min",
                 empty_cooking: "No orders currently cooking.",
                 empty_ready: "No orders waiting for pickup.",
+                empty_unpaid: "No unpaid orders pending.",
                 menu_mgmt_title: "Menu Management & Dish Creation",
                 menu_mgmt_desc: "Manage your food catalog, create dishes manually or scan menu photos with AI.",
                 menu_tab_catalog: "📋 Catalog & Stock",
@@ -833,8 +868,10 @@
                 title_kds: "لوحة التحكم",
                 stat_cooking: "قيد التحضير :",
                 stat_ready: "جاهزة :",
+                stat_unpaid: "غير مدفوعة :",
                 col_cooking: "قيد التحضير في المطبخ",
                 col_ready: "جاهزة للاستلام والتقديم",
+                col_unpaid: "في انتظار الدفع",
                 btn_ready: "جاهزة للتقديم !",
                 btn_served: "تم تسليم الطلب",
                 btn_manage_menu: "إدارة قائمة الطعام",
@@ -848,6 +885,7 @@
                 timer_min: "دقيقة",
                 empty_cooking: "لا توجد طلبات قيد التحضير حالياً.",
                 empty_ready: "لا توجد طلبات تنتظر الاستلام.",
+                empty_unpaid: "لا توجد طلبات في انتظار الدفع.",
                 menu_mgmt_title: "إدارة قائمة الطعام وإضافة الأطباق",
                 menu_mgmt_desc: "إدارة توفر المنتجات، إنشاء أطباق يدوياً أو مسح القوائم بالذكاء الاصطناعي والصور.",
                 menu_tab_catalog: "📋 قائمة الأطباق والمخزون",
@@ -888,8 +926,10 @@
                 title_kds: "Panel de Control",
                 stat_cooking: "En Cocina:",
                 stat_ready: "Listos:",
+                stat_unpaid: "Por Cobrar:",
                 col_cooking: "En Preparación",
                 col_ready: "Listos / Para Servir",
+                col_unpaid: "Pendientes de Pago",
                 btn_ready: "¡Listo para servir!",
                 btn_served: "Pedido Entregado",
                 btn_manage_menu: "Gestión de Menú",
@@ -903,6 +943,7 @@
                 timer_min: "min",
                 empty_cooking: "No hay pedidos en preparación.",
                 empty_ready: "No hay pedidos pendientes de entrega.",
+                empty_unpaid: "No hay pagos pendientes.",
                 menu_mgmt_title: "Gestión del Menú y Creación de Platos",
                 menu_mgmt_desc: "Gestione los platos, cree nuevos artículos manualmente o escanee una foto de la carta.",
                 menu_tab_catalog: "📋 Catálogo y Stock",
@@ -1230,6 +1271,8 @@
             if (statCook) statCook.innerText = t.stat_cooking;
             const statRdy = document.getElementById('stat-ready-label');
             if (statRdy) statRdy.innerText = t.stat_ready;
+            const statUnpaid = document.getElementById('stat-unpaid-label');
+            if (statUnpaid) statUnpaid.innerText = t.stat_unpaid || 'À Payer :';
 
             const headerBtnContainer = document.getElementById('header-btn-container');
             if (activeRole === 'cuisine' || activeRole === 'gestionnaire' || activeRole === 'superadmin') {
@@ -1442,15 +1485,17 @@
 
             let cookingList = document.getElementById('list-cooking');
             let readyList = document.getElementById('list-ready');
+            let unpaidList = document.getElementById('list-unpaid');
             const searchInput = document.getElementById('kds-search-input');
             
             // Sauvegarder les positions de scroll et le focus actif de la recherche
             const cookingScroll = cookingList ? cookingList.scrollTop : 0;
             const readyScroll = readyList ? readyList.scrollTop : 0;
+            const unpaidScroll = unpaidList ? unpaidList.scrollTop : 0;
             const isSearchFocused = (document.activeElement === searchInput);
             const selStart = isSearchFocused && searchInput ? searchInput.selectionStart : 0;
 
-            const isKdsStructurePresent = cookingList && readyList && !forceRebuild;
+            const isKdsStructurePresent = cookingList && readyList && unpaidList && !forceRebuild;
 
             if (!isKdsStructurePresent) {
                 mainContent.innerHTML = `
@@ -1482,7 +1527,9 @@
                             </div>
                         </div>
 
-                        <div style="flex:1; min-height:0; display:grid; grid-template-columns: 1fr 1fr; gap:20px; overflow:hidden; margin-top:8px;">
+                        <!-- Grille 3 Colonnes : En préparation | Prêtes / À retirer | À payer -->
+                        <div class="kds-columns-grid">
+                            <!-- Colonne 1 : En préparation -->
                             <section class="kds-column">
                                 <div class="column-header">
                                     <h2><i class="fa-solid fa-fire-burner" style="color: #ef4444;"></i> ${t.col_cooking}</h2>
@@ -1491,6 +1538,7 @@
                                 <div class="cards-list" id="list-cooking"></div>
                             </section>
 
+                            <!-- Colonne 2 : Prêtes / À retirer -->
                             <section class="kds-column">
                                 <div class="column-header">
                                     <h2><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> ${t.col_ready}</h2>
@@ -1498,11 +1546,21 @@
                                 </div>
                                 <div class="cards-list" id="list-ready"></div>
                             </section>
+
+                            <!-- Colonne 3 : À payer -->
+                            <section class="kds-column" style="border-color: rgba(245, 158, 11, 0.25); background: rgba(245, 158, 11, 0.02);">
+                                <div class="column-header">
+                                    <h2><i class="fa-solid fa-hand-holding-dollar" style="color: #f59e0b;"></i> ${t.col_unpaid || 'À Payer'}</h2>
+                                    <span class="count" id="count-unpaid" style="background:#f59e0b; color:#000; font-weight:800;">0</span>
+                                </div>
+                                <div class="cards-list" id="list-unpaid"></div>
+                            </section>
                         </div>
                     </div>
                 `;
                 cookingList = document.getElementById('list-cooking');
                 readyList = document.getElementById('list-ready');
+                unpaidList = document.getElementById('list-unpaid');
             } else {
                 const clearBtn = document.getElementById('kds-clear-search-btn');
                 if (clearBtn) clearBtn.style.display = kdsSearchQuery ? 'block' : 'none';
@@ -1527,9 +1585,11 @@
 
             const rawCooking = orders.filter(o => o.order_status === 'en_cuisine');
             const rawReady = orders.filter(o => o.order_status === 'prete');
+            const rawUnpaid = orders.filter(o => o.payment_status === 'a_payer_en_caisse' || o.payment_status === 'en_attente_paiement');
 
             const cookingOrders = rawCooking.filter(matchKdsFilter);
             const readyOrders = rawReady.filter(matchKdsFilter);
+            const unpaidOrders = rawUnpaid.filter(matchKdsFilter);
 
             const statCookEl = document.getElementById('stat-cooking');
             if (statCookEl) statCookEl.innerText = rawCooking.length;
@@ -1541,7 +1601,12 @@
             const countReadyEl = document.getElementById('count-ready');
             if (countReadyEl) countReadyEl.innerText = kdsSearchQuery ? `${readyOrders.length}/${rawReady.length}` : readyOrders.length;
 
-            // Rendu de la colonne en cuisine
+            const statUnpaidEl = document.getElementById('stat-unpaid');
+            if (statUnpaidEl) statUnpaidEl.innerText = rawUnpaid.length;
+            const countUnpaidEl = document.getElementById('count-unpaid');
+            if (countUnpaidEl) countUnpaidEl.innerText = kdsSearchQuery ? `${unpaidOrders.length}/${rawUnpaid.length}` : unpaidOrders.length;
+
+            // Rendu de la colonne 1 : En préparation
             if (cookingOrders.length === 0) {
                 cookingList.innerHTML = `<div class="empty-column-msg">${kdsSearchQuery ? 'Aucune commande trouvée pour cette recherche.' : t.empty_cooking}</div>`;
             } else {
@@ -1581,7 +1646,7 @@
 
                                     return `
                                         <li style="flex-direction:column; align-items:flex-start; gap:4px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05); ${isHold ? 'opacity:0.65;' : ''}">
-                                            <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                                             <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
                                                 <div class="item-qty-name">
                                                     <span class="seat-badge">🪑 S${item.seat_number || 1}</span>
                                                     <span class="item-qty">${item.quantity}x</span>
@@ -1626,7 +1691,7 @@
 
                             <div class="card-actions" style="display:flex; gap: 8px; flex-wrap:wrap; margin-top:10px; align-items:center;">
                                 ${isCashPending ? `
-                                    <button class="btn-cash-collect" onclick="collectCashPayment('${o.id}')" title="Valider le paiement en espèces">
+                                    <button class="btn-cash-collect" onclick="collectCashPayment('${o.id}', ${Math.round(orderTotal * 100)})" title="Valider le paiement en espèces">
                                         <i class="fa-solid fa-hand-holding-dollar"></i> Encaisser (${formatKdsPrice(orderTotal)})
                                     </button>
                                 ` : ''}
@@ -1645,7 +1710,7 @@
                 }).join('');
             }
 
-            // Rendu de la colonne prête
+            // Rendu de la colonne 2 : Prêtes / À retirer
             if (readyOrders.length === 0) {
                 readyList.innerHTML = `<div class="empty-column-msg">${kdsSearchQuery ? 'Aucune commande prête trouvée.' : t.empty_ready}</div>`;
             } else {
@@ -1694,9 +1759,74 @@
                 }).join('');
             }
 
+            // Rendu de la colonne 3 : À payer
+            if (unpaidOrders.length === 0) {
+                unpaidList.innerHTML = `<div class="empty-column-msg" style="color:#10b981;"><i class="fa-solid fa-circle-check" style="font-size:22px; display:block; margin-bottom:6px;"></i>${kdsSearchQuery ? 'Aucune commande impayée trouvée.' : (t.empty_unpaid || '✅ Aucun règlement en attente')}</div>`;
+            } else {
+                unpaidList.innerHTML = unpaidOrders.map((o, index) => {
+                    const elapsedMin = Math.floor((new Date() - new Date(o.created_at)) / 60000);
+                    const orderTotal = o.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                    const statusLabel = o.order_status === 'servie' ? '🍽️ Servie' : (o.order_status === 'prete' ? '✅ Prête au passe' : '🔥 En préparation');
+                    const statusColor = o.order_status === 'servie' ? '#10b981' : (o.order_status === 'prete' ? '#38bdf8' : '#ef4444');
+
+                    return `
+                        <div class="order-card glass" style="border-color: rgba(245, 158, 11, 0.35); box-shadow: 0 4px 20px rgba(245, 158, 11, 0.08); background: rgba(245, 158, 11, 0.02);">
+                            <div class="card-header">
+                                <div class="client-info">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <h3 style="color:#fff;">${o.client_name}</h3>
+                                        <span class="queue-badge" style="background:#f59e0b; color:#000;">#Q-${index+1}</span>
+                                        <span style="font-size:11px; color:var(--text-muted);">#${o.id.slice(0, 6).toUpperCase()}</span>
+                                    </div>
+                                    <div style="display:flex; gap: 6px; margin-top:4px; flex-wrap: wrap; align-items:center;">
+                                        <span class="elapsed-timer" style="color:#f59e0b; font-weight:700;">
+                                            ⏱️ ${elapsedMin} ${t.timer_min}
+                                        </span>
+                                        ${o.table_zone ? `<span style="font-size:10px; background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; color:var(--text-muted);"><i class="fa-solid fa-map-pin"></i> ${o.table_zone}</span>` : ''}
+                                        <span class="cash-badge-kds" style="background:rgba(245,158,11,0.18); color:#f59e0b; border:1px solid rgba(245,158,11,0.35);"><i class="fa-solid fa-money-bill-wave"></i> En caisse</span>
+                                    </div>
+                                </div>
+                                <span class="table-num" style="background: rgba(245, 158, 11, 0.15); border-color:#f59e0b; color:#f59e0b;">${t.table_prefix} ${o.table_number}</span>
+                            </div>
+
+                            <!-- Statut Cuisine Actuel -->
+                            <div style="margin: 8px 0 10px; font-size:11.5px; padding: 5px 10px; border-radius:6px; background:rgba(255,255,255,0.04); display:flex; justify-content:space-between; align-items:center;">
+                                <span style="color:var(--text-muted);">Avancement cuisine :</span>
+                                <strong style="color:${statusColor}; font-size:11px;">${statusLabel}</strong>
+                            </div>
+
+                            <ul class="card-items" style="max-height: 180px; overflow-y: auto; padding-right: 5px;">
+                                ${o.items.map(item => `
+                                    <li>
+                                        <div class="item-qty-name">
+                                            <span class="seat-badge">🪑 S${item.seat_number || 1}</span>
+                                            <span class="item-qty" style="color:#f59e0b;">${item.quantity}x</span>
+                                            <span>${item.name}</span>
+                                        </div>
+                                        <span>${formatKdsPrice(item.price * item.quantity)}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.08);">
+                                <span style="font-size:12px; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Total à régler :</span>
+                                <span style="font-size:16px; font-weight:800; color:#f59e0b;">${formatKdsPrice(orderTotal)}</span>
+                            </div>
+
+                            <div class="card-actions" style="margin-top:10px;">
+                                <button onclick="collectCashPayment('${o.id}', ${Math.round(orderTotal * 100)})" style="width:100%; justify-content:center; padding:10px 14px; font-size:13px; font-weight:700; background:#f59e0b; color:#000; border:none; border-radius:8px; cursor:pointer; box-shadow:0 4px 14px rgba(245,158,11,0.3); display:inline-flex; align-items:center; gap:8px;">
+                                    <i class="fa-solid fa-hand-holding-dollar"></i> Encaisser (${formatKdsPrice(orderTotal)})
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
             // Restauration exacte des positions de scroll des colonnes
             if (cookingList) cookingList.scrollTop = cookingScroll;
             if (readyList) readyList.scrollTop = readyScroll;
+            if (unpaidList) unpaidList.scrollTop = unpaidScroll;
 
             // Restauration du focus et du curseur de recherche sans interruption
             if (isSearchFocused) {
@@ -1712,6 +1842,24 @@
             kdsActiveStation = station;
             fetchOrders();
         }
+
+        async function collectCashPayment(orderId, amountCents) {
+            try {
+                const res = await fetch(`/api/orders/${orderId}/cash-payment`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amountCents: amountCents || null })
+                });
+                if (!res.ok) throw new Error('Erreur lors de l\'encaissement');
+                showKdsToast('💵 Paiement encaissé avec succès !', 'success');
+                await fetchOrders();
+                if (typeof renderUnpaidOrdersList === 'function') renderUnpaidOrdersList();
+            } catch (e) {
+                console.error('Erreur collectCashPayment:', e);
+                showKdsToast('Erreur lors de la validation du paiement', 'error');
+            }
+        }
+        window.collectCashPayment = collectCashPayment;
 
         async function updateOrderStatus(orderId, status) {
             try {
