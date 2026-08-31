@@ -5,6 +5,7 @@ const translations = {
         splash_desc: "Pour lier votre commande et retrouver vos reçus, connectez-vous ou continuez en tant qu'invité.",
         btn_login_google: "Se connecter avec Google",
         btn_login_apple: "Se connecter avec Apple",
+        btn_login_microsoft: "Se connecter avec Microsoft",
         btn_continue_guest: "Continuer en tant qu'invité",
         table_prefix: "Table",
         welcome_prefix: "Bienvenue chez",
@@ -83,6 +84,7 @@ const translations = {
         splash_desc: "To link your order and view receipts, sign in or continue as a guest.",
         btn_login_google: "Sign in with Google",
         btn_login_apple: "Sign in with Apple",
+        btn_login_microsoft: "Sign in with Microsoft",
         btn_continue_guest: "Continue as Guest",
         table_prefix: "Table",
         welcome_prefix: "Welcome to",
@@ -161,6 +163,7 @@ const translations = {
         splash_desc: "لربط طلبك والحصول على الإيصال، يمكنك تسجيل الدخول أو المتابعة كضيف.",
         btn_login_google: "تسجيل الدخول عبر Google",
         btn_login_apple: "تسجيل الدخول عبر Apple",
+        btn_login_microsoft: "تسجيل الدخول عبر Microsoft",
         btn_continue_guest: "المتابعة كضيف",
         table_prefix: "طاولة",
         welcome_prefix: "مرحباً بكم في",
@@ -239,6 +242,7 @@ const translations = {
         splash_desc: "Para vincular su pedido y guardar recibos, inicie sesión o continúe como invitado.",
         btn_login_google: "Iniciar sesión con Google",
         btn_login_apple: "Iniciar sesión con Apple",
+        btn_login_microsoft: "Iniciar sesión con Microsoft",
         btn_continue_guest: "Continuar como invitado",
         table_prefix: "Mesa",
         welcome_prefix: "Bienvenido a",
@@ -2770,22 +2774,33 @@ function submitGuestNameAndContinue() {
 }
 
 function clientSSO(provider) {
-    const mockNames = {
-        'Google': 'Thomas Martin',
-        'Apple': 'Sarah Dubois'
+    const mockProfiles = {
+        'Google': { name: 'Thomas Martin', email: 'thomas.martin@gmail.com', provider: 'Google', icon: 'fa-brands fa-google' },
+        'Apple': { name: 'Sarah Dubois', email: 'sarah.dubois@icloud.com', provider: 'Apple', icon: 'fa-brands fa-apple' },
+        'Microsoft': { name: 'Alexandre Leroy', email: 'alex.leroy@outlook.com', provider: 'Microsoft', icon: 'fa-brands fa-windows' }
     };
-    const chosenName = mockNames[provider] || 'Membre Club';
-    const email = `${chosenName.toLowerCase().replace(/\s+/g, '.')}@gmail.com`;
+    const prof = mockProfiles[provider] || { name: 'Membre Club', email: 'client@ciao-byebye.fr', provider: provider || 'SSO', icon: 'fa-solid fa-user-check' };
     
     sessionStorage.setItem('ciao_byebye_client_auth', 'true');
-    sessionStorage.setItem('ciao_byebye_client_name', chosenName);
-    sessionStorage.setItem('ciao_byebye_client_email', email);
+    sessionStorage.setItem('ciao_byebye_client_name', prof.name);
+    sessionStorage.setItem('ciao_byebye_client_email', prof.email);
+    sessionStorage.setItem('ciao_byebye_client_provider', prof.provider);
     
-    localStorage.setItem('ciao_guest_name', chosenName);
-    setClientIdentity(chosenName, true);
+    localStorage.setItem('ciao_guest_name', prof.name);
+    localStorage.setItem('kz_client_name', prof.name);
+    
+    setClientIdentity(prof.name, true);
     dismissClientAuth();
-    showToast(`Connecté avec succès via ${provider} (${chosenName}) ! 🌟`, 'success');
+    
+    // Inscription / Connexion automatique au programme de fidélité
+    if (typeof enrollMember === 'function') {
+        const phone = '06' + Math.floor(10000000 + Math.random() * 90000000);
+        enrollMember(prof.name, phone, prof.email);
+    }
+    
+    showToast(`✨ Connecté avec succès via ${prof.provider} (${prof.name}) ! 🌟`, 'success');
 }
+window.clientSSO = clientSSO;
 
 function dismissClientAuth() {
     const authOverlay = document.getElementById('client-auth-overlay');

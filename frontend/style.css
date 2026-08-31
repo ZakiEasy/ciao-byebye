@@ -1617,6 +1617,21 @@ body {
     background: #1f2937;
 }
 
+.sso-microsoft {
+    background: #0f172a;
+    color: #ffffff;
+    border: 1px solid rgba(0, 164, 239, 0.4);
+}
+
+.sso-microsoft:hover {
+    background: #1e293b;
+    border-color: #00a4ef;
+}
+
+.sso-microsoft i {
+    color: #00a4ef;
+}
+
 .guest-btn {
     background: rgba(255, 255, 255, 0.08);
     color: var(--text-primary);
