@@ -1437,6 +1437,37 @@
                     grid.classList.add(`show-only-${col}`);
                 }
             }
+
+            // Application directe sur le DOM pour compatibilité totale avec les montres connectées (Apple Watch, WearOS)
+            const colCooking = document.getElementById('col-cooking');
+            const colReady = document.getElementById('col-ready');
+            const colUnpaid = document.getElementById('col-unpaid');
+            if (colCooking && colReady && colUnpaid) {
+                if (window.innerWidth <= 1100 || (grid && grid.offsetWidth < 800)) {
+                    if (col === 'cooking') {
+                        colCooking.style.setProperty('display', 'flex', 'important');
+                        colReady.style.setProperty('display', 'none', 'important');
+                        colUnpaid.style.setProperty('display', 'none', 'important');
+                    } else if (col === 'ready') {
+                        colCooking.style.setProperty('display', 'none', 'important');
+                        colReady.style.setProperty('display', 'flex', 'important');
+                        colUnpaid.style.setProperty('display', 'none', 'important');
+                    } else if (col === 'unpaid') {
+                        colCooking.style.setProperty('display', 'none', 'important');
+                        colReady.style.setProperty('display', 'none', 'important');
+                        colUnpaid.style.setProperty('display', 'flex', 'important');
+                    } else {
+                        colCooking.style.display = 'flex';
+                        colReady.style.display = 'flex';
+                        colUnpaid.style.display = 'flex';
+                    }
+                } else {
+                    colCooking.style.display = '';
+                    colReady.style.display = '';
+                    colUnpaid.style.display = '';
+                }
+            }
+
             const tabs = document.querySelectorAll('.kds-col-tab');
             tabs.forEach(t => t.classList.remove('active'));
             const activeTab = document.getElementById(`kds-tab-${col}`);
@@ -1988,6 +2019,11 @@
                     refreshedInput.focus();
                     refreshedInput.setSelectionRange(selStart, selStart);
                 }
+            }
+
+            // Maintien automatique du filtre actif sur smartwatch et mobile
+            if (kdsMobileActiveCol && kdsMobileActiveCol !== 'all') {
+                setKdsMobileCol(kdsMobileActiveCol);
             }
         }
 

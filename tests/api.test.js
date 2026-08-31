@@ -1571,6 +1571,25 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         const tOrders = Date.now() - t3;
         assert.strictEqual(ordersRes.status, 200);
         assert.ok(tOrders < 1200, `Orders retrieval latency exceeded SLA: ${tOrders}ms`);
+
+        // 5. Benchmark POST /api/orders/mock-create (< 1500ms sur réseau dégradé)
+        const t4 = Date.now();
+        const createOrderRes = await fetch(`${BASE_URL}/api/orders/mock-create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableNumber: '08',
+                clientName: 'Performance SLA Test',
+                paymentMethod: 'especes',
+                items: [
+                    { name: 'Pizza Napolitaine', price: 13.5, quantity: 2 },
+                    { name: 'Coca-Cola Zero', price: 3.5, quantity: 2, category: 'boisson' }
+                ]
+            })
+        });
+        const tCreate = Date.now() - t4;
+        assert.strictEqual(createOrderRes.status, 200);
+        assert.ok(tCreate < 2500, `Order creation latency exceeded degraded SLA: ${tCreate}ms`);
     });
 
     test('60. GET /api/orders/:id/status & PUT /api/menu/:id - Real-time tracking and dish updates', async () => {

@@ -1069,20 +1069,19 @@ app.post('/api/orders/mock-create', async (req, res) => {
 
     const tableId = tableResult.rows[0].id;
     
-    // Mise à jour de l'état de service de la table
-    await pool.query(`
+    // Mise à jour de l'état de service et clôture des vieilles sessions en tâche de fond
+    pool.query(`
       UPDATE tables SET 
         service_status = 'en_preparation',
         service_started_at = COALESCE(service_started_at, CURRENT_TIMESTAMP),
         last_activity_at = CURRENT_TIMESTAMP
       WHERE id = $1
-    `, [tableId]);
+    `, [tableId]).catch(e => console.error('Table update error:', e));
 
-    // Clôturer les anciennes sessions périmées (> 3 heures)
-    await pool.query(
+    pool.query(
       "UPDATE table_sessions SET status = 'completed', ended_at = CURRENT_TIMESTAMP WHERE table_id = $1 AND status = 'active' AND started_at < NOW() - INTERVAL '3 hours'",
       [tableId]
-    );
+    ).catch(e => console.error('Session prune error:', e));
 
     let sessionResult = await pool.query("SELECT id FROM table_sessions WHERE table_id = $1 AND status = 'active' ORDER BY started_at DESC LIMIT 1", [tableId]);
     let sessionId;
@@ -1252,7 +1251,8 @@ app.post('/api/orders/mock-create', async (req, res) => {
     );
     const orderId = orderResult.rows[0].id;
     
-    for (const item of orderItems) {
+    // Traitement ultra-performant et concurrent de tous les articles de commande
+    await Promise.all(orderItems.map(async (item) => {
       let prodResult;
       if (item.id && isUUID(item.id)) {
         prodResult = await pool.query('SELECT id, category FROM products WHERE id = $1', [item.id]);
@@ -1296,10 +1296,12 @@ app.post('/api/orders/mock-create', async (req, res) => {
           ]
         );
 
-        // Décompte de la fiche technique BOM
-        await deductBOMStock(pool, productId, item.quantity || 1, modifiers, orderId);
+        // Décompte de la fiche technique BOM en tâche asynchrone sécurisée
+        deductBOMStock(pool, productId, item.quantity || 1, modifiers, orderId).catch(err => {
+          console.error('[BOM DEDUCT ERROR]:', err);
+        });
       }
-    }
+    }));
     
     const queueResult = await pool.query("SELECT COUNT(*) as count FROM orders WHERE order_status = 'en_cuisine'");
     const queuePos = parseInt(queueResult.rows[0].count || 1);

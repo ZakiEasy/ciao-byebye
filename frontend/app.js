@@ -2330,36 +2330,54 @@ async function simulatePaymentSuccess() {
     const appliedRewardId = currentAppliedReward ? currentAppliedReward.id : null;
     const loyaltyDiscountCents = Math.round((currentLoyaltyDiscountAmount || 0) * 100);
 
+    const payload = JSON.stringify({
+        tableNumber,
+        clientName,
+        paymentMethod: selectedPaymentMethod,
+        tipAmountCents: tipAmountCents,
+        splitCount: currentSplitCount,
+        splitPartIndex: currentSplitPart,
+        ticketRestoAmountCents: ticketRestoCents,
+        customerPhone,
+        customerEmail,
+        appliedRewardId,
+        loyaltyDiscountCents,
+        items: cart.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            category: item.category,
+            seat_number: item.seat_number || 1,
+            modifiers: item.modifiers || [],
+            allergies: item.allergies || [],
+            cooking_pref: item.cooking_pref || null,
+            customization_notes: item.specialNotes || null
+        }))
+    });
+
     try {
-        const response = await fetch('/api/orders/mock-create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                tableNumber,
-                clientName,
-                paymentMethod: selectedPaymentMethod,
-                tipAmountCents: tipAmountCents,
-                splitCount: currentSplitCount,
-                splitPartIndex: currentSplitPart,
-                ticketRestoAmountCents: ticketRestoCents,
-                customerPhone,
-                customerEmail,
-                appliedRewardId,
-                loyaltyDiscountCents,
-                items: cart.map(item => ({
-                    id: item.id,
-                    name: item.name,
-                    price: item.price,
-                    quantity: item.quantity,
-                    category: item.category,
-                    seat_number: item.seat_number || 1,
-                    modifiers: item.modifiers || [],
-                    allergies: item.allergies || [],
-                    cooking_pref: item.cooking_pref || null,
-                    customization_notes: item.specialNotes || null
-                }))
-            })
-        });
+        // Envoi avec timeout et résilience pour réseaux mobiles lents / dégradés
+        let response;
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 12000);
+            response = await fetch('/api/orders/mock-create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+        } catch (fetchErr) {
+            // Tentative de rattrapage immédiate sur connexion dégradée
+            console.warn('[RETRY ORDER FETCH] Connexion instable, réessai immédiat...', fetchErr);
+            response = await fetch('/api/orders/mock-create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload
+            });
+        }
 
         if (!response.ok) {
             const errData = await response.json().catch(() => ({}));

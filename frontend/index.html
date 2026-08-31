@@ -73,16 +73,31 @@
     <!-- Header / Navbar -->
     <header class="app-header">
         <div class="header-container">
-            <div class="logo" style="display:flex; align-items:center; gap:8px;">
-                <div style="width:34px; height:34px; border-radius:50%; background:#fff; border:2px solid var(--primary); display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 2px 8px rgba(0,0,0,0.3); flex-shrink:0;">
-                    🍕
+            <div class="header-top-row">
+                <div class="logo" style="display:flex; align-items:center; gap:8px;">
+                    <div style="width:32px; height:32px; border-radius:50%; background:#fff; border:2px solid var(--primary); display:flex; align-items:center; justify-content:center; font-size:16px; box-shadow:0 2px 8px rgba(0,0,0,0.3); flex-shrink:0;">
+                        🍕
+                    </div>
+                    <div>
+                        <div style="font-size:15px; font-weight:800; line-height:1.1; letter-spacing:-0.3px;"><span class="logo-accent">Don</span> Roberto</div>
+                        <div style="font-size:9px; color:#10b981; font-weight:700; letter-spacing:0.6px; text-transform:uppercase;">Pizzeria & Trattoria</div>
+                    </div>
                 </div>
-                <div>
-                    <div style="font-size:16px; font-weight:800; line-height:1.1; letter-spacing:-0.3px;"><span class="logo-accent">Don</span> Roberto</div>
-                    <div style="font-size:9px; color:#10b981; font-weight:700; letter-spacing:0.8px; text-transform:uppercase;">Pizzeria & Trattoria</div>
+
+                <div class="header-user-actions">
+                    <div class="table-badge" id="header-table-badge" onclick="openSharedTableOrdersModal()" style="cursor:pointer; display:inline-flex; align-items:center; gap:4px;" title="Voir les convives et commandes de la table">
+                        <i class="fa-solid fa-chair"></i> <span data-i18n="table_prefix">Table</span> <span id="table-number">05</span>
+                        <span id="table-guests-pill" style="background:rgba(56,189,248,0.25); color:#38bdf8; font-size:10px; padding:1px 5px; border-radius:10px; font-weight:800;" title="Convives connectés"><i class="fa-solid fa-users" style="font-size:8px;"></i> <span id="header-guests-count">1</span></span>
+                    </div>
+
+                    <!-- Client Account / Session Button -->
+                    <button class="client-account-btn glass" id="client-account-btn" onclick="toggleAccountDrawer()" aria-label="Espace Client">
+                        <i class="fa-solid fa-user-circle"></i> <span id="header-user-name">Invité</span>
+                    </button>
                 </div>
             </div>
-            <div class="header-controls">
+
+            <div class="header-controls-row">
                 <!-- Lang & Currency Selectors -->
                 <div class="i18n-selectors">
                     <select id="lang-select" onchange="changeLanguage(this.value)" class="glass-select" aria-label="Langue">
@@ -104,16 +119,6 @@
                 <!-- Walkthrough / Tour Button -->
                 <button class="glass-btn-tour" id="btn-start-client-tour" onclick="startClientWalkthrough()" title="Découvrir le fonctionnement du menu">
                     <i class="fa-solid fa-graduation-cap"></i> <span data-i18n="tour_btn_text">Visite Guidée</span>
-                </button>
-
-                <div class="table-badge" id="header-table-badge" onclick="openSharedTableOrdersModal()" style="cursor:pointer; display:inline-flex; align-items:center; gap:5px;" title="Voir les convives et commandes de la table">
-                    <i class="fa-solid fa-chair"></i> <span data-i18n="table_prefix">Table</span> <span id="table-number">05</span>
-                    <span id="table-guests-pill" style="background:rgba(56,189,248,0.25); color:#38bdf8; font-size:11px; padding:1px 6px; border-radius:10px; font-weight:800;" title="Convives connectés"><i class="fa-solid fa-users" style="font-size:9px;"></i> <span id="header-guests-count">1</span></span>
-                </div>
-
-                <!-- Client Account / Session Button -->
-                <button class="client-account-btn glass" id="client-account-btn" onclick="toggleAccountDrawer()" aria-label="Espace Client">
-                    <i class="fa-solid fa-user-circle"></i> <span id="header-user-name">Invité</span>
                 </button>
             </div>
         </div>
