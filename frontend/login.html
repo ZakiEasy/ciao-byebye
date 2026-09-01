@@ -421,7 +421,12 @@
 
         // Check if already authenticated
         if (sessionStorage.getItem('ciao_byebye_auth') === 'true') {
-            window.location.href = 'dashboard.html';
+            const role = sessionStorage.getItem('ciao_byebye_role');
+            if (role === 'superadmin') {
+                window.location.href = 'admin-hq.html';
+            } else {
+                window.location.href = 'dashboard.html';
+            }
         }
 
         // SSO triggers (Mocking redirect behavior to simulated OAuth callbacks)

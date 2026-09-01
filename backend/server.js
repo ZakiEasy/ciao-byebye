@@ -3370,7 +3370,8 @@ app.get('/api/auth/sso/callback', async (req, res) => {
         sessionStorage.setItem('ciao_byebye_role', ${JSON.stringify(role)});
         sessionStorage.setItem('ciao_byebye_tables', JSON.stringify(${JSON.stringify(assignedTables)}));
         setTimeout(function() {
-          window.location.href = '/dashboard.html';
+          const targetUrl = ${role === 'superadmin' ? "'/admin-hq.html'" : "'/dashboard.html'"};
+          window.location.href = targetUrl;
         }, 150);
       </script>
     </body>

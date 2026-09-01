@@ -750,13 +750,10 @@
                 <i class="fa-solid fa-graduation-cap"></i> Visite Guidée KDS
             </button>
 
-            <!-- SuperAdmin & CRM Quick Links (visible pour admin HQ) -->
-            <div id="hq-admin-links" style="display:flex; align-items:center; gap:6px;">
-                <a href="/admin-hq.html" class="action-btn secondary" style="text-decoration:none; font-size:11px; padding:6px 10px; color:#f87171; border-color:rgba(239,68,68,0.4);" title="SuperAdmin HQ">
-                    <i class="fa-solid fa-server"></i> HQ Admin
-                </a>
-                <a href="/sales-crm.html" class="action-btn secondary" style="text-decoration:none; font-size:11px; padding:6px 10px; color:#34d399; border-color:rgba(16,185,129,0.4);" title="Espace Commercial CRM">
-                    <i class="fa-solid fa-bullseye"></i> CRM Vente
+            <!-- SuperAdmin Quick Link (visible pour admin HQ) -->
+            <div id="hq-admin-links" style="display:none; align-items:center; gap:6px;">
+                <a href="/admin-hq.html" class="action-btn" style="text-decoration:none; font-size:11.5px; padding:6px 12px; background:rgba(239,68,68,0.2); color:#f87171; border:1px solid rgba(239,68,68,0.6); font-weight:800; border-radius:var(--radius-sm);" title="Portail SuperAdmin HQ (Déploiements, Modules & SaaS)">
+                    <i class="fa-solid fa-crown"></i> SuperAdmin HQ
                 </a>
             </div>
             <!-- Lang, Currency & Fullscreen Selectors -->
@@ -1280,8 +1277,8 @@
             if (btnTour) btnTour.style.display = 'inline-block';
 
             if (activeRole === 'superadmin') {
-                // SuperAdmin HQ: Accès total dont Modules & Presets Métiers, HQ Admin & CRM
-                if (tabModules) tabModules.style.display = 'inline-block';
+                // SuperAdmin : Navigation KDS Restaurant épurée + Lien direct vers le Portail SuperAdmin HQ
+                if (tabModules) tabModules.style.display = 'none';
                 if (tabPickup) tabPickup.style.display = 'inline-block';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'flex';
             } else if (activeRole === 'gestionnaire') {
