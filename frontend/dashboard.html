@@ -12,10 +12,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style variables -->
     <link rel="stylesheet" href="style.css">
-    <!-- HTML5 QR Code Scanner (Camera native) -->
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <!-- QRCode Generator Engine (Canvas HD & Logo overlay) -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <!-- HTML5 QR Code Scanner (Local first, CDN fallback) -->
+    <script src="libs/html5-qrcode.min.js"></script>
+    <script>if (typeof Html5Qrcode === 'undefined') document.write('<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"><\/script>');</script>
+    <!-- QRCode Generator Engine (Local first, CDN fallback) -->
+    <script src="libs/qrcode.min.js"></script>
+    <script>if (typeof QRCode === 'undefined') document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.1/qrcode.min.js"><\/script>');</script>
     
     <style>
         /* Specific Dashboard overrides */
@@ -6075,10 +6077,10 @@
             ctx.letterSpacing = '1.5px';
             ctx.fillText(headerSub.toUpperCase(), width / 2, 88);
 
-            // Generate Temporary QR Canvas via QRCode lib
-            const tempQrCanvas = document.createElement('canvas');
+            // Generate QR Code on Main Card
             try {
-                if (typeof QRCode !== 'undefined') {
+                if (typeof QRCode !== 'undefined' && typeof QRCode.toCanvas === 'function') {
+                    const tempQrCanvas = document.createElement('canvas');
                     await QRCode.toCanvas(tempQrCanvas, targetUrl, {
                         width: 440,
                         margin: 1,
@@ -6088,15 +6090,34 @@
                             light: bgCardColor
                         }
                     });
-
-                    // Draw QR onto Main Card
                     ctx.drawImage(tempQrCanvas, 80, 145, 440, 440);
                 } else {
-                    ctx.fillStyle = '#f1f5f9';
-                    ctx.fillRect(80, 145, 440, 440);
-                    ctx.fillStyle = '#0f172a';
-                    ctx.font = '14px sans-serif';
-                    ctx.fillText('Chargement du module QR Code...', width / 2, 360);
+                    // Fallback to QR API image with auto-retry
+                    await new Promise((resolve) => {
+                        const fallbackImg = new Image();
+                        fallbackImg.crossOrigin = 'anonymous';
+                        fallbackImg.onload = () => {
+                            ctx.drawImage(fallbackImg, 80, 145, 440, 440);
+                            resolve();
+                        };
+                        fallbackImg.onerror = () => {
+                            ctx.fillStyle = '#f1f5f9';
+                            ctx.fillRect(80, 145, 440, 440);
+                            ctx.fillStyle = '#0f172a';
+                            ctx.font = 'bold 16px sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('QR Code Don Roberto', width / 2, 360);
+                            resolve();
+                        };
+                        fallbackImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=440x440&ecc=H&data=${encodeURIComponent(targetUrl)}`;
+                    });
+
+                    // Si QRCode est encore en train de charger, re-déclencher un rendu dès qu'il est prêt
+                    if (typeof QRCode === 'undefined') {
+                        setTimeout(() => {
+                            if (typeof QRCode !== 'undefined') updateQRStudioPreview();
+                        }, 500);
+                    }
                 }
             } catch (err) {
                 console.error('Erreur génération QR Code canvas:', err);
@@ -6108,35 +6129,39 @@
                     ? DON_ROBERTO_EMBLEM_SVG 
                     : (logoType === 'ciao_badge' ? CIAO_LOGO_EMBLEM_SVG : (customLogoUrl || DON_ROBERTO_EMBLEM_SVG));
 
-                const logoImg = new Image();
-                logoImg.crossOrigin = 'anonymous';
-                logoImg.onload = function() {
-                    const centerX = width / 2;
-                    const centerY = 145 + 220;
-                    const radius = 48;
+                await new Promise((resolve) => {
+                    const logoImg = new Image();
+                    logoImg.crossOrigin = 'anonymous';
+                    logoImg.onload = function() {
+                        const centerX = width / 2;
+                        const centerY = 145 + 220;
+                        const radius = 48;
 
-                    // White Circular Background Plate
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.arc(centerX, centerY, radius + 4, 0, Math.PI * 2, false);
-                    ctx.fillStyle = '#ffffff';
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-                    ctx.shadowBlur = 12;
-                    ctx.fill();
-                    ctx.lineWidth = 3;
-                    ctx.strokeStyle = '#f59e0b';
-                    ctx.stroke();
-                    ctx.restore();
+                        // White Circular Background Plate
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.arc(centerX, centerY, radius + 4, 0, Math.PI * 2, false);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                        ctx.shadowBlur = 12;
+                        ctx.fill();
+                        ctx.lineWidth = 3;
+                        ctx.strokeStyle = '#f59e0b';
+                        ctx.stroke();
+                        ctx.restore();
 
-                    // Clip and Draw Image
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, false);
-                    ctx.clip();
-                    ctx.drawImage(logoImg, centerX - radius, centerY - radius, radius * 2, radius * 2);
-                    ctx.restore();
-                };
-                logoImg.src = logoSrc;
+                        // Clip and Draw Image
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, false);
+                        ctx.clip();
+                        ctx.drawImage(logoImg, centerX - radius, centerY - radius, radius * 2, radius * 2);
+                        ctx.restore();
+                        resolve();
+                    };
+                    logoImg.onerror = () => resolve();
+                    logoImg.src = logoSrc;
+                });
             }
 
             // Bottom Footer Badge Ribbon
