@@ -364,8 +364,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Servir les fichiers statiques du dossier frontend
+// Servir les fichiers statiques du dossier frontend et du centre de formation
 app.use(express.static(path.join(__dirname, '../frontend')));
+app.use('/formation', express.static(path.join(__dirname, '../formation')));
 
 // Helper de validation de format UUID pour Postgres
 const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
@@ -1384,6 +1385,27 @@ app.post('/api/orders/mock-create', async (req, res) => {
   } catch (error) {
     console.error('Erreur mock order create:', error);
     res.status(500).json({ error: error.message || 'Erreur serveur lors de la commande' });
+  }
+});
+
+// Endpoint pour ajouter un pourboire après livraison
+app.post('/api/orders/:id/tip', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tipAmountCents, tip } = req.body || {};
+    const amount = typeof tipAmountCents === 'number' ? tipAmountCents : (tip ? Math.round(tip * 100) : 100);
+    
+    if (pool) {
+      await pool.query('UPDATE orders SET tip_amount_cents = COALESCE(tip_amount_cents, 0) + $1 WHERE id = $2', [amount, id]).catch(() => {});
+    }
+    
+    io.emit('order_tip_added', { orderId: id, tipAmountCents: amount });
+    console.log(`[POURBOIRE] Pourboire de ${(amount/100).toFixed(2)}€ ajouté pour la commande #${id.slice(0, 8)}`);
+
+    res.json({ success: true, orderId: id, tipAmountCents: amount });
+  } catch (err) {
+    console.error('Erreur ajout pourboire:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 

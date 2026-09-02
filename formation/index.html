@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎓 Centre de Formation Vidéo & Parcours - Ciao Byebye</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'dark' });</script>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --card-bg: rgba(15, 23, 42, 0.75);
+            --primary: #f59e0b;
+            --primary-glow: rgba(245, 158, 11, 0.35);
+            --accent: #10b981;
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+        body { background: var(--bg-dark); color: var(--text); padding-bottom: 60px; min-height: 100vh; }
+        header { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); padding: 18px 24px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; }
+        .logo-box { display: flex; align-items: center; gap: 12px; }
+        .logo-badge { width: 40px; height: 40px; border-radius: 12px; background: #fff; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 14px var(--primary-glow); }
+        .portal-nav { display: flex; gap: 8px; flex-wrap: wrap; }
+        .nav-tab-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 10px; color: var(--text-muted); padding: 8px 16px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .nav-tab-btn:hover, .nav-tab-btn.active { background: var(--primary); color: #000; border-color: var(--primary); box-shadow: 0 4px 14px var(--primary-glow); }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .hero-banner { background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95)); border: 1px solid var(--border); border-radius: 20px; padding: 30px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+        .hero-title { font-size: 28px; font-weight: 900; line-height: 1.2; }
+        .hero-title span { color: var(--primary); }
+        .persona-content-pane { display: none; }
+        .persona-content-pane.active { display: block; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; margin-bottom: 30px; }
+        .feature-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 22px; backdrop-filter: blur(10px); }
+        .feature-card h3 { font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+        .feature-card h3 i { color: var(--primary); }
+        .diagram-container { background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin: 20px 0; overflow-x: auto; }
+        .video-player-card { background: #000; border: 2px solid rgba(245, 158, 11, 0.3); border-radius: 18px; overflow: hidden; margin: 20px 0; box-shadow: 0 12px 36px rgba(0,0,0,0.6); }
+        .video-player-card img, .video-player-card video { width: 100%; max-height: 540px; object-fit: contain; display: block; background: #000; }
+        .video-meta-bar { background: rgba(15, 23, 42, 0.95); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); }
+        .step-list { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+        .step-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: flex; gap: 14px; align-items: flex-start; }
+        .step-num { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #000; font-weight: 900; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+        .live-btn { background: var(--primary); color: #000; font-weight: 800; border: none; border-radius: 10px; padding: 10px 18px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-box">
+            <div class="logo-badge">🍕</div>
+            <div>
+                <h1 style="font-size:18px; font-weight:900; letter-spacing:-0.4px;">Don Roberto • Centre de Formation</h1>
+                <p style="font-size:11px; color:var(--accent); font-weight:700; text-transform:uppercase;">Guide Opérationnel & Vidéos Démo Loom</p>
+            </div>
+        </div>
+
+        <nav class="portal-nav">
+            <button class="nav-tab-btn active" onclick="switchPersonaTab('client')"><i class="fa-solid fa-user"></i> 1. Client</button>
+            <button class="nav-tab-btn" onclick="switchPersonaTab('serveur')"><i class="fa-solid fa-mobile-screen"></i> 2. Serveur</button>
+            <button class="nav-tab-btn" onclick="switchPersonaTab('cuisine')"><i class="fa-solid fa-fire-burner"></i> 3. Cuisine</button>
+            <button class="nav-tab-btn" onclick="switchPersonaTab('chef-rang')"><i class="fa-solid fa-table"></i> 4. Chef de Rang</button>
+            <button class="nav-tab-btn" onclick="switchPersonaTab('gerant')"><i class="fa-solid fa-crown"></i> 5. Gérant</button>
+        </nav>
+    </header>
+
+    <div class="container">
+
+        <!-- 1. PERSONA CLIENT -->
+        <div id="pane-client" class="persona-content-pane active">
+            <div class="hero-banner">
+                <div>
+                    <div style="font-size:12px; color:var(--primary); font-weight:800; text-transform:uppercase; margin-bottom:6px;">Persona #1</div>
+                    <h2 class="hero-title">Thomas <span>le Gourmet</span> (Convive à Table)</h2>
+                    <p style="color:var(--text-muted); font-size:14px; margin-top:6px; max-width:640px;">
+                        Scénarios : Paiement Titre-Restaurant + complément CB, partage de l'addition (Split Bill), suivi de commande live en cuisine, pourboire et avis 5 étoiles après livraison.
+                    </p>
+                </div>
+                <a href="/?table=05" target="_blank" class="live-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i> Tester la Carte Client (Table 05)</a>
+            </div>
+
+            <!-- Video Player -->
+            <div class="video-player-card">
+                <img src="/formation/parcours_client/demo_client_kds_complet.webp" alt="Vidéo Démo Parcours Client">
+                <div class="video-meta-bar">
+                    <div>
+                        <strong style="font-size:14px; color:#fff;">🎥 Démo Complète : Commande, Titre-Resto, Suivi & Avis Post-Livraison</strong>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Format Loom avec incrustation des étapes clés</div>
+                    </div>
+                    <span style="font-size:12px; background:rgba(16,185,129,0.15); color:var(--accent); padding:4px 10px; border-radius:8px; font-weight:700;">HD WebP Vidéo</span>
+                </div>
+            </div>
+
+            <!-- Mermaid Persona Diagram -->
+            <div class="diagram-container">
+                <h4 style="font-size:14px; color:var(--primary); margin-bottom:12px;"><i class="fa-solid fa-project-diagram"></i> Diagramme du Parcours Utilisateur Client</h4>
+                <div class="mermaid">
+                graph LR
+                    A[Arrivée Table 05] --> B[Connexion SSO Google / Apple]
+                    B --> C[Sélection Pizza Margherita + Supplément]
+                    C --> D[Paiement Titre-Resto + Complément CB]
+                    D --> E[Suivi Commande en Temps Réel]
+                    E --> F[Commande Servie à Table]
+                    F --> G[💖 Pourboire 2€ & ⭐ Avis 5 Étoiles]
+                </div>
+            </div>
+
+            <div class="card-grid">
+                <div class="feature-card">
+                    <h3><i class="fa-solid fa-ticket"></i> Paiement Titre-Restaurant & CB</h3>
+                    <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">
+                        Le client déduit instantanément 19,00 € ou 25,00 € de son solde Titre-Restaurant (Swile, Edenred). Le solde restant est ajusté pour un paiement transparent en carte bancaire ou Apple Pay.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <h3><i class="fa-solid fa-users"></i> Partage de l'Addition (Split Bill)</h3>
+                    <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">
+                        Fractionnement à part égale (½, ⅓, ¼) ou personnalisé jusqu'à 20 convives. Chaque convive règle sa propre quote-part sans attendre l'addition papier.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <h3><i class="fa-solid fa-heart"></i> Pourboire & Avis Après Livraison</h3>
+                    <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">
+                        Conformément aux meilleures pratiques d'hospitalité, les boutons de pourboire et de notation ne s'affichent qu'après la remise des assiettes à table (*statut servie*).
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. PERSONA SERVEUR -->
+        <div id="pane-serveur" class="persona-content-pane">
+            <div class="hero-banner">
+                <div>
+                    <div style="font-size:12px; color:var(--primary); font-weight:800; text-transform:uppercase; margin-bottom:6px;">Persona #2</div>
+                    <h2 class="hero-title">Lucas <span>en Salle</span> (Serveur Mobile & Watch)</h2>
+                    <p style="color:var(--text-muted); font-size:14px; margin-top:6px; max-width:640px;">
+                        Scénarios : Réception des commandes prêtes, notification tactile sur interface Watch, filtrage par carré de tables, validation du service à table.
+                    </p>
+                </div>
+                <a href="/dashboard.html" target="_blank" class="live-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ouvrir la Console Serveur</a>
+            </div>
+
+            <div class="diagram-container">
+                <h4 style="font-size:14px; color:var(--primary); margin-bottom:12px;"><i class="fa-solid fa-project-diagram"></i> Workflow Serveur : Notification & Service</h4>
+                <div class="mermaid">
+                graph TD
+                    KDS[Cuisine : Plat Prêt] --> Push[Alerte Sonore & Vibration]
+                    Push --> Term{Support de Réception}
+                    Term -->|Mobile PWA| Mob[Liste 'Prêtes / À Retirer' avec N° Table]
+                    Term -->|Montre Connectée| Watch[Écran Compact 42mm & Haptic Pulse]
+                    Mob --> Serv[Livraison à la Table]
+                    Watch --> Serv
+                    Serv --> Done[Bouton 'Servie à table' -> KDS & Client notifiés]
+                </div>
+            </div>
+
+            <div class="card-grid">
+                <div class="feature-card">
+                    <h3><i class="fa-solid fa-mobile"></i> Interface Mobile Ultra-Fluide</h3>
+                    <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">
+                        Affichage par onglets prioritaires (*En Préparation*, *Prêtes*, *À Payer*) permettant au serveur d'accéder directement aux commandes urgentes d'un simple geste du pouce.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <h3><i class="fa-solid fa-clock"></i> Mode Smartwatch Dédié</h3>
+                    <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">
+                        Optimisé pour écran 40-44mm avec retour haptique : le serveur sait quelle table est prête sans jamais sortir son smartphone pendant le service.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. PERSONA CUISINE -->
+        <div id="pane-cuisine" class="persona-content-pane">
+            <div class="hero-banner">
+                <div>
+                    <div style="font-size:12px; color:var(--primary); font-weight:800; text-transform:uppercase; margin-bottom:6px;">Persona #3</div>
+                    <h2 class="hero-title">Marco <span>au Piano</span> (Chef de Cuisine & KDS)</h2>
+                    <p style="color:var(--text-muted); font-size:14px; margin-top:6px; max-width:640px;">
+                        Scénarios : Traitement des commandes avec alertes allergènes, gestion de la carte en direct, déduction automatique des stocks BOM et mode rupture 86.
+                    </p>
+                </div>
+                <a href="/dashboard.html" target="_blank" class="live-btn"><i class="fa-solid fa-kitchen-set"></i> Accéder au KDS Cuisine</a>
+            </div>
+
+            <div class="diagram-container">
+                <h4 style="font-size:14px; color:var(--primary); margin-bottom:12px;"><i class="fa-solid fa-project-diagram"></i> Workflow Cuisine & Déduction Stocks BOM</h4>
+                <div class="mermaid">
+                graph TD
+                    T[Ticket KDS Entrant] --> A{Contrôle Allergènes}
+                    A -->|Alerte Rouge| Safe[Sécurisation Poste Sans Gluten / Lactose]
+                    A -->|Standard| Cook[Lancement Cuisson]
+                    Safe --> Cook
+                    Cook --> BOM[Déduction Recette : Farine, Fior di Latte, Truffe]
+                    BOM --> StockCheck{Stock Seuil Min ?}
+                    StockCheck -->|Stock Épuisé| M86[Activation Automatique Mode 86]
+                    StockCheck -->|OK| Bump[Clic 'Prête à servir !']
+                </div>
+            </div>
+
+            <div class="card-grid">
+                <div class="feature-card">
+                    <h3><i class="fa-solid fa-triangle-exclamation"></i> Détection Allergènes & Cuissons</h3>
+                    <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">
+                        Badges écarlates immédiatement visibles sur le KDS signalant les intolérances client et préférences de cuisson pour zéro erreur de dressage.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <h3><i class="fa-solid fa-boxes-stacked"></i> BOM (Bill of Materials) & Mode 86</h3>
+                    <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">
+                        Suivi précis des ingrédients consommés à la commande. En cas de rupture d'un produit phare, le mode 86 retire le plat de la carte en temps réel.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. PERSONA CHEF DE RANG -->
+        <div id="pane-chef-rang" class="persona-content-pane">
+            <div class="hero-banner">
+                <div>
+                    <div style="font-size:12px; color:var(--primary); font-weight:800; text-transform:uppercase; margin-bottom:6px;">Persona #4</div>
+                    <h2 class="hero-title">Alessandro <span>en Salle</span> (Chef de Rang & Floor Manager)</h2>
+                    <p style="color:var(--text-muted); font-size:14px; margin-top:6px; max-width:640px;">
+                        Scénarios : Pilotage du plan de salle 2D, fusion de tables pour banquets, réaffectation dynamique des serveurs par zones.
+                    </p>
+                </div>
+                <a href="/dashboard.html" target="_blank" class="live-btn"><i class="fa-solid fa-map"></i> Ouvrir le Plan de Salle 2D</a>
+            </div>
+
+            <div class="diagram-container">
+                <h4 style="font-size:14px; color:var(--primary); margin-bottom:12px;"><i class="fa-solid fa-project-diagram"></i> Organisation du Service & Fusion de Tables</h4>
+                <div class="mermaid">
+                graph LR
+                    Plan[Plan de Salle 2D] --> State[Contrôle Statuts & Couverts]
+                    State --> Merge[Fusion Banquet Tables 03 + 04]
+                    Merge --> Assign[Affectation Lucas : Carré Terrasse]
+                    Assign --> Reset[Séparation automatique en fin de service]
+                </div>
+            </div>
+
+            <div class="card-grid">
+                <div class="feature-card">
+                    <h3><i class="fa-solid fa-shapes"></i> Plan de Salle 2D Vivant</h3>
+                    <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">
+                        Statuts codifiés par couleur (Libre, Occupée, Addition, À Débarrasser) et suivi en direct du montant cumulé des commandes par table.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <h3><i class="fa-solid fa-object-group"></i> Fusion & Séparation Intelligente</h3>
+                    <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">
+                        Rassemblement des commandes de plusieurs tables en une seule facture de groupe avec dé-fusion automatique à la fin du repas.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. PERSONA GERANT -->
+        <div id="pane-gerant" class="persona-content-pane">
+            <div class="hero-banner">
+                <div>
+                    <div style="font-size:12px; color:var(--primary); font-weight:800; text-transform:uppercase; margin-bottom:6px;">Persona #5</div>
+                    <h2 class="hero-title">Don Roberto <span>Propriétaire</span> (Gérant & Franchise)</h2>
+                    <p style="color:var(--text-muted); font-size:14px; margin-top:6px; max-width:640px;">
+                        Scénarios : Studio QR Code HD avec planche vectorielle 12 tables, gestion e-réputation Google/TripAdvisor, réglage du programme de fidélité et KPIs SaaS.
+                    </p>
+                </div>
+                <a href="/admin-hq.html" target="_blank" class="live-btn"><i class="fa-solid fa-crown"></i> Portail SuperAdmin HQ</a>
+            </div>
+
+            <div class="diagram-container">
+                <h4 style="font-size:14px; color:var(--primary); margin-bottom:12px;"><i class="fa-solid fa-project-diagram"></i> Leviers de Croissance du Gérant</h4>
+                <div class="mermaid">
+                graph TD
+                    G[Pilotage Gérant] --> QR[Studio QR Code HD & Impression Chevalets]
+                    G --> Avis[Booster E-Réputation Google & TripAdvisor]
+                    G --> Fid[Programme de Fidélité & Récompenses VIP]
+                    G --> POS[Synchronisation 25+ Caisses POS]
+                </div>
+            </div>
+
+            <div class="card-grid">
+                <div class="feature-card">
+                    <h3><i class="fa-solid fa-qrcode"></i> Studio QR Code HD & Norme ISO</h3>
+                    <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">
+                        Génération de QR codes haute lisibilité avec Quiet Zone de 4 modules, URL de redirection éditable en direct et impression vectorielle SVG 1200 DPI.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <h3><i class="fa-solid fa-star"></i> E-Réputation & Smart Booster</h3>
+                    <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">
+                        Filtre intelligent : les avis 5 étoiles sont automatiquement invités à publier sur Google My Business pour propulser le restaurant en tête du référencement local.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <h3><i class="fa-solid fa-gift"></i> Programme de Fidélité Sur-Mesure</h3>
+                    <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">
+                        Configuration des barèmes de points, bonus de bienvenue, statuts VIP et cadeaux débloqués automatiquement à la commande.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function switchPersonaTab(personaId) {
+            document.querySelectorAll('.persona-content-pane').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
+
+            const targetPane = document.getElementById(`pane-${personaId}`);
+            if (targetPane) targetPane.classList.add('active');
+
+            const activeBtn = Array.from(document.querySelectorAll('.nav-tab-btn')).find(b => b.getAttribute('onclick').includes(personaId));
+            if (activeBtn) activeBtn.classList.add('active');
+
+            setTimeout(() => {
+                try { mermaid.run(); } catch(e) {}
+            }, 100);
+        }
+    </script>
+</body>
+</html>

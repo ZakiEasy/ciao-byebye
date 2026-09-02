@@ -1003,7 +1003,46 @@ function updateTrackerSteps(status) {
             if (label) label.innerText = "Prête";
         }
     }
+
+    // Gestion exclusive : Avis et Pourboire UNIQUEMENT après livraison (statut 'servie')
+    const postDeliveryBox = document.getElementById('post-delivery-experience-box');
+    if (postDeliveryBox) {
+        if (status === 'servie') {
+            postDeliveryBox.style.display = 'flex';
+        } else {
+            postDeliveryBox.style.display = 'none';
+        }
+    }
 }
+
+async function submitPostDeliveryTip(amount) {
+    if (!activeOrder) return;
+    try {
+        const orderId = activeOrder.orderId;
+        await fetch(`/api/orders/${orderId}/tip`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tipAmountCents: amount * 100 })
+        }).catch(() => {});
+
+        const tipConfirm = document.getElementById('post-delivery-tip-confirmed');
+        if (tipConfirm) {
+            tipConfirm.innerHTML = `<i class="fa-solid fa-circle-check"></i> Pourboire de ${amount}€ enregistré ! Merci pour l'équipe ! 💖`;
+            tipConfirm.style.display = 'block';
+        }
+
+        const tipStatus = document.getElementById('post-delivery-tip-status');
+        if (tipStatus) {
+            tipStatus.innerText = `+${amount} € Donné`;
+            tipStatus.style.color = '#10b981';
+        }
+
+        showToast(`💖 Merci beaucoup pour votre pourboire de ${amount}€ à l'équipe ! 🍕`, 'success');
+    } catch (e) {
+        showToast(`💖 Merci pour votre pourboire de ${amount}€ !`, 'success');
+    }
+}
+window.submitPostDeliveryTip = submitPostDeliveryTip;
 
 // ==========================================
 // DYNAMIC THEME SYSTEM (DESIGN SYSTEM ENGINE)
