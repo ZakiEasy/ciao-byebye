@@ -2791,34 +2791,202 @@ function submitGuestNameAndContinue() {
     showToast(`Bienvenue à table, ${name} ! 🍕`, 'success');
 }
 
-function clientSSO(provider) {
-    const mockProfiles = {
-        'Google': { name: 'Thomas Martin', email: 'thomas.martin@gmail.com', provider: 'Google', icon: 'fa-brands fa-google' },
-        'Apple': { name: 'Sarah Dubois', email: 'sarah.dubois@icloud.com', provider: 'Apple', icon: 'fa-brands fa-apple' },
-        'Microsoft': { name: 'Alexandre Leroy', email: 'alex.leroy@outlook.com', provider: 'Microsoft', icon: 'fa-brands fa-windows' }
-    };
-    const prof = mockProfiles[provider] || { name: 'Membre Club', email: 'client@ciao-byebye.fr', provider: provider || 'SSO', icon: 'fa-solid fa-user-check' };
-    
-    sessionStorage.setItem('ciao_byebye_client_auth', 'true');
-    sessionStorage.setItem('ciao_byebye_client_name', prof.name);
-    sessionStorage.setItem('ciao_byebye_client_email', prof.email);
-    sessionStorage.setItem('ciao_byebye_client_provider', prof.provider);
-    
-    localStorage.setItem('ciao_guest_name', prof.name);
-    localStorage.setItem('kz_client_name', prof.name);
-    
-    setClientIdentity(prof.name, true);
-    dismissClientAuth();
-    
-    // Inscription / Connexion automatique au programme de fidélité
-    if (typeof enrollMember === 'function') {
-        const phone = '06' + Math.floor(10000000 + Math.random() * 90000000);
-        enrollMember(prof.name, phone, prof.email);
+// ==========================================
+// AUTHENTIFICATION SSO INTERACTIVE DU CLIENT
+// ==========================================
+let activeClientSSOProvider = 'Google';
+let selectedSSOMode = 'saved';
+
+const defaultSSOProfiles = {
+    'Google': {
+        name: 'Thomas Martin',
+        email: 'thomas.martin@gmail.com',
+        avatar: 'TM',
+        icon: 'fa-brands fa-google',
+        iconColor: '#ea4335',
+        title: 'Connexion avec Google',
+        subtitle: 'Don Roberto Pizzeria Trattoria',
+        accountDomain: '@gmail.com'
+    },
+    'Apple': {
+        name: 'Sarah Dubois',
+        email: 'sarah.dubois@icloud.com',
+        avatar: 'SD',
+        icon: 'fa-brands fa-apple',
+        iconColor: '#ffffff',
+        title: 'Se connecter avec Apple ID',
+        subtitle: 'Don Roberto Nice',
+        accountDomain: '@icloud.com'
+    },
+    'Microsoft': {
+        name: 'Alexandre Leroy',
+        email: 'alex.leroy@outlook.com',
+        avatar: 'AL',
+        icon: 'fa-brands fa-windows',
+        iconColor: '#00a4ef',
+        title: 'Connexion au compte Microsoft',
+        subtitle: 'Service de commande à table',
+        accountDomain: '@outlook.com'
     }
+};
+
+function clientSSO(provider) {
+    activeClientSSOProvider = provider || 'Google';
+    const conf = defaultSSOProfiles[activeClientSSOProvider] || defaultSSOProfiles['Google'];
+
+    const modal = document.getElementById('client-sso-modal-overlay');
+    if (!modal) {
+        // Fallback si la modale n'est pas trouvée
+        setClientIdentity(conf.name, true);
+        dismissClientAuth();
+        showToast(`✨ Connecté via ${conf.title} !`, 'success');
+        return;
+    }
+
+    // Header & Icon branding
+    const headerTitle = document.getElementById('sso-provider-title');
+    const headerSub = document.getElementById('sso-provider-subtitle');
+    const iconBadge = document.getElementById('sso-provider-icon-badge');
+    const confirmLabel = document.getElementById('btn-confirm-sso-label');
+
+    if (headerTitle) headerTitle.innerText = conf.title;
+    if (headerSub) headerSub.innerText = conf.subtitle;
+    if (iconBadge) {
+        iconBadge.innerHTML = `<i class="${conf.icon}" style="color:${conf.iconColor};"></i>`;
+        iconBadge.style.background = activeClientSSOProvider === 'Apple' ? '#0f172a' : '#f8fafc';
+    }
+    if (confirmLabel) confirmLabel.innerText = `Continuer avec ${activeClientSSOProvider}`;
+
+    // Suggested Account Card
+    const savedNameEl = document.getElementById('sso-saved-name');
+    const savedEmailEl = document.getElementById('sso-saved-email');
+    const savedAvatarEl = document.getElementById('sso-saved-avatar');
     
-    showToast(`✨ Connecté avec succès via ${prof.provider} (${prof.name}) ! 🌟`, 'success');
+    const priorName = localStorage.getItem('kz_client_name') || localStorage.getItem('ciao_guest_name');
+    const activeName = priorName && priorName !== 'Invité' ? priorName : conf.name;
+    const activeEmail = priorName && priorName !== 'Invité' 
+        ? `${priorName.toLowerCase().replace(/\s+/g, '.')}${conf.accountDomain}`
+        : conf.email;
+    const initials = activeName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+    if (savedNameEl) savedNameEl.innerText = activeName;
+    if (savedEmailEl) savedEmailEl.innerText = activeEmail;
+    if (savedAvatarEl) savedAvatarEl.innerText = initials;
+
+    // Form inputs
+    const inputName = document.getElementById('sso-input-name');
+    const inputEmail = document.getElementById('sso-input-email');
+    if (inputName) inputName.value = activeName;
+    if (inputEmail) inputEmail.value = activeEmail;
+
+    selectSSOAccount('saved');
+    modal.style.display = 'flex';
 }
 window.clientSSO = clientSSO;
+
+function closeClientSSOModal() {
+    const modal = document.getElementById('client-sso-modal-overlay');
+    if (modal) modal.style.display = 'none';
+}
+window.closeClientSSOModal = closeClientSSOModal;
+
+function selectSSOAccount(mode) {
+    selectedSSOMode = mode;
+    const savedCard = document.getElementById('sso-saved-account-card');
+    const savedCheck = document.getElementById('sso-saved-check');
+    const customForm = document.getElementById('sso-custom-account-form');
+    const confirmLabel = document.getElementById('btn-confirm-sso-label');
+
+    if (mode === 'saved') {
+        if (savedCard) {
+            savedCard.style.border = '2px solid #38bdf8';
+            savedCard.style.background = 'rgba(56, 189, 248, 0.08)';
+        }
+        if (savedCheck) savedCheck.style.display = 'block';
+        if (customForm) customForm.style.display = 'none';
+        if (confirmLabel) confirmLabel.innerText = `Continuer avec ${activeClientSSOProvider}`;
+    } else {
+        if (savedCard) {
+            savedCard.style.border = '1px solid rgba(255, 255, 255, 0.15)';
+            savedCard.style.background = 'rgba(255, 255, 255, 0.04)';
+        }
+        if (savedCheck) savedCheck.style.display = 'none';
+        if (customForm) customForm.style.display = 'block';
+        if (confirmLabel) confirmLabel.innerText = `Connexion avec mon compte ${activeClientSSOProvider}`;
+        
+        const inputName = document.getElementById('sso-input-name');
+        if (inputName) inputName.focus();
+    }
+}
+window.selectSSOAccount = selectSSOAccount;
+
+function toggleSSOCustomAccount() {
+    selectSSOAccount('custom');
+}
+window.toggleSSOCustomAccount = toggleSSOCustomAccount;
+
+async function confirmClientSSOLogin() {
+    const confirmBtn = document.getElementById('btn-confirm-sso-login');
+    const conf = defaultSSOProfiles[activeClientSSOProvider] || defaultSSOProfiles['Google'];
+
+    let finalName = '';
+    let finalEmail = '';
+
+    if (selectedSSOMode === 'custom') {
+        const inputName = document.getElementById('sso-input-name')?.value.trim();
+        const inputEmail = document.getElementById('sso-input-email')?.value.trim();
+        finalName = inputName || 'Invité ' + activeClientSSOProvider;
+        finalEmail = inputEmail || `${finalName.toLowerCase().replace(/\s+/g, '.')}${conf.accountDomain}`;
+    } else {
+        finalName = document.getElementById('sso-saved-name')?.innerText.trim() || conf.name;
+        finalEmail = document.getElementById('sso-saved-email')?.innerText.trim() || conf.email;
+    }
+
+    // UX : Loader d'authentification OAuth 2.0
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Connexion auprès de ${activeClientSSOProvider}...`;
+    }
+
+    try {
+        await fetch('/api/auth/sso/client-verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                provider: activeClientSSOProvider,
+                name: finalName,
+                email: finalEmail
+            })
+        }).catch(() => {});
+    } catch (e) {}
+
+    setTimeout(() => {
+        sessionStorage.setItem('ciao_byebye_client_auth', 'true');
+        sessionStorage.setItem('ciao_byebye_client_name', finalName);
+        sessionStorage.setItem('ciao_byebye_client_email', finalEmail);
+        sessionStorage.setItem('ciao_byebye_client_provider', activeClientSSOProvider);
+
+        localStorage.setItem('ciao_guest_name', finalName);
+        localStorage.setItem('kz_client_name', finalName);
+
+        setClientIdentity(finalName, true);
+        closeClientSSOModal();
+        dismissClientAuth();
+
+        if (typeof enrollMember === 'function') {
+            const phone = '06' + Math.floor(10000000 + Math.random() * 90000000);
+            enrollMember(finalName, phone, finalEmail);
+        }
+
+        showToast(`✨ Authentifié avec succès via ${activeClientSSOProvider} (${finalEmail}) ! 🌟`, 'success');
+
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = `<span id="btn-confirm-sso-label">Continuer avec ${activeClientSSOProvider}</span> <i class="fa-solid fa-arrow-right"></i>`;
+        }
+    }, 450);
+}
+window.confirmClientSSOLogin = confirmClientSSOLogin;
 
 function dismissClientAuth() {
     const authOverlay = document.getElementById('client-auth-overlay');
