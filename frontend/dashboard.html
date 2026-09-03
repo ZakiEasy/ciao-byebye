@@ -372,6 +372,36 @@
             background: rgba(255, 255, 255, 0.15);
         }
 
+        .tools-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: #cbd5e1;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            background: transparent;
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .tools-dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .tools-dropdown-item.active {
+            color: var(--primary);
+            background: rgba(245, 158, 11, 0.15);
+            border-left: 3px solid var(--primary);
+        }
+
         .empty-column-msg {
             color: var(--text-muted);
             text-align: center;
@@ -686,114 +716,133 @@
         </div>
     </div>
 
-    <!-- Header -->
-    <header class="dashboard-header" style="flex-wrap: wrap; gap: 12px;">
-        <div style="display:flex; align-items:center; gap: 16px;">
+    <!-- Header épuré avec Essentiels & Menu Burger -->
+    <header class="dashboard-header" style="flex-wrap: wrap; gap: 10px; padding: 12px 20px;">
+        <div style="display:flex; align-items:center; gap: 12px; flex-wrap: wrap;">
             <div class="logo">
                 <span class="logo-accent">Ciao</span> Byebye 
-                <span id="dashboard-role-title" style="font-size: 14px; font-weight:400; color:var(--text-muted); margin-left: 10px;">Tableau de Bord</span>
+                <span id="dashboard-role-title" style="font-size: 13px; font-weight:500; color:var(--text-muted); margin-left: 6px;">Tableau de Bord</span>
             </div>
 
-            <!-- Main Feature Navigation Tabs -->
-            <nav id="dashboard-main-nav" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <!-- Navigation Principale : Essentiels + Menu Burger -->
+            <nav id="dashboard-main-nav" style="display:flex; align-items:center; gap:6px;">
+                <!-- Essentiel 1 : KDS -->
                 <button class="action-btn active" id="tab-btn-kds" onclick="switchMainTab('kds')" style="padding:6px 12px; font-size:12px;">
-                    <i class="fa-solid fa-fire-burner"></i> KDS Cuisine
+                    <i class="fa-solid fa-fire-burner"></i> KDS
                 </button>
+                <!-- Essentiel 2 : Plan 2D -->
                 <button class="action-btn secondary" id="tab-btn-floorplan" onclick="switchMainTab('floorplan')" style="padding:6px 12px; font-size:12px;">
-                    <i class="fa-solid fa-map"></i> Plan de Tables 2D
+                    <i class="fa-solid fa-map"></i> Plan 2D
                 </button>
-                <button class="action-btn secondary" id="tab-btn-inventory" onclick="switchMainTab('inventory')" style="padding:6px 12px; font-size:12px;">
-                    <i class="fa-solid fa-boxes-stacked"></i> Stocks & BOM
-                </button>
-                <button class="action-btn secondary" id="tab-btn-menu" onclick="switchMainTab('menu')" style="padding:6px 12px; font-size:12px;">
-                    <i class="fa-solid fa-utensils"></i> Menu
-                </button>
-                <button class="action-btn secondary" id="tab-btn-reviews" onclick="switchMainTab('reviews')" style="padding:6px 12px; font-size:12px;">
-                    <i class="fa-solid fa-star" style="color:#f59e0b;"></i> Avis & Retours
-                </button>
-                <button class="action-btn secondary" id="tab-btn-pos" onclick="switchMainTab('pos')" style="padding:6px 12px; font-size:12px;">
-                    <i class="fa-solid fa-cash-register"></i> Logiciels de Caisse (POS)
-                </button>
-                <button class="action-btn secondary" id="tab-btn-loyalty" onclick="switchMainTab('loyalty')" style="padding:6px 12px; font-size:12px;">
-                    <i class="fa-solid fa-crown" style="color:#f59e0b;"></i> Fidélité & Récompenses
-                </button>
-                <button class="action-btn secondary" id="tab-btn-pickup" onclick="switchMainTab('pickup')" style="padding:6px 12px; font-size:12px; display:none;">
-                    <i class="fa-solid fa-tv"></i> Écran Retrait
-                </button>
-                <button class="action-btn secondary" id="tab-btn-modules" onclick="switchMainTab('modules')" style="padding:6px 12px; font-size:12px; display:none;">
-                    <i class="fa-solid fa-toggle-on"></i> Modules & Offres
-                </button>
+
+                <!-- Badge dynamique du module actif s'il est secondaire -->
+                <span id="active-secondary-module-pill" style="display:none; align-items:center; gap:6px; background:rgba(245,158,11,0.15); border:1px solid var(--primary); color:var(--primary); font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:6px;">
+                    <span id="active-secondary-module-title">Module</span>
+                    <button onclick="switchMainTab('kds')" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size:11px; padding:0 2px;" title="Revenir au KDS"><i class="fa-solid fa-xmark"></i></button>
+                </span>
+
+                <!-- Menu Burger "Autres Modules & Outils" -->
+                <div class="dropdown-tools-wrapper" style="position:relative; display:inline-block;">
+                    <button class="action-btn secondary" id="btn-toggle-tools-menu" onclick="toggleToolsMenu(event)" style="padding:6px 12px; font-size:12px; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="Ouvrir tous les modules">
+                        <i class="fa-solid fa-bars"></i> <span>Modules</span> <i class="fa-solid fa-chevron-down" style="font-size:9px; opacity:0.7;"></i>
+                    </button>
+                    <div id="tools-dropdown-menu" style="display:none; position:absolute; top:calc(100% + 8px); left:0; min-width:240px; background:rgba(18,20,28,0.98); border:1px solid rgba(255,255,255,0.15); border-radius:12px; box-shadow:0 15px 35px rgba(0,0,0,0.7); backdrop-filter:blur(16px); z-index:99999; padding:6px; flex-direction:column; gap:2px;">
+                        <button class="tools-dropdown-item" id="tab-btn-inventory" onclick="switchMainTab('inventory'); closeToolsMenu();">
+                            <i class="fa-solid fa-boxes-stacked" style="color:#38bdf8; width:16px;"></i> Stocks & BOM Recettes
+                        </button>
+                        <button class="tools-dropdown-item" id="tab-btn-menu" onclick="switchMainTab('menu'); closeToolsMenu();">
+                            <i class="fa-solid fa-utensils" style="color:#10b981; width:16px;"></i> Carte & Menu
+                        </button>
+                        <button class="tools-dropdown-item" id="tab-btn-reviews" onclick="switchMainTab('reviews'); closeToolsMenu();">
+                            <i class="fa-solid fa-star" style="color:#f59e0b; width:16px;"></i> Avis & Retours Clients
+                        </button>
+                        <button class="tools-dropdown-item" id="tab-btn-pos" onclick="switchMainTab('pos'); closeToolsMenu();">
+                            <i class="fa-solid fa-cash-register" style="color:#a855f7; width:16px;"></i> Caisses & Logiciels POS
+                        </button>
+                        <button class="tools-dropdown-item" id="tab-btn-loyalty" onclick="switchMainTab('loyalty'); closeToolsMenu();">
+                            <i class="fa-solid fa-crown" style="color:#eab308; width:16px;"></i> Fidélité & Récompenses
+                        </button>
+                        <button class="tools-dropdown-item" id="tab-btn-pickup" onclick="switchMainTab('pickup'); closeToolsMenu();" style="display:none;">
+                            <i class="fa-solid fa-tv" style="color:#38bdf8; width:16px;"></i> Écran Retrait Client
+                        </button>
+                        <button class="tools-dropdown-item" id="tab-btn-modules" onclick="switchMainTab('modules'); closeToolsMenu();" style="display:none;">
+                            <i class="fa-solid fa-toggle-on" style="color:#10b981; width:16px;"></i> Modules & Offres
+                        </button>
+                        
+                        <div style="border-top:1px solid rgba(255,255,255,0.08); margin:4px 0;"></div>
+                        
+                        <!-- Studio QR Code (Gérant & SuperAdmin uniquement) -->
+                        <button class="tools-dropdown-item" id="btn-qr-studio" onclick="openQRStudioModal(); closeToolsMenu();" style="display:none; color:#34d399;">
+                            <i class="fa-solid fa-qrcode" style="color:#10b981; width:16px;"></i> Studio QR Code HD
+                        </button>
+                        <!-- Scanner QR Table Caméra -->
+                        <button class="tools-dropdown-item" id="btn-qr-audit" onclick="openQRAuditModal(); closeToolsMenu();">
+                            <i class="fa-solid fa-camera" style="color:#c084fc; width:16px;"></i> Scanner QR Table
+                        </button>
+                        <!-- Visite Guidée KDS -->
+                        <button class="tools-dropdown-item" id="btn-kds-tour" onclick="startKDSTour(); closeToolsMenu();">
+                            <i class="fa-solid fa-graduation-cap" style="color:#38bdf8; width:16px;"></i> Visite Guidée KDS
+                        </button>
+                    </div>
+                </div>
             </nav>
         </div>
 
-        <div class="stats-container">
+        <div class="stats-container" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <!-- Live Refresh Button -->
-            <button class="action-btn secondary" id="btn-manual-refresh" onclick="fetchOrders(); showKdsToast('Commandes actualisées 🔄', 'success');" style="font-size:11px; padding:6px 10px; color:#38bdf8; border-color:rgba(56,189,248,0.4);" title="Actualiser immédiatement les commandes reçues">
-                <i class="fa-solid fa-arrows-rotate"></i> Actualiser
+            <button class="action-btn secondary" id="btn-manual-refresh" onclick="fetchOrders(); showKdsToast('Commandes actualisées 🔄', 'success');" style="font-size:12px; padding:6px 10px; color:#38bdf8; border-color:rgba(56,189,248,0.4);" title="Actualiser immédiatement les commandes reçues">
+                <i class="fa-solid fa-arrows-rotate"></i>
             </button>
 
             <!-- Unpaid Orders Quick Modal Trigger -->
-            <button class="action-btn secondary" id="btn-unpaid-orders" onclick="openUnpaidOrdersModal()" style="font-size:11px; padding:6px 10px; color:#f59e0b; border-color:rgba(245,158,11,0.5); background:rgba(245,158,11,0.1);" title="Voir la liste des commandes non payées à encaisser">
+            <button class="action-btn secondary" id="btn-unpaid-orders" onclick="openUnpaidOrdersModal()" style="font-size:12px; padding:6px 10px; color:#f59e0b; border-color:rgba(245,158,11,0.5); background:rgba(245,158,11,0.1);" title="Voir la liste des commandes non payées à encaisser">
                 <i class="fa-solid fa-money-bill-wave"></i> Non Payées (<span id="stat-unpaid-count">0</span>)
-            </button>
-
-            <!-- Anti-Fraud QR Code Camera Scanner (Serveurs / Salle) -->
-            <button class="action-btn secondary" id="btn-qr-audit" onclick="openQRAuditModal()" style="font-size:11px; padding:6px 10px; color:#c084fc; border-color:rgba(192,132,252,0.4);" title="Scanner le QR Code physique d'une table avec la caméra de l'appareil">
-                <i class="fa-solid fa-camera"></i> Scanner QR Table
-            </button>
-
-            <!-- QR Code Generator & Studio Trigger -->
-            <button class="action-btn secondary" id="btn-qr-studio" onclick="openQRStudioModal()" style="font-size:11px; padding:6px 10px; color:#10b981; border-color:rgba(16,185,129,0.4); background:rgba(16,185,129,0.1);" title="Générateur de QR Codes avec Logo Client (Export PNG & Planche Tables)">
-                <i class="fa-solid fa-qrcode"></i> Studio QR Code
-            </button>
-
-            <!-- Walkthrough Tour Button for KDS -->
-            <button class="action-btn" id="btn-kds-tour" onclick="startKDSTour()" style="font-size:11px; padding:6px 10px; color:#38bdf8; border-color:rgba(56,189,248,0.4);" title="Découvrir le KDS & les fonctionnalités">
-                <i class="fa-solid fa-graduation-cap"></i> Visite Guidée KDS
             </button>
 
             <!-- SuperAdmin Quick Link (visible pour admin HQ) -->
             <div id="hq-admin-links" style="display:none; align-items:center; gap:6px;">
-                <a href="/admin-hq.html" class="action-btn" style="text-decoration:none; font-size:11.5px; padding:6px 12px; background:rgba(239,68,68,0.2); color:#f87171; border:1px solid rgba(239,68,68,0.6); font-weight:800; border-radius:var(--radius-sm);" title="Portail SuperAdmin HQ (Déploiements, Modules & SaaS)">
-                    <i class="fa-solid fa-crown"></i> SuperAdmin HQ
+                <a href="/admin-hq.html" class="action-btn" style="text-decoration:none; font-size:11px; padding:6px 10px; background:rgba(239,68,68,0.2); color:#f87171; border:1px solid rgba(239,68,68,0.6); font-weight:800; border-radius:var(--radius-sm);" title="Portail SuperAdmin HQ (Déploiements, Modules & SaaS)">
+                    <i class="fa-solid fa-crown"></i> HQ
                 </a>
             </div>
+
+            <!-- Stat badges compacts -->
+            <div class="stat-badge" style="padding:5px 9px; font-size:12px;" title="Commandes en cours de préparation en cuisine">
+                <i class="fa-solid fa-fire-burner" style="color:#ef4444;"></i> <span id="stat-cooking-label" style="display:none;">En Cuisine :</span> <span id="stat-cooking">0</span>
+            </div>
+            <div class="stat-badge" style="padding:5px 9px; font-size:12px;" title="Commandes prêtes au comptoir / à servir">
+                <i class="fa-solid fa-circle-check" style="color:#10b981;"></i> <span id="stat-ready-label" style="display:none;">Prêtes :</span> <span id="stat-ready">0</span>
+            </div>
+            <div class="stat-badge" style="padding:5px 9px; font-size:12px; border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.08);" title="Commandes à payer en caisse">
+                <i class="fa-solid fa-hand-holding-dollar" style="color:#f59e0b;"></i> <span id="stat-unpaid-label" style="display:none;">À Payer :</span> <span id="stat-unpaid" style="color:#f59e0b; font-weight:800;">0</span>
+            </div>
+
             <!-- Lang, Currency & Fullscreen Selectors -->
-            <div class="i18n-selectors" style="display:flex; align-items:center; gap:6px;">
-                <select id="kds-lang-select" onchange="changeKdsLanguage(this.value)" class="glass-select" aria-label="Langue">
-                    <option value="fr">🇫🇷 FR</option>
-                    <option value="en">🇬🇧 EN</option>
-                    <option value="ar">🇸🇦 العربية</option>
-                    <option value="es">🇪🇸 ES</option>
+            <div class="i18n-selectors" style="display:flex; align-items:center; gap:4px;">
+                <select id="kds-lang-select" onchange="changeKdsLanguage(this.value)" class="glass-select" style="padding:5px 8px; font-size:12px;" aria-label="Langue">
+                    <option value="fr">🇫🇷</option>
+                    <option value="en">🇬🇧</option>
+                    <option value="ar">🇸🇦</option>
+                    <option value="es">🇪🇸</option>
                 </select>
-                <select id="kds-currency-select" onchange="changeKdsCurrency(this.value)" class="glass-select" aria-label="Devise">
-                    <option value="EUR">EUR (€)</option>
-                    <option value="USD">USD ($)</option>
-                    <option value="GBP">GBP (£)</option>
-                    <option value="MAD">MAD (DH)</option>
-                    <option value="SAR">SAR (﷼)</option>
-                    <option value="AED">AED (د.إ)</option>
+                <select id="kds-currency-select" onchange="changeKdsCurrency(this.value)" class="glass-select" style="padding:5px 8px; font-size:12px;" aria-label="Devise">
+                    <option value="EUR">€</option>
+                    <option value="USD">$</option>
+                    <option value="GBP">£</option>
+                    <option value="MAD">DH</option>
+                    <option value="SAR">﷼</option>
+                    <option value="AED">د.إ</option>
                 </select>
-                <button onclick="toggleFullscreen()" class="glass-select" title="Plein Écran TV" style="display:flex; align-items:center; justify-content:center; padding:6px 10px;">
+                <button onclick="toggleFullscreen()" class="glass-select" title="Plein Écran TV" style="display:flex; align-items:center; justify-content:center; padding:5px 8px; font-size:12px;">
                     <i class="fa-solid fa-expand"></i>
                 </button>
             </div>
 
             <div id="header-btn-container"></div>
             
-            <div class="stat-badge">
-                <i class="fa-solid fa-fire-burner" style="color:#ef4444;"></i> <span id="stat-cooking-label">En Cuisine :</span> <span id="stat-cooking">0</span>
-            </div>
-            <div class="stat-badge">
-                <i class="fa-solid fa-circle-check" style="color:#10b981;"></i> <span id="stat-ready-label">Prêtes :</span> <span id="stat-ready">0</span>
-            </div>
-            <div class="stat-badge" style="border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.08);">
-                <i class="fa-solid fa-hand-holding-dollar" style="color:#f59e0b;"></i> <span id="stat-unpaid-label">À Payer :</span> <span id="stat-unpaid" style="color:#f59e0b; font-weight:800;">0</span>
-            </div>
-            
-            <div class="user-profile" style="display: flex; align-items: center; gap: 12px; border-left: 1px solid var(--glass-border); padding-left: 15px;">
-                <span id="user-email" style="font-size: 13px; color: var(--text-muted);">chef@atelier-chris.fr</span>
-                <button onclick="logout()" title="Déconnexion" style="background: none; border: none; color: #ef4444; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-family: inherit;"><i class="fa-solid fa-right-from-bracket"></i></button>
+            <div class="user-profile" style="display: flex; align-items: center; gap: 8px; border-left: 1px solid var(--glass-border); padding-left: 10px;">
+                <span id="user-email" style="font-size: 12px; color: var(--text-muted); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">chef@atelier-chris.fr</span>
+                <button onclick="logout()" title="Déconnexion" style="background: none; border: none; color: #ef4444; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-family: inherit; padding: 4px;"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </div>
     </header>
@@ -1177,6 +1226,29 @@
         let inventoryActiveSubTab = 'ingredients'; // 'ingredients' | 'recipes' | 'waste'
         let restaurantModulesList = [];
 
+        function toggleToolsMenu(event) {
+            if (event) event.stopPropagation();
+            const dropdown = document.getElementById('tools-dropdown-menu');
+            if (dropdown) {
+                dropdown.style.display = (dropdown.style.display === 'flex') ? 'none' : 'flex';
+            }
+        }
+
+        function closeToolsMenu() {
+            const dropdown = document.getElementById('tools-dropdown-menu');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+
+        window.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('tools-dropdown-menu');
+            const toggleBtn = document.getElementById('btn-toggle-tools-menu');
+            if (dropdown && dropdown.style.display === 'flex') {
+                if (!dropdown.contains(e.target) && !toggleBtn.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            }
+        });
+
         function switchMainTab(tab) {
             activeMainTab = tab;
             showMenuManagement = (tab === 'menu');
@@ -1184,13 +1256,35 @@
             ['kds', 'floorplan', 'inventory', 'modules', 'menu', 'reviews', 'pos', 'loyalty', 'pickup'].forEach(tName => {
                 const btn = document.getElementById(`tab-btn-${tName}`);
                 if (btn) {
+                    const isDropdown = btn.classList.contains('tools-dropdown-item');
                     if (tName === tab) {
-                        btn.className = 'action-btn active';
+                        btn.className = isDropdown ? 'tools-dropdown-item active' : 'action-btn active';
                     } else {
-                        btn.className = 'action-btn secondary';
+                        btn.className = isDropdown ? 'tools-dropdown-item' : 'action-btn secondary';
                     }
                 }
             });
+
+            // Affichage du badge pour les onglets secondaires du menu burger
+            const secPill = document.getElementById('active-secondary-module-pill');
+            const secTitle = document.getElementById('active-secondary-module-title');
+            if (secPill && secTitle) {
+                const labelMap = {
+                    'inventory': '📦 Stocks & BOM',
+                    'menu': '🍽️ Carte & Menu',
+                    'reviews': '⭐ Avis Clients',
+                    'pos': '💳 Caisses POS',
+                    'loyalty': '👑 Fidélité',
+                    'pickup': '📺 Écran Retrait',
+                    'modules': '🎛️ Modules SaaS'
+                };
+                if (labelMap[tab]) {
+                    secTitle.innerText = labelMap[tab];
+                    secPill.style.display = 'inline-flex';
+                } else {
+                    secPill.style.display = 'none';
+                }
+            }
 
             updateRoleTitle();
             if (tab === 'floorplan') {
@@ -1264,29 +1358,36 @@
             const tabModules = document.getElementById('tab-btn-modules');
             const hqAdminLinks = document.getElementById('hq-admin-links');
             const btnTour = document.getElementById('btn-kds-tour');
+            const btnQrStudio = document.getElementById('btn-qr-studio');
 
             // Default: show basic tabs
             if (tabKds) tabKds.style.display = 'inline-block';
             if (tabFloorplan) tabFloorplan.style.display = 'inline-block';
-            if (tabInventory) tabInventory.style.display = 'inline-block';
-            if (tabMenu) tabMenu.style.display = 'inline-block';
-            if (tabReviews) tabReviews.style.display = 'inline-block';
-            if (tabPos) tabPos.style.display = 'inline-block';
-            if (tabLoyalty) tabLoyalty.style.display = 'inline-block';
+            if (tabInventory) tabInventory.style.display = 'flex';
+            if (tabMenu) tabMenu.style.display = 'flex';
+            if (tabReviews) tabReviews.style.display = 'flex';
+            if (tabPos) tabPos.style.display = 'flex';
+            if (tabLoyalty) tabLoyalty.style.display = 'flex';
             if (tabPickup) tabPickup.style.display = 'none';
             if (tabModules) tabModules.style.display = 'none';
             if (hqAdminLinks) hqAdminLinks.style.display = 'none';
-            if (btnTour) btnTour.style.display = 'inline-block';
+            if (btnTour) btnTour.style.display = 'flex';
+
+            // Sécurité & Visibilité du Studio QR Code : strictement réservé au gérant et superadmin
+            const canAccessStudio = (activeRole === 'superadmin' || activeRole === 'gestionnaire' || activeRole === 'gerant');
+            if (btnQrStudio) {
+                btnQrStudio.style.display = canAccessStudio ? 'flex' : 'none';
+            }
 
             if (activeRole === 'superadmin') {
-                // SuperAdmin : Navigation KDS Restaurant épurée + Lien direct vers le Portail SuperAdmin HQ
-                if (tabModules) tabModules.style.display = 'none';
-                if (tabPickup) tabPickup.style.display = 'inline-block';
+                // SuperAdmin : Pilotage SaaS complet + Lien direct vers le Portail SuperAdmin HQ
+                if (tabModules) tabModules.style.display = 'flex';
+                if (tabPickup) tabPickup.style.display = 'flex';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'flex';
             } else if (activeRole === 'gestionnaire') {
-                // Direction / Gestionnaire restaurant: Pilotage complet (Modules & presets réservés aux superadmins)
+                // Direction / Gestionnaire restaurant: Pilotage complet du restaurant
                 if (tabModules) tabModules.style.display = 'none';
-                if (tabPickup) tabPickup.style.display = 'inline-block';
+                if (tabPickup) tabPickup.style.display = 'flex';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'none';
             } else if (activeRole === 'chef_de_salle') {
                 // Chef de Salle: Plan 2D complet (modification incluse), KDS Passe/Expo, Avis clients, Écran Retrait
@@ -1295,34 +1396,32 @@
                 if (tabPos) tabPos.style.display = 'none';
                 if (tabLoyalty) tabLoyalty.style.display = 'none';
                 if (tabModules) tabModules.style.display = 'none';
-                if (tabPickup) tabPickup.style.display = 'inline-block';
+                if (tabPickup) tabPickup.style.display = 'flex';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'none';
                 if (['inventory', 'menu', 'pos', 'loyalty', 'modules'].includes(activeMainTab)) {
                     activeMainTab = 'floorplan';
-                    document.querySelectorAll('#dashboard-main-nav .action-btn').forEach(b => b.classList.remove('active'));
                     if (tabFloorplan) tabFloorplan.classList.add('active');
                 }
             } else if (activeRole === 'serveur') {
-                // Serveur: Plan 2D (lecture rang/couverts/hygiène), KDS Service, Carte Menu (lecture seule ruptures/dispo), Avis (lecture), Écran Retrait (filtré sur ses tables)
+                // Serveur: Plan 2D, KDS Service, Carte Menu (consultation), Avis (lecture), Écran Retrait
                 if (tabInventory) tabInventory.style.display = 'none';
-                if (tabMenu) tabMenu.style.display = 'inline-block';
-                if (tabReviews) tabReviews.style.display = 'inline-block';
+                if (tabMenu) tabMenu.style.display = 'flex';
+                if (tabReviews) tabReviews.style.display = 'flex';
                 if (tabPos) tabPos.style.display = 'none';
                 if (tabLoyalty) tabLoyalty.style.display = 'none';
                 if (tabModules) tabModules.style.display = 'none';
-                if (tabPickup) tabPickup.style.display = 'inline-block';
+                if (tabPickup) tabPickup.style.display = 'flex';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'none';
                 if (['inventory', 'pos', 'loyalty', 'modules'].includes(activeMainTab)) {
                     activeMainTab = 'floorplan';
-                    document.querySelectorAll('#dashboard-main-nav .action-btn').forEach(b => b.classList.remove('active'));
                     if (tabFloorplan) tabFloorplan.classList.add('active');
                 }
             } else if (activeRole === 'cuisine') {
-                // Cuisine: KDS Cuisine, Plan de salle (lecture seule), Stocks & BOM Cuisine, Carte Menu (création & ajout plats, 86), Avis (lecture)
+                // Cuisine: KDS Cuisine, Plan 2D (lecture), Stocks & BOM Cuisine, Carte Menu (gestion dispo), Avis (lecture)
                 if (tabFloorplan) tabFloorplan.style.display = 'inline-block';
-                if (tabInventory) tabInventory.style.display = 'inline-block';
-                if (tabMenu) tabMenu.style.display = 'inline-block';
-                if (tabReviews) tabReviews.style.display = 'inline-block';
+                if (tabInventory) tabInventory.style.display = 'flex';
+                if (tabMenu) tabMenu.style.display = 'flex';
+                if (tabReviews) tabReviews.style.display = 'flex';
                 if (tabPos) tabPos.style.display = 'none';
                 if (tabLoyalty) tabLoyalty.style.display = 'none';
                 if (tabModules) tabModules.style.display = 'none';
@@ -1330,15 +1429,14 @@
                 if (hqAdminLinks) hqAdminLinks.style.display = 'none';
                 if (['pos', 'loyalty', 'modules', 'pickup'].includes(activeMainTab)) {
                     activeMainTab = 'kds';
-                    document.querySelectorAll('#dashboard-main-nav .action-btn').forEach(b => b.classList.remove('active'));
                     if (tabKds) tabKds.classList.add('active');
                 }
             } else if (activeRole === 'bar') {
-                // Bar: KDS Bar, Plan de salle (lecture seule avec filtre boissons), Stocks & BOM Boissons, Carte Menu (création boissons, 86), Avis (lecture)
+                // Bar: KDS Bar, Plan de salle, Stocks & BOM Boissons, Carte Menu (gestion dispo), Avis
                 if (tabFloorplan) tabFloorplan.style.display = 'inline-block';
-                if (tabInventory) tabInventory.style.display = 'inline-block';
-                if (tabMenu) tabMenu.style.display = 'inline-block';
-                if (tabReviews) tabReviews.style.display = 'inline-block';
+                if (tabInventory) tabInventory.style.display = 'flex';
+                if (tabMenu) tabMenu.style.display = 'flex';
+                if (tabReviews) tabReviews.style.display = 'flex';
                 if (tabPos) tabPos.style.display = 'none';
                 if (tabLoyalty) tabLoyalty.style.display = 'none';
                 if (tabModules) tabModules.style.display = 'none';
@@ -1347,7 +1445,6 @@
                 kdsActiveStation = 'bar';
                 if (['pos', 'loyalty', 'modules', 'pickup'].includes(activeMainTab)) {
                     activeMainTab = 'kds';
-                    document.querySelectorAll('#dashboard-main-nav .action-btn').forEach(b => b.classList.remove('active'));
                     if (tabKds) tabKds.classList.add('active');
                 }
             } else if (activeRole === 'technique') {
@@ -1360,7 +1457,7 @@
                 if (tabPos) tabPos.style.display = 'none';
                 if (tabLoyalty) tabLoyalty.style.display = 'none';
                 if (tabModules) tabModules.style.display = 'none';
-                if (tabPickup) tabPickup.style.display = 'inline-block';
+                if (tabPickup) tabPickup.style.display = 'flex';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'none';
                 if (btnTour) btnTour.style.display = 'none';
             }
@@ -1746,9 +1843,24 @@
             // Filtrage des commandes par terme de recherche
             function matchKdsFilter(o) {
                 if (!kdsSearchQuery) return true;
-                const q = kdsSearchQuery;
+                const q = kdsSearchQuery.toLowerCase().trim();
+                if (!q) return true;
+
+                // Match table souple : "table 5", "Table 5", "table 05", "table", "t5", "5"
+                const tableRaw = (o.table_number || '').toString().toLowerCase().trim();
+                const tableNum = parseInt(tableRaw, 10);
+                const cleanQ = q.replace(/\s+/g, '');
+                
+                // Si la recherche est "table" ou "tables" -> correspond à toutes les commandes
+                // Si la recherche contient le numéro de table ou la mention "table X"
+                const matchTable = (q === 'table' || q === 'tables') ||
+                    (tableRaw && tableRaw.includes(q)) ||
+                    (tableNum && (q === String(tableNum) || q === `table ${tableNum}` || q === `table ${tableRaw}`)) ||
+                    (tableNum && (cleanQ === `table${tableNum}` || cleanQ === `table${tableRaw}` || cleanQ === `t${tableNum}` || cleanQ === `t${tableRaw}`)) ||
+                    cleanQ.includes(`table${tableRaw}`) ||
+                    cleanQ.includes(`table${tableNum}`);
+
                 const matchClient = (o.client_name || '').toLowerCase().includes(q);
-                const matchTable = (o.table_number || '').toString().toLowerCase().includes(q);
                 const matchId = (o.id || '').toLowerCase().includes(q);
                 const matchZone = (o.table_zone || '').toLowerCase().includes(q);
                 const matchItems = Array.isArray(o.items) && o.items.some(item => 
@@ -1757,7 +1869,7 @@
                     (Array.isArray(item.allergies) && item.allergies.some(a => a.toLowerCase().includes(q))) ||
                     (Array.isArray(item.modifiers) && item.modifiers.some(m => (m.label || '').toLowerCase().includes(q)))
                 );
-                return matchClient || matchTable || matchId || matchZone || matchItems;
+                return matchTable || matchClient || matchId || matchZone || matchItems;
             }
 
             const rawCooking = orders.filter(o => o.order_status === 'en_cuisine');
@@ -2024,10 +2136,26 @@
             if (kdsMobileActiveCol && kdsMobileActiveCol !== 'all') {
                 setKdsMobileCol(kdsMobileActiveCol);
             }
+
+            // Synchronisation de l'état visuel actif des boutons de poste (Chaud, Froid, Bar, Tous)
+            syncKdsStationButtonsUI();
+        }
+
+        function syncKdsStationButtonsUI() {
+            const stationBtns = document.querySelectorAll('.kds-station-bar .station-btn');
+            stationBtns.forEach(btn => {
+                const attr = btn.getAttribute('onclick') || '';
+                if (attr.includes(`'${kdsActiveStation}'`)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
         }
 
         function setKdsStation(station) {
             kdsActiveStation = station;
+            syncKdsStationButtonsUI();
             fetchOrders();
         }
 
@@ -3408,9 +3536,69 @@
         // ==========================================
         // SUB-VIEW 1: CATALOG & AVAILABILITY
         // ==========================================
-        function renderCatalogView() {
+        function renderCatalogItemsListHTML(filtered) {
             const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
             const isServer = activeRole === 'serveur';
+            if (filtered.length === 0) {
+                return `<div class="empty-column-msg">Aucun plat trouvé dans cette catégorie.</div>`;
+            }
+            return filtered.map(item => {
+                const canToggleThis = activeRole === 'superadmin' || activeRole === 'gestionnaire' || 
+                    (activeRole === 'cuisine' && item.category !== 'boisson') || 
+                    (activeRole === 'bar' && item.category === 'boisson');
+                const canDeleteThis = activeRole === 'superadmin' || activeRole === 'gestionnaire' ||
+                    (activeRole === 'cuisine' && item.category !== 'boisson') ||
+                    (activeRole === 'bar' && item.category === 'boisson');
+
+                return `
+                    <div class="menu-mgmt-item">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div style="width: 50px; height: 50px; border-radius: var(--radius-sm); overflow: hidden; background: #000; flex-shrink: 0; border: 1px solid var(--glass-border);">
+                                <img src="${item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200'}" alt="${item.name}" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <strong style="font-size: 15px; color: #fff;">${item.name}</strong>
+                                    <span class="badge-tag badge-signature" style="font-size:10px;">${formatKdsPrice(item.price_cents / 100)}</span>
+                                </div>
+                                <span style="display: block; font-size: 11px; color: var(--text-muted); margin-top:2px;">
+                                    ${item.description ? item.description.substring(0, 90) + '...' : ''}
+                                </span>
+                                <span style="font-size: 10px; color: var(--primary); text-transform: uppercase; font-weight:700;">
+                                    ${t.category_label} ${item.category}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            ${canDeleteThis ? `
+                                <button onclick="openEditDishModal('${item.id}')" style="background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.35); color: #38bdf8; font-size: 11px; font-weight: 600; cursor: pointer; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" title="Modifier le produit">
+                                    <i class="fa-solid fa-pen-to-square"></i> Modifier
+                                </button>
+                            ` : ''}
+                            ${isServer || !canToggleThis ? `
+                                <span style="font-size:11px; font-weight:700; padding:4px 10px; border-radius:12px; background:${item.is_available ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}; color:${item.is_available ? '#34d399' : '#ef4444'}; border:1px solid ${item.is_available ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};">
+                                    ${item.is_available ? '🟢 Dispo' : '🔴 Rupture'}
+                                </span>
+                            ` : `
+                                <label class="switch" title="Activer / Désactiver">
+                                    <input type="checkbox" ${item.is_available ? 'checked' : ''} onchange="toggleProductAvailability('${item.id}', this.checked)">
+                                    <span class="slider"></span>
+                                </label>
+                            `}
+                            ${canDeleteThis ? `
+                                <button onclick="deleteDish('${item.id}', '${item.name.replace(/'/g, "\\'")}')" style="background: none; border: none; color: #ef4444; font-size: 14px; cursor: pointer; padding: 4px;" title="Supprimer">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCatalogView() {
+            const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
             let currentItems = Array.isArray(cachedMenuItems) ? cachedMenuItems : [];
             let filtered = currentItems;
 
@@ -3433,67 +3621,15 @@
                         <button class="btn-secondary-dark" style="${catalogCategoryFilter === 'boisson' ? 'border-color:var(--primary); color:var(--primary);' : ''}" onclick="setCatalogFilter('boisson')">🍹 Boissons</button>
                     </div>
 
-                    <!-- Search Input -->
-                    <div style="min-width: 220px;">
-                        <input type="text" placeholder="${t.search_placeholder}" value="${catalogSearchQuery}" oninput="handleCatalogSearch(this.value)" style="width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: #fff; font-family: inherit; font-size: 13px; outline: none;">
+                    <!-- Search Input (Non détruit lors de la frappe) -->
+                    <div style="min-width: 220px; position: relative;">
+                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 12px; pointer-events: none;"></i>
+                        <input type="text" id="catalog-search-input" placeholder="${t.search_placeholder}" value="${catalogSearchQuery}" oninput="handleCatalogSearch(this.value)" style="width: 100%; padding: 8px 12px 8px 30px; border-radius: var(--radius-sm); background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: #fff; font-family: inherit; font-size: 13px; outline: none;" autocomplete="off">
                     </div>
                 </div>
 
                 <div class="menu-mgmt-list">
-                    ${filtered.length === 0 ? `<div class="empty-column-msg">Aucun plat trouvé dans cette catégorie.</div>` : 
-                      filtered.map(item => {
-                        const canToggleThis = activeRole === 'superadmin' || activeRole === 'gestionnaire' || 
-                            (activeRole === 'cuisine' && item.category !== 'boisson') || 
-                            (activeRole === 'bar' && item.category === 'boisson');
-                        const canDeleteThis = activeRole === 'superadmin' || activeRole === 'gestionnaire' ||
-                            (activeRole === 'cuisine' && item.category !== 'boisson') ||
-                            (activeRole === 'bar' && item.category === 'boisson');
-
-                        return `
-                            <div class="menu-mgmt-item">
-                                <div style="display: flex; align-items: center; gap: 14px;">
-                                    <div style="width: 50px; height: 50px; border-radius: var(--radius-sm); overflow: hidden; background: #000; flex-shrink: 0; border: 1px solid var(--glass-border);">
-                                        <img src="${item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200'}" alt="${item.name}" style="width: 100%; height: 100%; object-fit: cover;">
-                                    </div>
-                                    <div>
-                                        <div style="display:flex; align-items:center; gap:8px;">
-                                            <strong style="font-size: 15px; color: #fff;">${item.name}</strong>
-                                            <span class="badge-tag badge-signature" style="font-size:10px;">${formatKdsPrice(item.price_cents / 100)}</span>
-                                        </div>
-                                        <span style="display: block; font-size: 11px; color: var(--text-muted); margin-top:2px;">
-                                            ${item.description ? item.description.substring(0, 90) + '...' : ''}
-                                        </span>
-                                        <span style="font-size: 10px; color: var(--primary); text-transform: uppercase; font-weight:700;">
-                                            ${t.category_label} ${item.category}
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    ${canDeleteThis ? `
-                                        <button onclick="openEditDishModal('${item.id}')" style="background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.35); color: #38bdf8; font-size: 11px; font-weight: 600; cursor: pointer; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" title="Modifier le produit">
-                                            <i class="fa-solid fa-pen-to-square"></i> Modifier
-                                        </button>
-                                    ` : ''}
-                                    ${isServer || !canToggleThis ? `
-                                        <span style="font-size:11px; font-weight:700; padding:4px 10px; border-radius:12px; background:${item.is_available ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}; color:${item.is_available ? '#34d399' : '#ef4444'}; border:1px solid ${item.is_available ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};">
-                                            ${item.is_available ? '🟢 Dispo' : '🔴 Rupture'}
-                                        </span>
-                                    ` : `
-                                        <label class="switch" title="Activer / Désactiver">
-                                            <input type="checkbox" ${item.is_available ? 'checked' : ''} onchange="toggleProductAvailability('${item.id}', this.checked)">
-                                            <span class="slider"></span>
-                                        </label>
-                                    `}
-                                    ${canDeleteThis ? `
-                                        <button onclick="deleteDish('${item.id}', '${item.name.replace(/'/g, "\\'")}')" style="background: none; border: none; color: #ef4444; font-size: 14px; cursor: pointer; padding: 4px;" title="Supprimer">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
+                    ${renderCatalogItemsListHTML(filtered)}
                 </div>
             `;
         }
@@ -3505,7 +3641,21 @@
 
         function handleCatalogSearch(query) {
             catalogSearchQuery = query;
-            renderMenuManagement();
+            const listEl = document.querySelector('.menu-mgmt-list');
+            if (listEl) {
+                let currentItems = Array.isArray(cachedMenuItems) ? cachedMenuItems : [];
+                let filtered = currentItems;
+                if (catalogCategoryFilter !== 'all') {
+                    filtered = filtered.filter(item => item && item.category === catalogCategoryFilter);
+                }
+                if (catalogSearchQuery && catalogSearchQuery.trim()) {
+                    const q = catalogSearchQuery.toLowerCase();
+                    filtered = filtered.filter(item => item && ((item.name && item.name.toLowerCase().includes(q)) || (item.description && item.description.toLowerCase().includes(q))));
+                }
+                listEl.innerHTML = renderCatalogItemsListHTML(filtered);
+            } else {
+                renderMenuManagement();
+            }
         }
 
         // ==========================================
@@ -5934,6 +6084,12 @@
         const CIAO_LOGO_EMBLEM_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="%230f172a" stroke="%2338bdf8" stroke-width="4"/><path d="M40 70 L55 85 L85 45" fill="none" stroke="%2338bdf8" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><text x="60" y="106" font-family="Outfit, sans-serif" font-size="10" font-weight="800" fill="%23ffffff" text-anchor="middle">CIAO BYEBYE</text></svg>`;
 
         function openQRStudioModal(preselectedTable) {
+            // Restriction : seul le gérant ou le superadmin peut accéder au Studio QR Code
+            if (activeRole !== 'superadmin' && activeRole !== 'gestionnaire' && activeRole !== 'gerant') {
+                showKdsToast('Accès restreint : Seuls le gérant et le superadmin peuvent accéder au Studio QR Code.', 'error');
+                return;
+            }
+
             const modal = document.getElementById('qr-studio-modal-overlay');
             if (modal) {
                 modal.style.display = 'flex';

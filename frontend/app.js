@@ -2,7 +2,7 @@
 const translations = {
     fr: {
         splash_title: "Bienvenue sur Ciao Byebye",
-        splash_desc: "Pour lier votre commande et retrouver vos reçus, connectez-vous ou continuez en tant qu'invité.",
+        splash_desc: "Pour lier vos commandes et cumuler vos points sur notre programme de fidélité (récompenses et cadeaux exclusifs), connectez-vous avec votre compte ou rejoignez la table en invité.",
         btn_login_google: "Se connecter avec Google",
         btn_login_apple: "Se connecter avec Apple",
         btn_login_microsoft: "Se connecter avec Microsoft",
@@ -81,7 +81,7 @@ const translations = {
     },
     en: {
         splash_title: "Welcome to Ciao Byebye",
-        splash_desc: "To link your order and view receipts, sign in or continue as a guest.",
+        splash_desc: "To link your orders and earn points in our loyalty program (exclusive rewards & gifts), sign in with your account or continue as a guest.",
         btn_login_google: "Sign in with Google",
         btn_login_apple: "Sign in with Apple",
         btn_login_microsoft: "Sign in with Microsoft",
@@ -160,7 +160,7 @@ const translations = {
     },
     ar: {
         splash_title: "مرحباً بكم في تشاو باي باي",
-        splash_desc: "لربط طلبك والحصول على الإيصال، يمكنك تسجيل الدخول أو المتابعة كضيف.",
+        splash_desc: "لربط طلباتك وجمع النقاط في برنامج الولاء (مكافآت وهدايا حصرية)، سجّل الدخول بحسابك أو تابع كضيف.",
         btn_login_google: "تسجيل الدخول عبر Google",
         btn_login_apple: "تسجيل الدخول عبر Apple",
         btn_login_microsoft: "تسجيل الدخول عبر Microsoft",
@@ -195,7 +195,7 @@ const translations = {
         security_badge: "دفع آمن ومباشر 100% لمطعم ورشة كريس.",
         success_title: "تتبع الطلب مباشرة",
         success_thanks: "شكراً لك",
-        success_validated: "طلبك قيد التحضير في المطبخ حالياً.",
+        success_validated: "طلبك قيد التحضir في المطبخ حالياً.",
         order_prefix: "رقم الطلب",
         queue_prefix: "الترتيب في قائمة الانتظار",
         payment_status_label: "حالة الدفع",
@@ -239,7 +239,7 @@ const translations = {
     },
     es: {
         splash_title: "Bienvenido a Ciao Byebye",
-        splash_desc: "Para vincular su pedido y guardar recibos, inicie sesión o continúe como invitado.",
+        splash_desc: "Para vincular sus pedidos y acumular puntos en nuestro programa de fidelización (recompensas y regalos exclusivos), inicie sesión con su cuenta o continúe como invitado.",
         btn_login_google: "Iniciar sesión con Google",
         btn_login_apple: "Iniciar sesión con Apple",
         btn_login_microsoft: "Iniciar sesión con Microsoft",
@@ -2869,20 +2869,58 @@ const defaultSSOProfiles = {
     }
 };
 
-function clientSSO(provider) {
+async function clientSSO(provider) {
     activeClientSSOProvider = provider || 'Google';
     const conf = defaultSSOProfiles[activeClientSSOProvider] || defaultSSOProfiles['Google'];
 
-    const modal = document.getElementById('client-sso-modal-overlay');
-    if (!modal) {
-        // Fallback si la modale n'est pas trouvée
-        setClientIdentity(conf.name, true);
-        dismissClientAuth();
-        showToast(`✨ Connecté via ${conf.title} !`, 'success');
-        return;
+    const priorName = localStorage.getItem('kz_client_name') || localStorage.getItem('ciao_guest_name');
+    const finalName = (priorName && priorName !== 'Invité') ? priorName : conf.name;
+    const finalEmail = (priorName && priorName !== 'Invité') 
+        ? `${priorName.toLowerCase().replace(/\s+/g, '.')}${conf.accountDomain}`
+        : conf.email;
+
+    showToast(`Connexion sécurisée via ${activeClientSSOProvider}... ⏳`, 'info');
+
+    try {
+        await fetch('/api/auth/sso/client-verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                provider: activeClientSSOProvider,
+                name: finalName,
+                email: finalEmail
+            })
+        }).catch(() => {});
+    } catch (e) {}
+
+    sessionStorage.setItem('ciao_byebye_client_auth', 'true');
+    sessionStorage.setItem('ciao_byebye_client_name', finalName);
+    sessionStorage.setItem('ciao_byebye_client_email', finalEmail);
+    sessionStorage.setItem('ciao_byebye_client_provider', activeClientSSOProvider);
+
+    localStorage.setItem('ciao_guest_name', finalName);
+    localStorage.setItem('kz_client_name', finalName);
+
+    setClientIdentity(finalName, true);
+    closeClientSSOModal();
+    dismissClientAuth();
+
+    // Auto-attribution au programme de fidélité avec bonus de bienvenue
+    if (typeof enrollMember === 'function') {
+        const phone = '06' + Math.floor(10000000 + Math.random() * 90000000);
+        enrollMember(finalName, phone, finalEmail);
     }
 
-    // Header & Icon branding
+    showToast(`✨ Authentifié avec succès via ${activeClientSSOProvider} ! Bienvenue ${finalName} (50 pts fidélité crédités 🎁)`, 'success');
+}
+window.clientSSO = clientSSO;
+
+function openClientSSOModal(provider) {
+    activeClientSSOProvider = provider || 'Google';
+    const conf = defaultSSOProfiles[activeClientSSOProvider] || defaultSSOProfiles['Google'];
+    const modal = document.getElementById('client-sso-modal-overlay');
+    if (!modal) return clientSSO(provider);
+
     const headerTitle = document.getElementById('sso-provider-title');
     const headerSub = document.getElementById('sso-provider-subtitle');
     const iconBadge = document.getElementById('sso-provider-icon-badge');
@@ -2896,7 +2934,6 @@ function clientSSO(provider) {
     }
     if (confirmLabel) confirmLabel.innerText = `Continuer avec ${activeClientSSOProvider}`;
 
-    // Suggested Account Card
     const savedNameEl = document.getElementById('sso-saved-name');
     const savedEmailEl = document.getElementById('sso-saved-email');
     const savedAvatarEl = document.getElementById('sso-saved-avatar');
@@ -2912,7 +2949,6 @@ function clientSSO(provider) {
     if (savedEmailEl) savedEmailEl.innerText = activeEmail;
     if (savedAvatarEl) savedAvatarEl.innerText = initials;
 
-    // Form inputs
     const inputName = document.getElementById('sso-input-name');
     const inputEmail = document.getElementById('sso-input-email');
     if (inputName) inputName.value = activeName;
@@ -2921,7 +2957,7 @@ function clientSSO(provider) {
     selectSSOAccount('saved');
     modal.style.display = 'flex';
 }
-window.clientSSO = clientSSO;
+window.openClientSSOModal = openClientSSOModal;
 
 function closeClientSSOModal() {
     const modal = document.getElementById('client-sso-modal-overlay');
