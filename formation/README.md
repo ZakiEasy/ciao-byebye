@@ -171,3 +171,19 @@ graph TD
    - Redirection automatique des avis 5 étoiles vers Google My Business.
 3. **Programme de Fidélité & Gamification** :
    - Réglage du taux de points (ex: 1€ dépensé = 1 point), offres cadeaux (ex: Dessert offert à 100 pts) et bonus de bienvenue.
+
+---
+
+## 📹 Récapitulatif des Fichiers Vidéo (.AVI & .WEBP)
+
+Tous les fichiers `.webp` ont été convertis au format vidéo standard **`.avi` (XviD / MPEG-4)** pour une compatibilité universelle sur tous les lecteurs multimédias (VLC, Windows Media Player, QuickTime, Premiere, etc.) :
+
+| Persona | Vidéo Haute Définition (.AVI) | Format Web (.WEBP) | Durée & Résolution |
+| :--- | :--- | :--- | :--- |
+| **👤 Client (Complet)** | [`parcours_client/demo_client_kds_complet.avi`](file:///Users/zaki/Projet%20KZ%20Menu/formation/parcours_client/demo_client_kds_complet.avi) | [`parcours_client/demo_client_kds_complet.webp`](file:///Users/zaki/Projet%20KZ%20Menu/formation/parcours_client/demo_client_kds_complet.webp) | 36.8s • 1920x1000 • 9.2 MB |
+| **👤 Client (Titre-Resto / Split)** | [`parcours_client/demo_client_titre_resto_split_bill.avi`](file:///Users/zaki/Projet%20KZ%20Menu/formation/parcours_client/demo_client_titre_resto_split_bill.avi) | [`parcours_client/demo_client_titre_resto_split_bill.webp`](file:///Users/zaki/Projet%20KZ%20Menu/formation/parcours_client/demo_client_titre_resto_split_bill.webp) | 3.0s • 960x960 • 64 KB |
+| **📱 Serveur** | [`parcours_serveur/demo_serveur_mobile_watch.avi`](file:///Users/zaki/Projet%20KZ%20Menu/formation/parcours_serveur/demo_serveur_mobile_watch.avi) | [`parcours_serveur/demo_serveur_mobile_watch.webp`](file:///Users/zaki/Projet%20KZ%20Menu/formation/parcours_serveur/demo_serveur_mobile_watch.webp) | 11.0s • 1920x1000 • 3.1 MB |
+| **👨‍🍳 Chef de Cuisine** | [`parcours_cuisine/demo_cuisine_allergene_bom_menu.avi`](file:///Users/zaki/Projet%20KZ%20Menu/formation/parcours_cuisine/demo_cuisine_allergene_bom_menu.avi) | [`parcours_cuisine/demo_cuisine_allergene_bom_menu.webp`](file:///Users/zaki/Projet%20KZ%20Menu/formation/parcours_cuisine/demo_cuisine_allergene_bom_menu.webp) | 3.0s • 960x960 • 64 KB |
+| **👔 Chef de Rang** | [`parcours_chef_de_rang/demo_chef_de_rang_salle_fusion_serveur.avi`](file:///Users/zaki/Projet%20KZ%20Menu/formation/parcours_chef_de_rang/demo_chef_de_rang_salle_fusion_serveur.avi) | [`parcours_chef_de_rang/demo_chef_de_rang_salle_fusion_serveur.webp`](file:///Users/zaki/Projet%20KZ%20Menu/formation/parcours_chef_de_rang/demo_chef_de_rang_salle_fusion_serveur.webp) | 3.0s • 960x960 • 64 KB |
+| **👑 Gérant** | [`parcours_gerant/demo_gerant_qrcode_avis_fidelite.avi`](file:///Users/zaki/Projet%20KZ%20Menu/formation/parcours_gerant/demo_gerant_qrcode_avis_fidelite.avi) | [`parcours_gerant/demo_gerant_qrcode_avis_fidelite.webp`](file:///Users/zaki/Projet%20KZ%20Menu/formation/parcours_gerant/demo_gerant_qrcode_avis_fidelite.webp) | 18.5s • 1920x1000 • 5.1 MB |
+

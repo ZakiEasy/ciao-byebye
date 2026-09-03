@@ -506,13 +506,23 @@ app.get('/api/tables/:qr_token/display', async (req, res) => {
     }
     const table = tableResult.rows[0];
 
-    // Trouver la session active de cette table
-    const sessionResult = await pool.query(
-      "SELECT id, started_at FROM table_sessions WHERE table_id = $1 AND status = 'active' ORDER BY started_at DESC LIMIT 1",
+    // Trouver la session active ou la plus récente de cette table
+    let sessionResult = await pool.query(
+      "SELECT id, started_at, status FROM table_sessions WHERE table_id = $1 AND status = 'active' ORDER BY started_at DESC LIMIT 1",
       [table.id]
     );
 
-    if (sessionResult.rows.length === 0 || table.service_status === 'libre') {
+    if (sessionResult.rows.length === 0) {
+      const recentSession = await pool.query(
+        "SELECT id, started_at, status FROM table_sessions WHERE table_id = $1 ORDER BY started_at DESC LIMIT 1",
+        [table.id]
+      );
+      if (recentSession.rows.length > 0) {
+        sessionResult = recentSession;
+      }
+    }
+
+    if (sessionResult.rows.length === 0) {
       return res.json({
         tableNumber: table.number,
         activeSession: false,
