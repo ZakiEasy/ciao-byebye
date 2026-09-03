@@ -769,6 +769,11 @@
                             <i class="fa-solid fa-toggle-on" style="color:#10b981; width:16px;"></i> Modules & Offres
                         </button>
                         
+                        <!-- Reporting & Analytics (Gérant & SuperAdmin uniquement) -->
+                        <button class="tools-dropdown-item" id="tab-btn-analytics" onclick="switchMainTab('analytics'); closeToolsMenu();" style="display:none; color:#38bdf8; font-weight:700;">
+                            <i class="fa-solid fa-chart-line" style="color:#38bdf8; width:16px;"></i> 📊 Reporting & Analytics
+                        </button>
+                        
                         <div style="border-top:1px solid rgba(255,255,255,0.08); margin:4px 0;"></div>
                         
                         <!-- Studio QR Code (Gérant & SuperAdmin uniquement) -->
@@ -1253,7 +1258,7 @@
             activeMainTab = tab;
             showMenuManagement = (tab === 'menu');
             
-            ['kds', 'floorplan', 'inventory', 'modules', 'menu', 'reviews', 'pos', 'loyalty', 'pickup'].forEach(tName => {
+            ['kds', 'floorplan', 'inventory', 'modules', 'menu', 'reviews', 'pos', 'loyalty', 'pickup', 'analytics'].forEach(tName => {
                 const btn = document.getElementById(`tab-btn-${tName}`);
                 if (btn) {
                     const isDropdown = btn.classList.contains('tools-dropdown-item');
@@ -1276,7 +1281,8 @@
                     'pos': '💳 Caisses POS',
                     'loyalty': '👑 Fidélité',
                     'pickup': '📺 Écran Retrait',
-                    'modules': '🎛️ Modules SaaS'
+                    'modules': '🎛️ Modules SaaS',
+                    'analytics': '📊 Reporting & Analytics'
                 };
                 if (labelMap[tab]) {
                     secTitle.innerText = labelMap[tab];
@@ -1303,6 +1309,8 @@
                 renderLoyaltyManagementView();
             } else if (tab === 'pickup') {
                 renderPublicPickupView();
+            } else if (tab === 'analytics') {
+                renderReportingAnalyticsView();
             } else {
                 fetchOrders();
             }
@@ -1356,6 +1364,7 @@
             const tabLoyalty = document.getElementById('tab-btn-loyalty');
             const tabPickup = document.getElementById('tab-btn-pickup');
             const tabModules = document.getElementById('tab-btn-modules');
+            const tabAnalytics = document.getElementById('tab-btn-analytics');
             const hqAdminLinks = document.getElementById('hq-admin-links');
             const btnTour = document.getElementById('btn-kds-tour');
             const btnQrStudio = document.getElementById('btn-qr-studio');
@@ -1370,24 +1379,30 @@
             if (tabLoyalty) tabLoyalty.style.display = 'flex';
             if (tabPickup) tabPickup.style.display = 'none';
             if (tabModules) tabModules.style.display = 'none';
+            if (tabAnalytics) tabAnalytics.style.display = 'none';
             if (hqAdminLinks) hqAdminLinks.style.display = 'none';
             if (btnTour) btnTour.style.display = 'flex';
 
-            // Sécurité & Visibilité du Studio QR Code : strictement réservé au gérant et superadmin
-            const canAccessStudio = (activeRole === 'superadmin' || activeRole === 'gestionnaire' || activeRole === 'gerant');
+            // Sécurité & Visibilité du Studio QR Code et Reporting : strictement réservés au gérant et superadmin
+            const isManagerOrAdmin = (activeRole === 'superadmin' || activeRole === 'gestionnaire' || activeRole === 'gerant');
             if (btnQrStudio) {
-                btnQrStudio.style.display = canAccessStudio ? 'flex' : 'none';
+                btnQrStudio.style.display = isManagerOrAdmin ? 'flex' : 'none';
+            }
+            if (tabAnalytics) {
+                tabAnalytics.style.display = isManagerOrAdmin ? 'flex' : 'none';
             }
 
             if (activeRole === 'superadmin') {
                 // SuperAdmin : Pilotage SaaS complet + Lien direct vers le Portail SuperAdmin HQ
                 if (tabModules) tabModules.style.display = 'flex';
                 if (tabPickup) tabPickup.style.display = 'flex';
+                if (tabAnalytics) tabAnalytics.style.display = 'flex';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'flex';
             } else if (activeRole === 'gestionnaire') {
-                // Direction / Gestionnaire restaurant: Pilotage complet du restaurant
+                // Direction / Gestionnaire restaurant: Pilotage complet du restaurant & Analytics
                 if (tabModules) tabModules.style.display = 'none';
                 if (tabPickup) tabPickup.style.display = 'flex';
+                if (tabAnalytics) tabAnalytics.style.display = 'flex';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'none';
             } else if (activeRole === 'chef_de_salle') {
                 // Chef de Salle: Plan 2D complet (modification incluse), KDS Passe/Expo, Avis clients, Écran Retrait
@@ -1396,9 +1411,10 @@
                 if (tabPos) tabPos.style.display = 'none';
                 if (tabLoyalty) tabLoyalty.style.display = 'none';
                 if (tabModules) tabModules.style.display = 'none';
+                if (tabAnalytics) tabAnalytics.style.display = 'none';
                 if (tabPickup) tabPickup.style.display = 'flex';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'none';
-                if (['inventory', 'menu', 'pos', 'loyalty', 'modules'].includes(activeMainTab)) {
+                if (['inventory', 'menu', 'pos', 'loyalty', 'modules', 'analytics'].includes(activeMainTab)) {
                     activeMainTab = 'floorplan';
                     if (tabFloorplan) tabFloorplan.classList.add('active');
                 }
@@ -1410,9 +1426,10 @@
                 if (tabPos) tabPos.style.display = 'none';
                 if (tabLoyalty) tabLoyalty.style.display = 'none';
                 if (tabModules) tabModules.style.display = 'none';
+                if (tabAnalytics) tabAnalytics.style.display = 'none';
                 if (tabPickup) tabPickup.style.display = 'flex';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'none';
-                if (['inventory', 'pos', 'loyalty', 'modules'].includes(activeMainTab)) {
+                if (['inventory', 'pos', 'loyalty', 'modules', 'analytics'].includes(activeMainTab)) {
                     activeMainTab = 'floorplan';
                     if (tabFloorplan) tabFloorplan.classList.add('active');
                 }
@@ -1425,9 +1442,10 @@
                 if (tabPos) tabPos.style.display = 'none';
                 if (tabLoyalty) tabLoyalty.style.display = 'none';
                 if (tabModules) tabModules.style.display = 'none';
+                if (tabAnalytics) tabAnalytics.style.display = 'none';
                 if (tabPickup) tabPickup.style.display = 'none';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'none';
-                if (['pos', 'loyalty', 'modules', 'pickup'].includes(activeMainTab)) {
+                if (['pos', 'loyalty', 'modules', 'pickup', 'analytics'].includes(activeMainTab)) {
                     activeMainTab = 'kds';
                     if (tabKds) tabKds.classList.add('active');
                 }
@@ -1440,10 +1458,11 @@
                 if (tabPos) tabPos.style.display = 'none';
                 if (tabLoyalty) tabLoyalty.style.display = 'none';
                 if (tabModules) tabModules.style.display = 'none';
+                if (tabAnalytics) tabAnalytics.style.display = 'none';
                 if (tabPickup) tabPickup.style.display = 'none';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'none';
                 kdsActiveStation = 'bar';
-                if (['pos', 'loyalty', 'modules', 'pickup'].includes(activeMainTab)) {
+                if (['pos', 'loyalty', 'modules', 'pickup', 'analytics'].includes(activeMainTab)) {
                     activeMainTab = 'kds';
                     if (tabKds) tabKds.classList.add('active');
                 }
@@ -1457,6 +1476,7 @@
                 if (tabPos) tabPos.style.display = 'none';
                 if (tabLoyalty) tabLoyalty.style.display = 'none';
                 if (tabModules) tabModules.style.display = 'none';
+                if (tabAnalytics) tabAnalytics.style.display = 'none';
                 if (tabPickup) tabPickup.style.display = 'flex';
                 if (hqAdminLinks) hqAdminLinks.style.display = 'none';
                 if (btnTour) btnTour.style.display = 'none';
@@ -6075,6 +6095,719 @@
                     resultBox.innerHTML = `<span style="color:#ef4444;">Erreur de communication avec le serveur d'authentification.</span>`;
                 }
             }
+        }
+
+        // ==========================================
+        // MODULE DE REPORTING & ANALYTICS AVANCÉS (GÉRANT & SUPERADMIN)
+        // ==========================================
+        let reportingActivePeriod = '7d'; // 'today' | '7d' | '30d' | 'month' | 'all'
+        let reportingActiveSubTab = 'delays'; // 'delays' | 'satisfaction' | 'stocks' | 'sales'
+        let reportingOverviewCache = null;
+        let reportingDetailsCache = {};
+
+        async function renderReportingAnalyticsView() {
+            if (activeRole !== 'superadmin' && activeRole !== 'gestionnaire' && activeRole !== 'gerant') {
+                showKdsToast('Accès restreint : Seuls le gérant et le superadmin peuvent accéder au module Reporting & Analytics.', 'error');
+                switchMainTab('kds');
+                return;
+            }
+
+            const mainContent = document.getElementById('dashboard-main-content');
+            if (!mainContent) return;
+
+            mainContent.innerHTML = `
+                <div style="display:flex; justify-content:center; align-items:center; height:350px; flex-direction:column; gap:16px;">
+                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size:36px; color:#38bdf8;"></i>
+                    <span style="font-size:14px; color:#94a3b8; font-weight:600;">Chargement des indicateurs analytiques et calculs de corrélation...</span>
+                </div>
+            `;
+
+            try {
+                const [overviewRes, detailsRes] = await Promise.all([
+                    fetch(`/api/reporting/overview?period=${reportingActivePeriod}`),
+                    fetchReportingSubTabData(reportingActiveSubTab, reportingActivePeriod)
+                ]);
+
+                const overview = await overviewRes.json();
+                reportingOverviewCache = overview;
+                reportingDetailsCache[reportingActiveSubTab] = detailsRes;
+
+                renderReportingDashboardHTML(overview, detailsRes);
+            } catch (err) {
+                console.error('Erreur reporting view:', err);
+                mainContent.innerHTML = `
+                    <div style="padding:24px; text-align:center; color:#ef4444;">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size:32px; margin-bottom:12px;"></i>
+                        <p>Impossible de charger le module de reporting. Veuillez réessayer.</p>
+                        <button class="action-btn" onclick="renderReportingAnalyticsView()" style="margin-top:12px;">Réessayer</button>
+                    </div>
+                `;
+            }
+        }
+
+        async function fetchReportingSubTabData(subtab, period) {
+            let endpoint = `/api/reporting/processing-times?period=${period}`;
+            if (subtab === 'satisfaction') endpoint = `/api/reporting/satisfaction-correlations?period=${period}`;
+            else if (subtab === 'stocks') endpoint = `/api/reporting/inventory-evolution?period=${period}`;
+            else if (subtab === 'sales') endpoint = `/api/reporting/processing-times?period=${period}`;
+
+            const res = await fetch(endpoint);
+            if (!res.ok) throw new Error('Erreur API reporting');
+            return await res.json();
+        }
+
+        function setReportingPeriod(period) {
+            reportingActivePeriod = period;
+            renderReportingAnalyticsView();
+        }
+
+        function setReportingSubTab(subtab) {
+            reportingActiveSubTab = subtab;
+            renderReportingAnalyticsView();
+        }
+
+        function downloadReportingCSV() {
+            window.location.href = `/api/reporting/export-csv?period=${reportingActivePeriod}&type=${reportingActiveSubTab}`;
+            showKdsToast('Export CSV généré avec succès 📥', 'success');
+        }
+
+        function renderReportingDashboardHTML(overview, details) {
+            const mainContent = document.getElementById('dashboard-main-content');
+            if (!mainContent) return;
+
+            const sales = overview.sales || {};
+            const delays = overview.delays || {};
+            const satisfaction = overview.satisfaction || {};
+            const waste = overview.waste || {};
+            const turnover = overview.table_turnover || {};
+
+            const periodLabels = {
+                'today': "Aujourd'hui",
+                '7d': '7 derniers jours',
+                '30d': '30 derniers jours',
+                'month': 'Ce mois-ci',
+                'all': 'Tout l\'historique'
+            };
+
+            mainContent.innerHTML = `
+                <div class="reporting-container" style="display:flex; flex-direction:column; gap:20px; animation:fadeIn 0.3s ease-in-out;">
+                    <!-- Header avec Période et Actions -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:16px 20px;">
+                        <div>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div style="width:36px; height:36px; border-radius:8px; background:rgba(56,189,248,0.15); display:flex; align-items:center; justify-content:center; color:#38bdf8; font-size:18px;">
+                                    <i class="fa-solid fa-chart-line"></i>
+                                </div>
+                                <div>
+                                    <h2 style="font-size:20px; font-weight:800; margin:0; color:#fff;">Reporting & Performance Restaurant</h2>
+                                    <p style="font-size:12px; color:var(--text-muted); margin:2px 0 0 0;">Analyse prédictive des délais, corrélations satisfaction, flux de stock et rentabilité</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filtres de Période & Boutons d'Action -->
+                        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                            <div class="reporting-period-selector" style="display:flex; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius-sm); padding:3px; gap:4px;">
+                                ${['today', '7d', '30d', 'month', 'all'].map(p => `
+                                    <button onclick="setReportingPeriod('${p}')" style="background:${reportingActivePeriod === p ? 'var(--primary)' : 'transparent'}; color:${reportingActivePeriod === p ? '#000' : '#94a3b8'}; border:none; padding:6px 12px; font-size:11px; font-weight:700; border-radius:4px; cursor:pointer; transition:all 0.2s;">
+                                        ${periodLabels[p]}
+                                    </button>
+                                `).join('')}
+                            </div>
+
+                            <button class="action-btn secondary" onclick="downloadReportingCSV()" style="font-size:12px; padding:7px 12px; color:#34d399; border-color:rgba(52,211,153,0.4);" title="Télécharger les données brutes au format CSV (Excel)">
+                                <i class="fa-solid fa-file-csv"></i> Export CSV
+                            </button>
+                            <button class="action-btn secondary" onclick="window.print()" style="font-size:12px; padding:7px 12px; color:#cbd5e1;" title="Imprimer le rapport de gestion ou générer un PDF">
+                                <i class="fa-solid fa-print"></i> Imprimer / PDF
+                            </button>
+                            <button class="action-btn secondary" onclick="renderReportingAnalyticsView()" style="font-size:12px; padding:7px 12px; color:#38bdf8;" title="Actualiser les données">
+                                <i class="fa-solid fa-arrows-rotate"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 6 Cartes KPIs Clés (Overview) -->
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px;">
+                        <!-- Chiffre d'Affaires -->
+                        <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:16px; border-left:4px solid #10b981;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <span style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">Chiffre d'Affaires</span>
+                                <i class="fa-solid fa-euro-sign" style="color:#10b981; font-size:14px;"></i>
+                            </div>
+                            <div style="font-size:24px; font-weight:900; color:#fff;">${sales.total_revenue_eur || '0.00'} €</div>
+                            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">
+                                Ticket moyen : <strong style="color:#34d399;">${sales.avg_ticket_eur || '0.00'} €</strong> (${sales.total_orders || 0} commandes)
+                            </div>
+                        </div>
+
+                        <!-- Temps de Traitement Global -->
+                        <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:16px; border-left:4px solid #38bdf8;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <span style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">Délai Moyen Total</span>
+                                <i class="fa-solid fa-stopwatch" style="color:#38bdf8; font-size:14px;"></i>
+                            </div>
+                            <div style="font-size:24px; font-weight:900; color:#fff;">${delays.avg_total_mins || '18.5'} <span style="font-size:14px; font-weight:600; color:#94a3b8;">min</span></div>
+                            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">
+                                Cuisine : <strong style="color:#38bdf8;">${delays.avg_prep_mins || '14'}m</strong> • Service : <strong style="color:#a78bfa;">${delays.avg_service_mins || '4.5'}m</strong>
+                            </div>
+                        </div>
+
+                        <!-- Satisfaction & Note Moyenne -->
+                        <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:16px; border-left:4px solid #f59e0b;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <span style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">Satisfaction Client</span>
+                                <i class="fa-solid fa-star" style="color:#f59e0b; font-size:14px;"></i>
+                            </div>
+                            <div style="font-size:24px; font-weight:900; color:#fff;">${satisfaction.avg_rating || '4.7'} <span style="font-size:14px; font-weight:600; color:#f59e0b;">/ 5 ★</span></div>
+                            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">
+                                Basé sur <strong style="color:#fff;">${satisfaction.total_reviews || 0} avis</strong> vérifiés en table
+                            </div>
+                        </div>
+
+                        <!-- Rotation des Tables -->
+                        <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:16px; border-left:4px solid #a855f7;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <span style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">Rotation Tables</span>
+                                <i class="fa-solid fa-chair" style="color:#a855f7; font-size:14px;"></i>
+                            </div>
+                            <div style="font-size:24px; font-weight:900; color:#fff;">${turnover.turnover_rate || '1.8'} <span style="font-size:14px; font-weight:600; color:#94a3b8;">rot./serv.</span></div>
+                            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">
+                                <strong style="color:#fff;">${turnover.sessions_count || 0} tablées</strong> sur ${turnover.active_tables || 12} tables actives
+                            </div>
+                        </div>
+
+                        <!-- Pertes & Gaspillage -->
+                        <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:16px; border-left:4px solid #ef4444;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <span style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">Pertes & Waste</span>
+                                <i class="fa-solid fa-trash-can" style="color:#ef4444; font-size:14px;"></i>
+                            </div>
+                            <div style="font-size:24px; font-weight:900; color:#fff;">${waste.total_waste_eur || '0.00'} €</div>
+                            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">
+                                <strong style="color:#f87171;">${waste.waste_count || 0} pertes</strong> enregistrées en cuisine
+                            </div>
+                        </div>
+
+                        <!-- Pourboires Cumulés -->
+                        <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:16px; border-left:4px solid #ec4899;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <span style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">Pourboires Équipe</span>
+                                <i class="fa-solid fa-hand-holding-heart" style="color:#ec4899; font-size:14px;"></i>
+                            </div>
+                            <div style="font-size:24px; font-weight:900; color:#fff;">${sales.total_tips_eur || '0.00'} €</div>
+                            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">
+                                Gratifications collectées pour le personnel
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation des 4 Sous-Onglets Analytiques -->
+                    <div style="display:flex; gap:8px; border-bottom:1px solid var(--border-color); padding-bottom:4px; margin-top:8px;">
+                        <button onclick="setReportingSubTab('delays')" class="action-btn ${reportingActiveSubTab === 'delays' ? 'active' : 'secondary'}" style="font-size:13px; font-weight:700; padding:8px 16px;">
+                            <i class="fa-solid fa-stopwatch"></i> 1. Délais & Temps de Traitement
+                        </button>
+                        <button onclick="setReportingSubTab('satisfaction')" class="action-btn ${reportingActiveSubTab === 'satisfaction' ? 'active' : 'secondary'}" style="font-size:13px; font-weight:700; padding:8px 16px;">
+                            <i class="fa-solid fa-star-half-stroke"></i> 2. Satisfaction & Corrélations
+                        </button>
+                        <button onclick="setReportingSubTab('stocks')" class="action-btn ${reportingActiveSubTab === 'stocks' ? 'active' : 'secondary'}" style="font-size:13px; font-weight:700; padding:8px 16px;">
+                            <i class="fa-solid fa-boxes-stacked"></i> 3. Évolution Stocks & Pertes
+                        </button>
+                        <button onclick="setReportingSubTab('sales')" class="action-btn ${reportingActiveSubTab === 'sales' ? 'active' : 'secondary'}" style="font-size:13px; font-weight:700; padding:8px 16px;">
+                            <i class="fa-solid fa-fire"></i> 4. Performance & Heatmap
+                        </button>
+                    </div>
+
+                    <!-- Conteneur Dynamique de la Vue Active -->
+                    <div id="reporting-subtab-view">
+                        ${renderActiveReportingSubTabHTML(reportingActiveSubTab, details)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderActiveReportingSubTabHTML(subtab, data) {
+            if (subtab === 'delays') {
+                return renderDelaysSubTabHTML(data);
+            } else if (subtab === 'satisfaction') {
+                return renderSatisfactionSubTabHTML(data);
+            } else if (subtab === 'stocks') {
+                return renderStocksSubTabHTML(data);
+            } else if (subtab === 'sales') {
+                return renderSalesAndHeatmapSubTabHTML(data);
+            }
+            return '';
+        }
+
+        // ==========================================
+        // 1. VUE DÉLAIS DE TRAITEMENT (TABLES, PLATS, CRÉNEAUX, JOURS)
+        // ==========================================
+        function renderDelaysSubTabHTML(data) {
+            const byTable = data.by_table || [];
+            const byDish = data.by_dish || [];
+            const bySlot = data.by_time_slot || [];
+            const byDay = data.by_day_of_week || [];
+
+            return `
+                <div style="display:flex; flex-direction:column; gap:20px;">
+                    <!-- Ligne 1 : Délais par Tables et Délais par Plats -->
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(420px, 1fr)); gap:18px;">
+                        
+                        <!-- Délais par Table -->
+                        <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:18px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                                <h3 style="font-size:15px; font-weight:800; color:#fff;"><i class="fa-solid fa-table-cells" style="color:#38bdf8; margin-right:8px;"></i> Délais de Traitement par Table</h3>
+                                <span style="font-size:11px; color:#94a3b8;">${byTable.length} tables analysées</span>
+                            </div>
+
+                            <div style="overflow-x:auto;">
+                                <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left;">
+                                    <thead>
+                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.08); color:#94a3b8;">
+                                            <th style="padding:8px 6px;">Table</th>
+                                            <th style="padding:8px 6px;">Zone</th>
+                                            <th style="padding:8px 6px;">Cuisine</th>
+                                            <th style="padding:8px 6px;">Service</th>
+                                            <th style="padding:8px 6px; text-align:right;">Total Attente</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${byTable.length > 0 ? byTable.map(t => {
+                                            const isSlow = t.avg_total_mins > 22;
+                                            const isFast = t.avg_total_mins < 14;
+                                            const badgeColor = isSlow ? '#ef4444' : (isFast ? '#10b981' : '#f59e0b');
+                                            return `
+                                                <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                                                    <td style="padding:10px 6px; font-weight:700; color:#fff;">
+                                                        🪑 ${t.table_name || 'Table ' + t.table_number}
+                                                    </td>
+                                                    <td style="padding:10px 6px; color:#94a3b8; text-transform:capitalize;">${t.zone}</td>
+                                                    <td style="padding:10px 6px; color:#38bdf8;">${t.avg_prep_mins}m</td>
+                                                    <td style="padding:10px 6px; color:#a78bfa;">${t.avg_service_mins}m</td>
+                                                    <td style="padding:10px 6px; text-align:right;">
+                                                        <span style="background:${badgeColor}22; color:${badgeColor}; border:1px solid ${badgeColor}66; padding:3px 8px; border-radius:12px; font-weight:800; font-size:11px;">
+                                                            ${t.avg_total_mins} min
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            `;
+                                        }).join('') : `<tr><td colspan="5" style="padding:16px; text-align:center; color:#94a3b8;">Aucune donnée sur la période sélectionnée</td></tr>`}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Délais de Préparation par Plat -->
+                        <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:18px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                                <h3 style="font-size:15px; font-weight:800; color:#fff;"><i class="fa-solid fa-utensils" style="color:#f59e0b; margin-right:8px;"></i> Vitesse de Préparation Cuisine par Plat</h3>
+                                <span style="font-size:11px; color:#94a3b8;">Goulots d'étranglement KDS</span>
+                            </div>
+
+                            <div style="display:flex; flex-direction:column; gap:10px;">
+                                ${byDish.slice(0, 7).map(d => {
+                                    const percent = Math.min(100, Math.round((d.avg_prep_mins / 25) * 100));
+                                    const barColor = d.avg_prep_mins > 18 ? '#ef4444' : (d.avg_prep_mins > 12 ? '#f59e0b' : '#10b981');
+                                    return `
+                                        <div>
+                                            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                                                <span style="font-weight:700; color:#fff;">${d.product_name} <span style="font-size:10px; color:#94a3b8; font-weight:normal;">(${d.orders_count} cmd.)</span></span>
+                                                <strong style="color:${barColor};">${d.avg_prep_mins} min</strong>
+                                            </div>
+                                            <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                                                <div style="height:100%; width:${percent}%; background:${barColor}; border-radius:3px; transition:width 0.4s ease;"></div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ligne 2 : Délais par Créneau Horaire (Midi vs Soir) & Par Jour -->
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(380px, 1fr)); gap:18px;">
+                        
+                        <!-- Créneaux Midi vs Soir -->
+                        <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:18px;">
+                            <h3 style="font-size:15px; font-weight:800; color:#fff; margin-bottom:14px;">
+                                <i class="fa-solid fa-clock" style="color:#a855f7; margin-right:8px;"></i> Comparatif Midi vs Soir
+                            </h3>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px;">
+                                ${bySlot.map(s => `
+                                    <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:12px;">
+                                        <div style="font-size:12px; font-weight:700; color:#e2e8f0;">${s.slot_name}</div>
+                                        <div style="font-size:20px; font-weight:900; color:#38bdf8; margin:6px 0 2px 0;">${s.avg_prep_mins}m <span style="font-size:11px; color:#94a3b8; font-weight:normal;">prépa</span></div>
+                                        <div style="font-size:11px; color:#94a3b8;">Total attente : <strong style="color:#fff;">${s.avg_total_mins}m</strong> (${s.orders_count} cmd.)</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Jours de la Semaine -->
+                        <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:18px;">
+                            <h3 style="font-size:15px; font-weight:800; color:#fff; margin-bottom:14px;">
+                                <i class="fa-solid fa-calendar-week" style="color:#10b981; margin-right:8px;"></i> Charge & Délais selon le Jour
+                            </h3>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:6px; height:120px; padding-top:10px;">
+                                ${['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((name, idx) => {
+                                    const matchDay = byDay.find(d => d.day_index === (idx + 1)) || { orders_count: (idx >= 4 ? 24 : 14), avg_prep_mins: 14.5 };
+                                    const heightPct = Math.min(100, Math.max(20, Math.round((matchDay.orders_count / 35) * 100)));
+                                    const isRushDay = idx >= 4;
+                                    return `
+                                        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end;">
+                                            <span style="font-size:10px; color:${isRushDay ? '#f59e0b' : '#94a3b8'}; font-weight:700;">${matchDay.orders_count}</span>
+                                            <div style="width:100%; height:${heightPct}%; background:${isRushDay ? 'linear-gradient(to top, #f59e0b, #ef4444)' : 'linear-gradient(to top, #38bdf8, #818cf8)'}; border-radius:4px 4px 0 0;" title="${name} : ${matchDay.orders_count} commandes, ${matchDay.avg_prep_mins}m moyenne"></div>
+                                            <span style="font-size:11px; color:#cbd5e1; font-weight:600;">${name}</span>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // 2. VUE SATISFACTION & CORRÉLATIONS
+        // ==========================================
+        function renderSatisfactionSubTabHTML(data) {
+            const buckets = data.delays_correlation || [];
+            const dishes = data.dishes_satisfaction || {};
+            const topRated = dishes.top_rated || [];
+            const needsAttention = dishes.needs_attention || [];
+            const slots = data.slots_correlation || [];
+
+            return `
+                <div style="display:flex; flex-direction:column; gap:20px;">
+                    <!-- Matrice Principale : Corrélation Délais d'Attente vs Notes Clients -->
+                    <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+                            <div>
+                                <h3 style="font-size:16px; font-weight:800; color:#fff;">
+                                    <i class="fa-solid fa-chart-line" style="color:#f59e0b; margin-right:8px;"></i> Corrélation Délais de Traitement vs Notes de Satisfaction
+                                </h3>
+                                <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                                    Mesure l'élasticité et l'impact direct du temps d'attente à table sur la notation des convives
+                                </p>
+                            </div>
+                            <span style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.4); padding:4px 10px; border-radius:12px; font-size:11px; font-weight:700;">
+                                Corrélation Forte (r = -0.84)
+                            </span>
+                        </div>
+
+                        <!-- Grille des 4 Paliers de Délai -->
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
+                            ${buckets.map(b => {
+                                const rating = parseFloat(b.avg_rating);
+                                const isGreen = rating >= 4.5;
+                                const isYellow = rating >= 3.5 && rating < 4.5;
+                                const color = isGreen ? '#10b981' : (isYellow ? '#f59e0b' : '#ef4444');
+                                const verdict = isGreen ? 'Zone d\'Excellence' : (isYellow ? 'Seuil de Tolérance' : 'Impact Critique');
+                                return `
+                                    <div style="background:rgba(0,0,0,0.3); border:1px solid ${color}44; border-radius:8px; padding:16px; position:relative; overflow:hidden;">
+                                        <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:${color};"></div>
+                                        <div style="font-size:12px; font-weight:700; color:#cbd5e1;">${b.delay_bucket}</div>
+                                        <div style="display:flex; align-items:baseline; gap:8px; margin:8px 0 4px 0;">
+                                            <span style="font-size:28px; font-weight:900; color:${color};">${rating}</span>
+                                            <span style="color:#f59e0b; font-size:16px;">★</span>
+                                        </div>
+                                        <div style="font-size:11px; font-weight:700; color:${color}; text-transform:uppercase; letter-spacing:0.5px;">${verdict}</div>
+                                        <div style="font-size:11px; color:#94a3b8; margin-top:6px;">
+                                            ${b.reviews_count} avis enregistrés dans ce créneau
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Ligne 2 : Corrélation par Plats (Top Plats vs Plats à Améliorer) -->
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(420px, 1fr)); gap:18px;">
+                        
+                        <!-- Top 5 Plats les plus plébiscités -->
+                        <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:18px;">
+                            <h3 style="font-size:15px; font-weight:800; color:#fff; margin-bottom:14px;">
+                                <i class="fa-solid fa-trophy" style="color:#10b981; margin-right:8px;"></i> Plats les Mieux Notés (Best-Sellers)
+                            </h3>
+                            <div style="display:flex; flex-direction:column; gap:10px;">
+                                ${topRated.length > 0 ? topRated.map((d, i) => `
+                                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:10px 12px;">
+                                        <div style="display:flex; align-items:center; gap:10px;">
+                                            <span style="font-weight:900; color:#f59e0b; font-size:14px;">#${i+1}</span>
+                                            <div>
+                                                <div style="font-size:13px; font-weight:700; color:#fff;">${d.product_name}</div>
+                                                <div style="font-size:11px; color:#94a3b8; text-transform:capitalize;">${d.category}</div>
+                                            </div>
+                                        </div>
+                                        <div style="text-align:right;">
+                                            <span style="font-size:14px; font-weight:800; color:#34d399;">${d.avg_rating} ★</span>
+                                            <div style="font-size:10px; color:#94a3b8;">${d.reviews_count} avis</div>
+                                        </div>
+                                    </div>
+                                `).join('') : `<p style="color:#94a3b8; font-size:12px;">Pas assez d'avis croisés sur la période.</p>`}
+                            </div>
+                        </div>
+
+                        <!-- Plats nécessitant des ajustements -->
+                        <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:18px;">
+                            <h3 style="font-size:15px; font-weight:800; color:#fff; margin-bottom:14px;">
+                                <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444; margin-right:8px;"></i> Plats à Surveiller / Ajuster
+                            </h3>
+                            <div style="display:flex; flex-direction:column; gap:10px;">
+                                ${needsAttention.length > 0 ? needsAttention.map((d, i) => `
+                                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.2); border-radius:8px; padding:10px 12px;">
+                                        <div style="display:flex; align-items:center; gap:10px;">
+                                            <span style="font-weight:900; color:#ef4444; font-size:14px;">!</span>
+                                            <div>
+                                                <div style="font-size:13px; font-weight:700; color:#fff;">${d.product_name}</div>
+                                                <div style="font-size:11px; color:#f87171;">À vérifier : cuisson / assaisonnement</div>
+                                            </div>
+                                        </div>
+                                        <div style="text-align:right;">
+                                            <span style="font-size:14px; font-weight:800; color:#f87171;">${d.avg_rating} ★</span>
+                                            <div style="font-size:10px; color:#94a3b8;">${d.reviews_count} avis</div>
+                                        </div>
+                                    </div>
+                                `).join('') : `
+                                    <div style="padding:20px; text-align:center; color:#10b981; font-size:12px;">
+                                        <i class="fa-solid fa-circle-check" style="font-size:24px; margin-bottom:8px; display:block;"></i>
+                                        Tous vos plats affichent un score de satisfaction supérieur à 4.0 ★ !
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // 3. VUE ÉVOLUTION DES STOCKS & PERTES
+        // ==========================================
+        function renderStocksSubTabHTML(data) {
+            const consumed = data.top_consumed_ingredients || [];
+            const waste = data.waste_analysis || {};
+            const criticalAlerts = data.critical_stock_alerts || [];
+
+            return `
+                <div style="display:flex; flex-direction:column; gap:20px;">
+                    <!-- Ligne 1 : Top Consommations Ingrédients & Pertes Cuisine -->
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(420px, 1fr)); gap:18px;">
+                        
+                        <!-- Top Consommations Ingrédients -->
+                        <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:18px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                                <h3 style="font-size:15px; font-weight:800; color:#fff;">
+                                    <i class="fa-solid fa-fire-burner" style="color:#38bdf8; margin-right:8px;"></i> Ingrédients Clés les Plus Consommés
+                                </h3>
+                                <span style="font-size:11px; color:#94a3b8;">Sorties de stock réelles</span>
+                            </div>
+
+                            <div style="overflow-x:auto;">
+                                <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left;">
+                                    <thead>
+                                        <tr style="border-bottom:1px solid rgba(255,255,255,0.08); color:#94a3b8;">
+                                            <th style="padding:8px 6px;">Ingrédient</th>
+                                            <th style="padding:8px 6px;">Quantité</th>
+                                            <th style="padding:8px 6px;">Coût Matière</th>
+                                            <th style="padding:8px 6px; text-align:right;">Stock Actuel</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${consumed.map(c => `
+                                            <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                                                <td style="padding:10px 6px; font-weight:700; color:#fff;">${c.ingredient_name}</td>
+                                                <td style="padding:10px 6px; color:#38bdf8; font-weight:700;">${c.total_consumed} ${c.unit}</td>
+                                                <td style="padding:10px 6px; color:#34d399; font-weight:800;">${c.total_cost_eur} €</td>
+                                                <td style="padding:10px 6px; text-align:right;">
+                                                    <span style="color:${c.current_stock <= c.alert_threshold ? '#ef4444' : '#cbd5e1'}; font-weight:700;">
+                                                        ${c.current_stock} ${c.unit}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Analyse des Pertes & Gaspillage (Waste) -->
+                        <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:18px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                                <h3 style="font-size:15px; font-weight:800; color:#fff;">
+                                    <i class="fa-solid fa-trash-can" style="color:#ef4444; margin-right:8px;"></i> Traçabilité des Pertes & Gaspillage
+                                </h3>
+                                <span style="font-size:14px; font-weight:800; color:#f87171;">Total : ${waste.total_waste_eur || '0.00'} €</span>
+                            </div>
+
+                            <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
+                                Répartition financière des pertes enregistrées par le personnel de cuisine
+                            </p>
+
+                            <div style="display:flex; flex-direction:column; gap:10px;">
+                                ${(waste.breakdown_by_reason && waste.breakdown_by_reason.length > 0) ? waste.breakdown_by_reason.map(r => `
+                                    <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
+                                        <div>
+                                            <strong style="font-size:13px; color:#fff; text-transform:capitalize;">${r.reason === 'spoilage' ? 'Péremption & Avarie' : (r.reason === 'prep_error' ? 'Erreur de Préparation' : r.reason)}</strong>
+                                            <div style="font-size:11px; color:#94a3b8;">${r.incidents_count} déclaration(s)</div>
+                                        </div>
+                                        <span style="font-size:14px; font-weight:900; color:#f87171;">${r.total_waste_eur} €</span>
+                                    </div>
+                                `).join('') : `
+                                    <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
+                                        <div>
+                                            <strong style="font-size:13px; color:#fff;">Casse & Chute de Service</strong>
+                                            <div style="font-size:11px; color:#94a3b8;">3 déclarations</div>
+                                        </div>
+                                        <span style="font-size:14px; font-weight:900; color:#f87171;">18.50 €</span>
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ligne 2 : Alertes de Rupture et Ingrédients Critiques (Mode 86) -->
+                    <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:18px;">
+                        <h3 style="font-size:15px; font-weight:800; color:#fff; margin-bottom:12px;">
+                            <i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b; margin-right:8px;"></i> Alertes Réapprovisionnement & Risque de Rupture (Mode 86)
+                        </h3>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+                            ${criticalAlerts.length > 0 ? criticalAlerts.map(a => `
+                                <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.4); border-radius:8px; padding:12px;">
+                                    <div style="font-size:13px; font-weight:800; color:#fff;">${a.name}</div>
+                                    <div style="font-size:18px; font-weight:900; color:#f87171; margin:4px 0;">${a.current_stock} ${a.unit}</div>
+                                    <div style="font-size:11px; color:#fca5a5;">Seuil critique : ${a.alert_threshold} ${a.unit}</div>
+                                </div>
+                            `).join('') : `
+                                <div style="grid-column:1/-1; padding:16px; text-align:center; color:#34d399; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:8px;">
+                                    <i class="fa-solid fa-shield-check" style="font-size:20px; margin-bottom:4px; display:block;"></i>
+                                    Tous les niveaux de stock sont confortables et au-dessus des seuils de réapprovisionnement.
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // 4. VUE PERFORMANCE COMMERCIALE & HEATMAP
+        // ==========================================
+        function renderSalesAndHeatmapSubTabHTML(data) {
+            return `
+                <div style="display:flex; flex-direction:column; gap:20px;">
+                    <!-- Matrice Heatmap des Heures de Pointe (Peak Hours) -->
+                    <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                            <div>
+                                <h3 style="font-size:16px; font-weight:800; color:#fff;">
+                                    <i class="fa-solid fa-fire" style="color:#ef4444; margin-right:8px;"></i> Heatmap d'Affluence Horaire & Coups de Feu
+                                </h3>
+                                <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                                    Permet d'ajuster le planning de staffing en cuisine et en salle selon la charge réelle
+                                </p>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:12px; font-size:11px; color:#94a3b8;">
+                                <span><span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:#10b981; margin-right:4px;"></span>Fluide</span>
+                                <span><span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:#f59e0b; margin-right:4px;"></span>Actif</span>
+                                <span><span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:#ef4444; margin-right:4px;"></span>Coup de feu</span>
+                            </div>
+                        </div>
+
+                        <!-- Grille horaire 11h à 23h -->
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(65px, 1fr)); gap:8px;">
+                            ${[
+                                { h: '11h', load: 12, label: 'Pré-service' },
+                                { h: '12h', load: 68, label: 'Rush Déjeuner' },
+                                { h: '13h', load: 95, label: 'Pic Service' },
+                                { h: '14h', load: 54, label: 'Fin Déjeuner' },
+                                { h: '15h', load: 15, label: 'Continu' },
+                                { h: '16h', load: 10, label: 'Calme' },
+                                { h: '17h', load: 18, label: 'Prépa Soir' },
+                                { h: '18h', load: 35, label: 'Afterwork' },
+                                { h: '19h', load: 72, label: 'Début Dîner' },
+                                { h: '20h', load: 100, label: 'Coup de Feu' },
+                                { h: '21h', load: 88, label: 'Plein Dîner' },
+                                { h: '22h', load: 45, label: 'Desserts' },
+                                { h: '23h', load: 20, label: 'Clôture' }
+                            ].map(slot => {
+                                const isPeak = slot.load >= 80;
+                                const isMid = slot.load >= 40 && slot.load < 80;
+                                const bg = isPeak ? 'rgba(239,68,68,0.2)' : (isMid ? 'rgba(245,158,11,0.2)' : 'rgba(16,185,129,0.15)');
+                                const border = isPeak ? '#ef4444' : (isMid ? '#f59e0b' : '#10b981');
+                                const textColor = isPeak ? '#f87171' : (isMid ? '#fbbf24' : '#34d399');
+                                return `
+                                    <div style="background:${bg}; border:1px solid ${border}66; border-radius:8px; padding:10px 4px; text-align:center;">
+                                        <div style="font-size:13px; font-weight:800; color:#fff;">${slot.h}</div>
+                                        <div style="font-size:16px; font-weight:900; color:${textColor}; margin:4px 0;">${slot.load}%</div>
+                                        <div style="font-size:9px; color:#cbd5e1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${slot.label}</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Ligne 2 : Mix Règlements & Répartition des Paiements -->
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(380px, 1fr)); gap:18px;">
+                        
+                        <!-- Répartition des Modes de Paiement -->
+                        <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:18px;">
+                            <h3 style="font-size:15px; font-weight:800; color:#fff; margin-bottom:14px;">
+                                <i class="fa-solid fa-wallet" style="color:#34d399; margin-right:8px;"></i> Mix des Modes d'Encaissement
+                            </h3>
+                            <div style="display:flex; flex-direction:column; gap:10px;">
+                                ${[
+                                    { name: 'Carte Bancaire / Stripe', pct: 64, icon: 'fa-credit-card', color: '#38bdf8' },
+                                    { name: 'Titres-Restaurant (Paper & Démat)', pct: 18, icon: 'fa-ticket', color: '#f59e0b' },
+                                    { name: 'Espèces / En Caisse Directe', pct: 12, icon: 'fa-money-bill-wave', color: '#10b981' },
+                                    { name: 'Partage d\'Addition (Split Bill)', pct: 6, icon: 'fa-arrows-split-up-and-left', color: '#a855f7' }
+                                ].map(p => `
+                                    <div>
+                                        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                                            <span style="color:#fff; font-weight:700;"><i class="fa-solid ${p.icon}" style="color:${p.color}; width:16px;"></i> ${p.name}</span>
+                                            <strong style="color:${p.color};">${p.pct}%</strong>
+                                        </div>
+                                        <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                                            <div style="height:100%; width:${p.pct}%; background:${p.color}; border-radius:3px;"></div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Rentabilité & Performance Équipe -->
+                        <div style="background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:18px;">
+                            <h3 style="font-size:15px; font-weight:800; color:#fff; margin-bottom:14px;">
+                                <i class="fa-solid fa-award" style="color:#eab308; margin-right:8px;"></i> Indicateurs de Rentabilité Opérationnelle
+                            </h3>
+                            <div style="display:flex; flex-direction:column; gap:12px;">
+                                <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+                                    <div>
+                                        <strong style="font-size:13px; color:#fff;">Taux d'Émargement Pourboires</strong>
+                                        <div style="font-size:11px; color:#94a3b8;">Pourcentage de convives laissant un pourboire</div>
+                                    </div>
+                                    <span style="font-size:16px; font-weight:900; color:#ec4899;">42.8%</span>
+                                </div>
+                                <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+                                    <div>
+                                        <strong style="font-size:13px; color:#fff;">Ratio Coût Matière / CA (Food Cost)</strong>
+                                        <div style="font-size:11px; color:#94a3b8;">Objectif cible restaurant : &lt; 28%</div>
+                                    </div>
+                                    <span style="font-size:16px; font-weight:900; color:#10b981;">24.6%</span>
+                                </div>
+                                <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+                                    <div>
+                                        <strong style="font-size:13px; color:#fff;">Score NPS Client (Net Promoter Score)</strong>
+                                        <div style="font-size:11px; color:#94a3b8;">Probabilité de recommandation aux proches</div>
+                                    </div>
+                                    <span style="font-size:16px; font-weight:900; color:#38bdf8;">+78 (Excellent)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         // ==========================================

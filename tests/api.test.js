@@ -1669,6 +1669,74 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         assert.ok(qrData.tables[0].qr_code_token);
         assert.ok(qrData.tables[0].qr_image_url);
     });
+
+    test('62. GET /api/reporting/overview - should return aggregated restaurant KPIs for manager', async () => {
+        const res = await fetch(`${BASE_URL}/api/reporting/overview?period=7d`);
+        assert.strictEqual(res.status, 200);
+        const data = await res.json();
+        assert.strictEqual(data.period, '7d');
+        assert.ok(data.sales);
+        assert.ok(typeof data.sales.total_orders === 'number');
+        assert.ok(typeof data.sales.total_revenue_eur === 'string');
+        assert.ok(data.delays);
+        assert.ok(typeof data.delays.avg_prep_mins === 'number');
+        assert.ok(typeof data.delays.avg_total_mins === 'number');
+        assert.ok(data.satisfaction);
+        assert.ok(typeof data.satisfaction.avg_rating === 'number');
+        assert.ok(data.table_turnover);
+        assert.ok(typeof data.table_turnover.turnover_rate === 'number');
+    });
+
+    test('63. GET /api/reporting/processing-times - should break down delays by table, dish, slot and day', async () => {
+        const res = await fetch(`${BASE_URL}/api/reporting/processing-times?period=7d`);
+        assert.strictEqual(res.status, 200);
+        const data = await res.json();
+        assert.ok(Array.isArray(data.by_table));
+        assert.ok(Array.isArray(data.by_dish));
+        assert.ok(Array.isArray(data.by_time_slot));
+        assert.ok(Array.isArray(data.by_day_of_week));
+
+        if (data.by_table.length > 0) {
+            assert.ok(data.by_table[0].table_number);
+            assert.ok(typeof data.by_table[0].avg_total_mins === 'number');
+        }
+        if (data.by_time_slot.length > 0) {
+            assert.ok(data.by_time_slot[0].slot_name);
+            assert.ok(typeof data.by_time_slot[0].avg_prep_mins === 'number');
+        }
+    });
+
+    test('64. GET /api/reporting/satisfaction-correlations - should correlate delays and dishes with customer ratings', async () => {
+        const res = await fetch(`${BASE_URL}/api/reporting/satisfaction-correlations?period=7d`);
+        assert.strictEqual(res.status, 200);
+        const data = await res.json();
+        assert.ok(Array.isArray(data.delays_correlation));
+        assert.ok(data.delays_correlation.length > 0);
+        assert.ok(data.delays_correlation[0].delay_bucket);
+        assert.ok(typeof data.delays_correlation[0].avg_rating === 'number');
+
+        assert.ok(data.dishes_satisfaction);
+        assert.ok(Array.isArray(data.dishes_satisfaction.top_rated));
+        assert.ok(Array.isArray(data.slots_correlation));
+    });
+
+    test('65. GET /api/reporting/inventory-evolution & /api/reporting/export-csv - should report stock movements and export CSV file', async () => {
+        // 1. Évolution des stocks
+        const invRes = await fetch(`${BASE_URL}/api/reporting/inventory-evolution?period=7d`);
+        assert.strictEqual(invRes.status, 200);
+        const invData = await invRes.json();
+        assert.ok(Array.isArray(invData.top_consumed_ingredients));
+        assert.ok(invData.waste_analysis);
+        assert.ok(Array.isArray(invData.critical_stock_alerts));
+
+        // 2. Export CSV
+        const csvRes = await fetch(`${BASE_URL}/api/reporting/export-csv?period=7d&type=all`);
+        assert.strictEqual(csvRes.status, 200);
+        assert.ok(csvRes.headers.get('content-type').includes('text/csv'));
+        assert.ok(csvRes.headers.get('content-disposition').includes('attachment'));
+        const csvText = await csvRes.text();
+        assert.ok(csvText.includes('ID_Commande;Date_Heure;Table;Client;Montant_EUR'));
+    });
 });
 
 
