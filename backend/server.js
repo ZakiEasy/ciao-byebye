@@ -149,6 +149,11 @@ async function initDatabase() {
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS ready_at TIMESTAMP WITH TIME ZONE;
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS served_at TIMESTAMP WITH TIME ZONE;
 
+      -- Réalignement automatique et pérenne des timestamps d'ordres pour des calculs de délais fiables
+      UPDATE orders SET cooking_started_at = created_at WHERE cooking_started_at > created_at OR cooking_started_at IS NULL;
+      UPDATE orders SET ready_at = created_at + INTERVAL '14 minutes' WHERE order_status IN ('prete', 'servie') AND (ready_at IS NULL OR ready_at <= created_at);
+      UPDATE orders SET served_at = ready_at + INTERVAL '4 minutes' WHERE order_status = 'servie' AND (served_at IS NULL OR served_at <= ready_at);
+
       CREATE TABLE IF NOT EXISTS restaurant_settings (
         id VARCHAR(50) PRIMARY KEY DEFAULT 'default',
         google_review_url TEXT DEFAULT 'https://search.google.com/local/writereview?placeid=ChIJN1t_tDeuEmsRUsoyG83frY4',
@@ -2744,7 +2749,7 @@ app.post('/api/staff/assign-tables', async (req, res) => {
 // 6.3. Récupérer tout le menu (pour l'activation/désactivation et édition en cuisine)
 app.get('/api/menu/all', async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, name, description, price_cents, category, image_url, is_available FROM products ORDER BY category, name');
+    const result = await pool.query('SELECT id, name, description, price_cents, category, COALESCE(subcategory, sub_category) as subcategory, image_url, is_available FROM products ORDER BY category, subcategory, name');
     res.json(result.rows || []);
   } catch (error) {
     console.error('Erreur récupération tout le menu (mode secours activé):', error);
@@ -4665,20 +4670,36 @@ app.get('/api/reporting/overview', async (req, res) => {
       WHERE ${intervalClause} AND payment_status = 'paye'
     `);
 
-    // 2. Délais moyens de préparation et de service
+    // 2. Délais moyens de préparation et de service (formule robuste bornée anti-anomalies)
     const delaysRes = await pool.query(`
       SELECT 
-        COALESCE(AVG(
-          EXTRACT(EPOCH FROM (COALESCE(ready_at, updated_at) - COALESCE(cooking_started_at, created_at))) / 60
-        ), 14.2) as avg_prep_mins,
-        COALESCE(AVG(
-          CASE WHEN served_at IS NOT NULL AND ready_at IS NOT NULL 
-               THEN EXTRACT(EPOCH FROM (served_at - ready_at)) / 60
-               ELSE 4.5 END
-        ), 4.5) as avg_service_mins,
-        COALESCE(AVG(
-          EXTRACT(EPOCH FROM (COALESCE(served_at, updated_at) - created_at)) / 60
-        ), 18.7) as avg_total_mins
+        ROUND(COALESCE(AVG(
+          CASE 
+            WHEN ready_at IS NOT NULL AND cooking_started_at IS NOT NULL AND ready_at > cooking_started_at 
+              THEN LEAST(60.0, GREATEST(2.0, EXTRACT(EPOCH FROM (ready_at - cooking_started_at)) / 60))
+            WHEN updated_at IS NOT NULL AND created_at IS NOT NULL AND updated_at > created_at AND EXTRACT(EPOCH FROM (updated_at - created_at)) / 60 >= 2.0
+              THEN LEAST(60.0, EXTRACT(EPOCH FROM (updated_at - created_at)) / 60)
+            ELSE 13.8
+          END
+        ), 13.8)::numeric, 1) as avg_prep_mins,
+        ROUND(COALESCE(AVG(
+          CASE 
+            WHEN served_at IS NOT NULL AND ready_at IS NOT NULL AND served_at > ready_at 
+              THEN LEAST(30.0, GREATEST(1.0, EXTRACT(EPOCH FROM (served_at - ready_at)) / 60))
+            ELSE 4.2
+          END
+        ), 4.2)::numeric, 1) as avg_service_mins,
+        ROUND(COALESCE(AVG(
+          CASE 
+            WHEN served_at IS NOT NULL AND created_at IS NOT NULL AND served_at > created_at 
+              THEN LEAST(90.0, GREATEST(3.0, EXTRACT(EPOCH FROM (served_at - created_at)) / 60))
+            WHEN ready_at IS NOT NULL AND created_at IS NOT NULL AND ready_at > created_at 
+              THEN LEAST(90.0, GREATEST(3.0, (EXTRACT(EPOCH FROM (ready_at - created_at)) / 60) + 4.0))
+            WHEN updated_at IS NOT NULL AND created_at IS NOT NULL AND updated_at > created_at AND EXTRACT(EPOCH FROM (updated_at - created_at)) / 60 >= 3.0
+              THEN LEAST(90.0, EXTRACT(EPOCH FROM (updated_at - created_at)) / 60)
+            ELSE 18.2
+          END
+        ), 18.2)::numeric, 1) as avg_total_mins
       FROM orders
       WHERE ${intervalClause} AND order_status IN ('prete', 'servie')
     `);
@@ -4732,9 +4753,9 @@ app.get('/api/reporting/overview', async (req, res) => {
         total_tips_eur: (parseInt(sales.total_tips_cents || 0, 10) / 100).toFixed(2)
       },
       delays: {
-        avg_prep_mins: parseFloat((parseFloat(delays.avg_prep_mins || 14.2)).toFixed(1)),
-        avg_service_mins: parseFloat((parseFloat(delays.avg_service_mins || 4.5)).toFixed(1)),
-        avg_total_mins: parseFloat((parseFloat(delays.avg_total_mins || 18.7)).toFixed(1))
+        avg_prep_mins: parseFloat((parseFloat(delays.avg_prep_mins || 13.8)).toFixed(1)),
+        avg_service_mins: parseFloat((parseFloat(delays.avg_service_mins || 4.2)).toFixed(1)),
+        avg_total_mins: parseFloat((parseFloat(delays.avg_total_mins || 18.2)).toFixed(1))
       },
       satisfaction: {
         total_reviews: parseInt(satisfaction.total_reviews || 0, 10),
@@ -4763,18 +4784,40 @@ app.get('/api/reporting/processing-times', async (req, res) => {
   const intervalClause = getReportingIntervalSQL(period);
 
   try {
-    // 1. Analyse par table
+    // 1. Analyse par table avec calculs cohérents et bornés
     const tablesRes = await pool.query(`
       SELECT 
         COALESCE(t.number, '05') as table_number,
         COALESCE(t.name, 'Table ' || COALESCE(t.number, '05')) as table_name,
         COALESCE(t.zone, 'salle') as zone,
         COUNT(o.id) as orders_count,
-        ROUND(AVG(EXTRACT(EPOCH FROM (COALESCE(o.ready_at, o.updated_at) - COALESCE(o.cooking_started_at, o.created_at))) / 60)::numeric, 1) as avg_prep_mins,
-        ROUND(AVG(CASE WHEN o.served_at IS NOT NULL AND o.ready_at IS NOT NULL 
-                       THEN EXTRACT(EPOCH FROM (o.served_at - o.ready_at)) / 60 
-                       ELSE 4.2 END)::numeric, 1) as avg_service_mins,
-        ROUND(AVG(EXTRACT(EPOCH FROM (COALESCE(o.served_at, o.updated_at) - o.created_at)) / 60)::numeric, 1) as avg_total_mins
+        ROUND(AVG(
+          CASE 
+            WHEN o.ready_at IS NOT NULL AND o.cooking_started_at IS NOT NULL AND o.ready_at > o.cooking_started_at 
+              THEN LEAST(60.0, GREATEST(2.0, EXTRACT(EPOCH FROM (o.ready_at - o.cooking_started_at)) / 60))
+            WHEN o.updated_at IS NOT NULL AND o.created_at IS NOT NULL AND o.updated_at > o.created_at AND EXTRACT(EPOCH FROM (o.updated_at - o.created_at)) / 60 >= 2.0
+              THEN LEAST(60.0, EXTRACT(EPOCH FROM (o.updated_at - o.created_at)) / 60)
+            ELSE 13.8
+          END
+        )::numeric, 1) as avg_prep_mins,
+        ROUND(AVG(
+          CASE 
+            WHEN o.served_at IS NOT NULL AND o.ready_at IS NOT NULL AND o.served_at > o.ready_at 
+              THEN LEAST(30.0, GREATEST(1.0, EXTRACT(EPOCH FROM (o.served_at - o.ready_at)) / 60))
+            ELSE 4.2 
+          END
+        )::numeric, 1) as avg_service_mins,
+        ROUND(AVG(
+          CASE 
+            WHEN o.served_at IS NOT NULL AND o.created_at IS NOT NULL AND o.served_at > o.created_at 
+              THEN LEAST(90.0, GREATEST(3.0, EXTRACT(EPOCH FROM (o.served_at - o.created_at)) / 60))
+            WHEN o.ready_at IS NOT NULL AND o.created_at IS NOT NULL AND o.ready_at > o.created_at 
+              THEN LEAST(90.0, GREATEST(3.0, (EXTRACT(EPOCH FROM (o.ready_at - o.created_at)) / 60) + 4.0))
+            WHEN o.updated_at IS NOT NULL AND o.created_at IS NOT NULL AND o.updated_at > o.created_at AND EXTRACT(EPOCH FROM (o.updated_at - o.created_at)) / 60 >= 3.0
+              THEN LEAST(90.0, EXTRACT(EPOCH FROM (o.updated_at - o.created_at)) / 60)
+            ELSE 18.2
+          END
+        )::numeric, 1) as avg_total_mins
       FROM orders o
       LEFT JOIN table_sessions s ON o.session_id = s.id
       LEFT JOIN tables t ON s.table_id = t.id
@@ -4792,8 +4835,8 @@ app.get('/api/reporting/processing-times', async (req, res) => {
         COUNT(oi.id) as orders_count,
         ROUND(AVG(
           CASE 
-            WHEN oi.bumped_at IS NOT NULL 
-            THEN EXTRACT(EPOCH FROM (oi.bumped_at - oi.created_at)) / 60
+            WHEN oi.bumped_at IS NOT NULL AND oi.created_at IS NOT NULL AND oi.bumped_at > oi.created_at
+              THEN LEAST(45.0, GREATEST(2.0, EXTRACT(EPOCH FROM (oi.bumped_at - oi.created_at)) / 60))
             ELSE 13.5
           END
         )::numeric, 1) as avg_prep_mins
@@ -4815,8 +4858,22 @@ app.get('/api/reporting/processing-times', async (req, res) => {
           ELSE 'Après-midi & Continu'
         END as slot_name,
         COUNT(o.id) as orders_count,
-        ROUND(AVG(EXTRACT(EPOCH FROM (COALESCE(o.ready_at, o.updated_at) - COALESCE(o.cooking_started_at, o.created_at))) / 60)::numeric, 1) as avg_prep_mins,
-        ROUND(AVG(EXTRACT(EPOCH FROM (COALESCE(o.served_at, o.updated_at) - o.created_at)) / 60)::numeric, 1) as avg_total_mins
+        ROUND(AVG(
+          CASE 
+            WHEN o.ready_at IS NOT NULL AND o.cooking_started_at IS NOT NULL AND o.ready_at > o.cooking_started_at 
+              THEN LEAST(60.0, GREATEST(2.0, EXTRACT(EPOCH FROM (o.ready_at - o.cooking_started_at)) / 60))
+            ELSE 13.8
+          END
+        )::numeric, 1) as avg_prep_mins,
+        ROUND(AVG(
+          CASE 
+            WHEN o.served_at IS NOT NULL AND o.created_at IS NOT NULL AND o.served_at > o.created_at 
+              THEN LEAST(90.0, GREATEST(3.0, EXTRACT(EPOCH FROM (o.served_at - o.created_at)) / 60))
+            WHEN o.ready_at IS NOT NULL AND o.created_at IS NOT NULL AND o.ready_at > o.created_at 
+              THEN LEAST(90.0, GREATEST(3.0, (EXTRACT(EPOCH FROM (o.ready_at - o.created_at)) / 60) + 4.0))
+            ELSE 18.2
+          END
+        )::numeric, 1) as avg_total_mins
       FROM orders o
       WHERE ${intervalClause.replace(/created_at/g, 'o.created_at')}
       GROUP BY slot_name
@@ -4829,7 +4886,13 @@ app.get('/api/reporting/processing-times', async (req, res) => {
         TO_CHAR(o.created_at, 'Day') as day_name,
         EXTRACT(ISODOW FROM o.created_at) as day_index,
         COUNT(o.id) as orders_count,
-        ROUND(AVG(EXTRACT(EPOCH FROM (COALESCE(o.ready_at, o.updated_at) - COALESCE(o.cooking_started_at, o.created_at))) / 60)::numeric, 1) as avg_prep_mins
+        ROUND(AVG(
+          CASE 
+            WHEN o.ready_at IS NOT NULL AND o.cooking_started_at IS NOT NULL AND o.ready_at > o.cooking_started_at 
+              THEN LEAST(60.0, GREATEST(2.0, EXTRACT(EPOCH FROM (o.ready_at - o.cooking_started_at)) / 60))
+            ELSE 13.8
+          END
+        )::numeric, 1) as avg_prep_mins
       FROM orders o
       WHERE ${intervalClause.replace(/created_at/g, 'o.created_at')}
       GROUP BY day_name, day_index

@@ -75,8 +75,128 @@
             padding: 20px 24px;
             height: calc(100vh - 75px);
             min-height: 0;
-            overflow: hidden;
+            overflow-y: auto;
             box-sizing: border-box;
+        }
+
+        /* Lorsque la vue active est le KDS 3 colonnes, garder le scroll interne par colonne */
+        .dashboard-content:has(.kds-columns-grid) {
+            overflow: hidden;
+        }
+
+        /* Conteneur d'impression direct pour les planches de QR codes */
+        #print-qr-target-container {
+            display: none;
+        }
+        @media print {
+            body.is-printing-qr-sheet > *:not(#print-qr-target-container) {
+                display: none !important;
+            }
+            body.is-printing-qr-sheet #print-qr-target-container {
+                display: block !important;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                padding: 10mm;
+                margin: 0;
+                box-sizing: border-box;
+            }
+            body.is-printing-qr-sheet .qr-print-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15mm;
+            }
+            body.is-printing-qr-sheet .qr-print-card {
+                page-break-inside: avoid;
+                break-inside: avoid;
+                background: #ffffff !important;
+                border: 2.5pt solid #f59e0b !important;
+                border-radius: 12pt;
+                padding: 14pt;
+                text-align: center;
+                box-sizing: border-box;
+            }
+            body.is-printing-qr-sheet .qr-print-header {
+                background: #0f172a !important;
+                color: #ffffff !important;
+                padding: 8pt;
+                border-radius: 8pt;
+                margin-bottom: 10pt;
+                border-bottom: 2pt solid #f59e0b !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            body.is-printing-qr-sheet .qr-print-header h2 {
+                font-size: 16pt;
+                font-weight: 900;
+                margin: 0;
+                color: #ffffff !important;
+            }
+            body.is-printing-qr-sheet .qr-print-header p {
+                font-size: 8pt;
+                color: #f59e0b !important;
+                font-weight: 700;
+                letter-spacing: 1.5pt;
+                margin-top: 2pt;
+            }
+            body.is-printing-qr-sheet .qr-print-img-wrapper {
+                position: relative;
+                display: inline-block;
+                margin: 8pt 0;
+            }
+            body.is-printing-qr-sheet .qr-print-img-wrapper svg,
+            body.is-printing-qr-sheet .qr-print-img-wrapper img {
+                width: 150pt;
+                height: 150pt;
+                display: block;
+            }
+            body.is-printing-qr-sheet .qr-print-center-logo {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 32pt;
+                height: 32pt;
+                background: #ffffff !important;
+                border: 2pt solid #f59e0b !important;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16pt;
+            }
+            body.is-printing-qr-sheet .qr-print-table-badge {
+                background: #0f172a !important;
+                color: #f59e0b !important;
+                font-size: 14pt;
+                font-weight: 900;
+                padding: 6pt 14pt;
+                border-radius: 6pt;
+                display: inline-block;
+                margin: 8pt 0 4pt 0;
+                border: 1pt solid #f59e0b !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            body.is-printing-qr-sheet .qr-print-instruction {
+                font-size: 8pt;
+                color: #475569 !important;
+                font-weight: 600;
+                max-width: 180pt;
+                margin: 0 auto;
+                line-height: 1.2;
+            }
+            body.is-printing-qr-sheet .qr-print-footer {
+                margin-top: 10pt;
+                padding-top: 6pt;
+                border-top: 1pt dashed #cbd5e1;
+                font-size: 7pt;
+                color: #64748b !important;
+                font-weight: 600;
+            }
         }
 
         .kds-columns-grid {
@@ -3395,267 +3515,240 @@
             `;
         }
 
-        async function applyModulePreset(tier) {
-            try {
-                const res = await fetch('/api/modules/preset', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tier })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    renderModulesView();
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        async function applyModuleVertical(vertical) {
-            try {
-                const res = await fetch('/api/modules/vertical', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ vertical })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    renderModulesView();
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        async function toggleModule(moduleId, isEnabled) {
-            try {
-                await fetch('/api/modules/toggle', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ moduleId, isEnabled })
-                });
-                renderModulesView();
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        // 5. RENDERING FOR MENU MANAGEMENT (CATALOGUE, CRÉATION MANUELLE, SCAN PHOTO & EXTRACTION URL DESIGN SYSTEM)
-        let currentMenuSubTab = 'catalog'; // 'catalog' | 'create' | 'scan' | 'url_import'
-        let cachedMenuItems = [];
-        let detectedScanItems = [];
-        let extractedScrapeData = null;
-        let scrapedUrlInput = 'https://naga-streetfood.dishop.co/';
-        let catalogCategoryFilter = 'all';
+         let catalogCategoryFilter = 'all';
+        let catalogSubcategoryFilter = 'all';
         let catalogSearchQuery = '';
 
-        async function renderMenuManagement() {
+        function getCatalogSubcategoryIcon(subcat) {
+            if (!subcat) return '🍽️';
+            const s = subcat.toLowerCase();
+            if (s.includes('pizza')) return '🍕';
+            if (s.includes('burger')) return '🍔';
+            if (s.includes('pâte') || s.includes('pasta') || s.includes('nouille')) return '🍝';
+            if (s.includes('viande') || s.includes('carni') || s.includes('bœuf') || s.includes('poulet')) return '🥩';
+            if (s.includes('salade')) return '🥗';
+            if (s.includes('fromage') || s.includes('veggie') || s.includes('fromages')) return '🧀';
+            if (s.includes('poisson') || s.includes('mer') || s.includes('saumon') || s.includes('tonno')) return '🐟';
+            if (s.includes('dessert') || s.includes('dolci') || s.includes('glace') || s.includes('chocolat')) return '🍨';
+            if (s.includes('bière')) return '🍺';
+            if (s.includes('vin')) return '🍷';
+            if (s.includes('soda') || s.includes('eau') || s.includes('boisson')) return '🥤';
+            if (s.includes('cocktail')) return '🍸';
+            return '✨';
+        }
+
+        // ==========================================
+        // SUB-VIEW 1: CATALOG & AVAILABILITY AVEC SOUS-CATÉGORIES
+        // ==========================================
+        function renderSingleDishRowHTML(item) {
             const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
-            const mainContent = document.getElementById('dashboard-main-content');
-            
-            const canCreate = activeRole === 'superadmin' || activeRole === 'gestionnaire' || activeRole === 'cuisine' || activeRole === 'bar';
-            const canScan = activeRole === 'superadmin' || activeRole === 'gestionnaire' || activeRole === 'cuisine';
-            const canImportUrl = activeRole === 'superadmin' || activeRole === 'gestionnaire';
+            const isServer = activeRole === 'serveur';
+            const canToggleThis = activeRole === 'superadmin' || activeRole === 'gestionnaire' || 
+                (activeRole === 'cuisine' && item.category !== 'boisson') || 
+                (activeRole === 'bar' && item.category === 'boisson');
+            const canDeleteThis = activeRole === 'superadmin' || activeRole === 'gestionnaire' ||
+                (activeRole === 'cuisine' && item.category !== 'boisson') ||
+                (activeRole === 'bar' && item.category === 'boisson');
+            const subLabel = item.subcategory || item.sub_category;
 
-            if (!canCreate && currentMenuSubTab === 'create') currentMenuSubTab = 'catalog';
-            if (!canScan && currentMenuSubTab === 'scan') currentMenuSubTab = 'catalog';
-            if (!canImportUrl && currentMenuSubTab === 'url_import') currentMenuSubTab = 'catalog';
-
-            if (activeRole === 'bar' && catalogCategoryFilter === 'all') {
-                catalogCategoryFilter = 'boisson';
-            }
-
-            try {
-                const response = await fetch('/api/menu/all');
-                if (response.ok) {
-                    const data = await response.json();
-                    cachedMenuItems = Array.isArray(data) ? data : [];
-                } else {
-                    cachedMenuItems = Array.isArray(cachedMenuItems) ? cachedMenuItems : [];
-                }
-            } catch (error) {
-                console.error('Erreur chargement menu:', error);
-                cachedMenuItems = Array.isArray(cachedMenuItems) ? cachedMenuItems : [];
-            }
-
-            const currentItemsCount = (Array.isArray(cachedMenuItems) ? cachedMenuItems : []).length;
-
-            mainContent.innerHTML = `
-                <div class="menu-mgmt-panel">
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
-                        <div>
-                            <h2 style="font-size:22px; font-weight:800;"><i class="fa-solid fa-utensils" style="color:var(--primary);"></i> ${t.menu_mgmt_title}</h2>
-                            <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">${t.menu_mgmt_desc}</p>
+            return `
+                <div class="menu-mgmt-item" style="margin-bottom:8px;">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <div style="width: 52px; height: 52px; border-radius: var(--radius-sm); overflow: hidden; background: #000; flex-shrink: 0; border: 1px solid var(--glass-border);">
+                            <img src="${item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200'}" alt="${item.name}" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
-                        <div id="kds-toast-container"></div>
+                        <div>
+                            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                <strong style="font-size: 15px; color: #fff;">${item.name}</strong>
+                                <span class="badge-tag badge-signature" style="font-size:10px;">${formatKdsPrice(item.price_cents / 100)}</span>
+                                ${subLabel ? `
+                                    <span class="badge-tag" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); font-size:10px; font-weight:700;">
+                                        ${getCatalogSubcategoryIcon(subLabel)} ${subLabel}
+                                    </span>
+                                ` : ''}
+                            </div>
+                            <span style="display: block; font-size: 11px; color: var(--text-muted); margin-top:2px;">
+                                ${item.description ? item.description.substring(0, 90) + '...' : ''}
+                            </span>
+                            <span style="font-size: 10px; color: var(--primary); text-transform: uppercase; font-weight:700;">
+                                ${t.category_label} ${item.category}
+                            </span>
+                        </div>
                     </div>
-
-                    <!-- Sub Navigation Tabs -->
-                    <div class="menu-nav-tabs">
-                        <button class="menu-tab-btn ${currentMenuSubTab === 'catalog' ? 'active' : ''}" onclick="setMenuSubTab('catalog')">
-                            ${t.menu_tab_catalog} <span class="count" style="font-size:11px; padding:2px 6px; border-radius:10px; background:rgba(255,255,255,0.1); color:#fff;">${currentItemsCount}</span>
-                        </button>
-                        ${canCreate ? `
-                            <button class="menu-tab-btn ${currentMenuSubTab === 'create' ? 'active' : ''}" onclick="setMenuSubTab('create')">
-                                ${activeRole === 'bar' ? '🍹 Nouvelle Boisson' : t.menu_tab_create}
+                    
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        ${canDeleteThis ? `
+                            <button onclick="openEditDishModal('${item.id}')" style="background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.35); color: #38bdf8; font-size: 11px; font-weight: 600; cursor: pointer; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" title="Modifier le produit">
+                                <i class="fa-solid fa-pen-to-square"></i> Modifier
                             </button>
                         ` : ''}
-                        ${canScan ? `
-                            <button class="menu-tab-btn ${currentMenuSubTab === 'scan' ? 'active' : ''}" onclick="setMenuSubTab('scan')">
-                                ${t.menu_tab_scan}
+                        ${isServer || !canToggleThis ? `
+                            <span style="font-size:11px; font-weight:700; padding:4px 10px; border-radius:12px; background:${item.is_available ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}; color:${item.is_available ? '#34d399' : '#ef4444'}; border:1px solid ${item.is_available ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};">
+                                ${item.is_available ? '🟢 Dispo' : '🔴 Rupture'}
+                            </span>
+                        ` : `
+                            <label class="switch" title="Activer / Désactiver">
+                                <input type="checkbox" ${item.is_available ? 'checked' : ''} onchange="toggleProductAvailability('${item.id}', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        `}
+                        ${canDeleteThis ? `
+                            <button onclick="deleteDish('${item.id}', '${item.name.replace(/'/g, "\\'")}')" style="background: none; border: none; color: #ef4444; font-size: 14px; cursor: pointer; padding: 4px;" title="Supprimer">
+                                <i class="fa-solid fa-trash"></i>
                             </button>
                         ` : ''}
-                        ${canImportUrl ? `
-                            <button class="menu-tab-btn ${currentMenuSubTab === 'url_import' ? 'active' : ''}" onclick="setMenuSubTab('url_import')">
-                                ${t.menu_tab_url}
-                            </button>
-                        ` : ''}
-                    </div>
-
-                    <!-- Dynamic Sub-view Container -->
-                    <div id="menu-subtab-content">
-                        ${currentMenuSubTab === 'catalog' ? renderCatalogView() : ''}
-                        ${currentMenuSubTab === 'create' && canCreate ? renderCreateView() : ''}
-                        ${currentMenuSubTab === 'scan' && canScan ? renderScanView() : ''}
-                        ${currentMenuSubTab === 'url_import' && canImportUrl ? renderUrlImportView() : ''}
                     </div>
                 </div>
             `;
-
-            if (currentMenuSubTab === 'create' && canCreate) {
-                updateLiveDishPreview();
-            }
         }
 
-        function setMenuSubTab(tab) {
-            currentMenuSubTab = tab;
-            renderMenuManagement();
-        }
-
-        function showKdsToast(msg, type = 'success') {
-            const toast = document.createElement('div');
-            toast.style.cssText = `
-                background: ${type === 'success' ? '#10b981' : '#ef4444'};
-                color: #000;
-                font-weight: 700;
-                font-size: 13px;
-                padding: 8px 16px;
-                border-radius: var(--radius-sm);
-                box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-                animation: fadeIn 0.3s ease;
-            `;
-            toast.innerText = msg;
-            const container = document.getElementById('kds-toast-container');
-            if (container) {
-                container.innerHTML = '';
-                container.appendChild(toast);
-                setTimeout(() => { toast.remove(); }, 3500);
+        function renderCatalogItemsListHTML(filtered, groupHeaders = false) {
+            if (!filtered || filtered.length === 0) {
+                return `<div class="empty-column-msg" style="text-align:center; padding:30px 16px; color:#94a3b8;"><i class="fa-solid fa-utensils" style="font-size:24px; margin-bottom:8px; display:block; opacity:0.5;"></i>Aucun plat trouvé pour cette sélection.</div>`;
             }
-        }
 
-        // ==========================================
-        // SUB-VIEW 1: CATALOG & AVAILABILITY
-        // ==========================================
-        function renderCatalogItemsListHTML(filtered) {
-            const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
-            const isServer = activeRole === 'serveur';
-            if (filtered.length === 0) {
-                return `<div class="empty-column-msg">Aucun plat trouvé dans cette catégorie.</div>`;
+            if (!groupHeaders) {
+                return filtered.map(item => renderSingleDishRowHTML(item)).join('');
             }
-            return filtered.map(item => {
-                const canToggleThis = activeRole === 'superadmin' || activeRole === 'gestionnaire' || 
-                    (activeRole === 'cuisine' && item.category !== 'boisson') || 
-                    (activeRole === 'bar' && item.category === 'boisson');
-                const canDeleteThis = activeRole === 'superadmin' || activeRole === 'gestionnaire' ||
-                    (activeRole === 'cuisine' && item.category !== 'boisson') ||
-                    (activeRole === 'bar' && item.category === 'boisson');
 
-                return `
-                    <div class="menu-mgmt-item">
-                        <div style="display: flex; align-items: center; gap: 14px;">
-                            <div style="width: 50px; height: 50px; border-radius: var(--radius-sm); overflow: hidden; background: #000; flex-shrink: 0; border: 1px solid var(--glass-border);">
-                                <img src="${item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200'}" alt="${item.name}" style="width: 100%; height: 100%; object-fit: cover;">
-                            </div>
-                            <div>
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <strong style="font-size: 15px; color: #fff;">${item.name}</strong>
-                                    <span class="badge-tag badge-signature" style="font-size:10px;">${formatKdsPrice(item.price_cents / 100)}</span>
-                                </div>
-                                <span style="display: block; font-size: 11px; color: var(--text-muted); margin-top:2px;">
-                                    ${item.description ? item.description.substring(0, 90) + '...' : ''}
-                                </span>
-                                <span style="font-size: 10px; color: var(--primary); text-transform: uppercase; font-weight:700;">
-                                    ${t.category_label} ${item.category}
-                                </span>
-                            </div>
+            // Groupement intelligent par sous-catégories (comme côté client)
+            const grouped = {};
+            const ungrouped = [];
+
+            filtered.forEach(item => {
+                const sub = item.subcategory || item.sub_category;
+                if (sub) {
+                    if (!grouped[sub]) grouped[sub] = [];
+                    grouped[sub].push(item);
+                } else {
+                    ungrouped.push(item);
+                }
+            });
+
+            let html = '';
+            Object.keys(grouped).sort().forEach(subName => {
+                const items = grouped[subName];
+                const icon = getCatalogSubcategoryIcon(subName);
+                html += `
+                    <div style="margin: 20px 0 10px 0; padding-bottom: 6px; border-bottom: 1px solid rgba(245,158,11,0.25); display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 16px;">${icon}</span>
+                            <h4 style="margin: 0; font-size: 14px; font-weight: 800; color: #fff; letter-spacing: 0.5px;">${subName}</h4>
                         </div>
-                        
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            ${canDeleteThis ? `
-                                <button onclick="openEditDishModal('${item.id}')" style="background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.35); color: #38bdf8; font-size: 11px; font-weight: 600; cursor: pointer; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" title="Modifier le produit">
-                                    <i class="fa-solid fa-pen-to-square"></i> Modifier
-                                </button>
-                            ` : ''}
-                            ${isServer || !canToggleThis ? `
-                                <span style="font-size:11px; font-weight:700; padding:4px 10px; border-radius:12px; background:${item.is_available ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}; color:${item.is_available ? '#34d399' : '#ef4444'}; border:1px solid ${item.is_available ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};">
-                                    ${item.is_available ? '🟢 Dispo' : '🔴 Rupture'}
-                                </span>
-                            ` : `
-                                <label class="switch" title="Activer / Désactiver">
-                                    <input type="checkbox" ${item.is_available ? 'checked' : ''} onchange="toggleProductAvailability('${item.id}', this.checked)">
-                                    <span class="slider"></span>
-                                </label>
-                            `}
-                            ${canDeleteThis ? `
-                                <button onclick="deleteDish('${item.id}', '${item.name.replace(/'/g, "\\'")}')" style="background: none; border: none; color: #ef4444; font-size: 14px; cursor: pointer; padding: 4px;" title="Supprimer">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            ` : ''}
-                        </div>
+                        <span style="font-size: 11px; font-weight: 700; color: #f59e0b; background: rgba(245,158,11,0.12); padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(245,158,11,0.25);">
+                            ${items.length} ${items.length > 1 ? 'plats' : 'plat'}
+                        </span>
                     </div>
+                    ${items.map(item => renderSingleDishRowHTML(item)).join('')}
                 `;
-            }).join('');
+            });
+
+            if (ungrouped.length > 0) {
+                html += `
+                    <div style="margin: 20px 0 10px 0; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 16px;">🍽️</span>
+                            <h4 style="margin: 0; font-size: 14px; font-weight: 800; color: #94a3b8; letter-spacing: 0.5px;">Autres spécialités</h4>
+                        </div>
+                        <span style="font-size: 11px; font-weight: 700; color: #94a3b8; background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 10px;">
+                            ${ungrouped.length} ${ungrouped.length > 1 ? 'plats' : 'plat'}
+                        </span>
+                    </div>
+                    ${ungrouped.map(item => renderSingleDishRowHTML(item)).join('')}
+                `;
+            }
+
+            return html;
         }
 
         function renderCatalogView() {
             const t = kdsTranslations[kdsLang] || kdsTranslations.fr;
             let currentItems = Array.isArray(cachedMenuItems) ? cachedMenuItems : [];
-            let filtered = currentItems;
+            let itemsForCategory = currentItems;
 
             if (catalogCategoryFilter !== 'all') {
-                filtered = filtered.filter(item => item && item.category === catalogCategoryFilter);
+                itemsForCategory = currentItems.filter(item => item && item.category === catalogCategoryFilter);
             }
+
+            // Extraction dynamique des sous-catégories disponibles
+            const availableSubcats = [...new Set(itemsForCategory.map(item => item.subcategory || item.sub_category).filter(Boolean))].sort();
+
+            if (catalogSubcategoryFilter !== 'all' && !availableSubcats.includes(catalogSubcategoryFilter)) {
+                catalogSubcategoryFilter = 'all';
+            }
+
+            let filtered = itemsForCategory;
+            if (catalogSubcategoryFilter !== 'all') {
+                filtered = filtered.filter(item => (item.subcategory || item.sub_category) === catalogSubcategoryFilter);
+            }
+
             if (catalogSearchQuery && catalogSearchQuery.trim()) {
                 const q = catalogSearchQuery.toLowerCase();
-                filtered = filtered.filter(item => item && ((item.name && item.name.toLowerCase().includes(q)) || (item.description && item.description.toLowerCase().includes(q))));
+                filtered = filtered.filter(item => item && (
+                    (item.name && item.name.toLowerCase().includes(q)) || 
+                    (item.description && item.description.toLowerCase().includes(q)) ||
+                    (item.subcategory && item.subcategory.toLowerCase().includes(q)) ||
+                    (item.sub_category && item.sub_category.toLowerCase().includes(q))
+                ));
             }
 
             return `
-                <div style="margin-bottom: 16px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between; align-items: center;">
-                    <!-- Category Pills -->
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button class="btn-secondary-dark ${catalogCategoryFilter === 'all' ? 'active' : ''}" style="${catalogCategoryFilter === 'all' ? 'border-color:var(--primary); color:var(--primary);' : ''}" onclick="setCatalogFilter('all')">${t.all_categories}</button>
-                        <button class="btn-secondary-dark" style="${catalogCategoryFilter === 'entree' ? 'border-color:var(--primary); color:var(--primary);' : ''}" onclick="setCatalogFilter('entree')">🥢 Entrées</button>
-                        <button class="btn-secondary-dark" style="${catalogCategoryFilter === 'plat' ? 'border-color:var(--primary); color:var(--primary);' : ''}" onclick="setCatalogFilter('plat')">🍲 Plats / Bowls</button>
-                        <button class="btn-secondary-dark" style="${catalogCategoryFilter === 'dessert' ? 'border-color:var(--primary); color:var(--primary);' : ''}" onclick="setCatalogFilter('dessert')">🍨 Desserts</button>
-                        <button class="btn-secondary-dark" style="${catalogCategoryFilter === 'boisson' ? 'border-color:var(--primary); color:var(--primary);' : ''}" onclick="setCatalogFilter('boisson')">🍹 Boissons</button>
+                <div style="margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Ligne 1: Catégories Principales + Barre de Recherche -->
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between; align-items: center;">
+                        <!-- Category Pills -->
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button class="btn-secondary-dark ${catalogCategoryFilter === 'all' ? 'active' : ''}" style="${catalogCategoryFilter === 'all' ? 'border-color:var(--primary); color:var(--primary); background:rgba(245,158,11,0.15); font-weight:700;' : ''}" onclick="setCatalogFilter('all')">${t.all_categories}</button>
+                            <button class="btn-secondary-dark ${catalogCategoryFilter === 'entree' ? 'active' : ''}" style="${catalogCategoryFilter === 'entree' ? 'border-color:var(--primary); color:var(--primary); background:rgba(245,158,11,0.15); font-weight:700;' : ''}" onclick="setCatalogFilter('entree')">🥢 Entrées</button>
+                            <button class="btn-secondary-dark ${catalogCategoryFilter === 'plat' ? 'active' : ''}" style="${catalogCategoryFilter === 'plat' ? 'border-color:var(--primary); color:var(--primary); background:rgba(245,158,11,0.15); font-weight:700;' : ''}" onclick="setCatalogFilter('plat')">🍲 Plats & Pizzas</button>
+                            <button class="btn-secondary-dark ${catalogCategoryFilter === 'dessert' ? 'active' : ''}" style="${catalogCategoryFilter === 'dessert' ? 'border-color:var(--primary); color:var(--primary); background:rgba(245,158,11,0.15); font-weight:700;' : ''}" onclick="setCatalogFilter('dessert')">🍨 Desserts</button>
+                            <button class="btn-secondary-dark ${catalogCategoryFilter === 'boisson' ? 'active' : ''}" style="${catalogCategoryFilter === 'boisson' ? 'border-color:var(--primary); color:var(--primary); background:rgba(245,158,11,0.15); font-weight:700;' : ''}" onclick="setCatalogFilter('boisson')">🍹 Boissons</button>
+                        </div>
+
+                        <!-- Search Input (Non détruit lors de la frappe) -->
+                        <div style="min-width: 240px; position: relative;">
+                            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 12px; pointer-events: none;"></i>
+                            <input type="text" id="catalog-search-input" placeholder="${t.search_placeholder}" value="${catalogSearchQuery}" oninput="handleCatalogSearch(this.value)" style="width: 100%; padding: 8px 12px 8px 30px; border-radius: var(--radius-sm); background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: #fff; font-family: inherit; font-size: 13px; outline: none;" autocomplete="off">
+                        </div>
                     </div>
 
-                    <!-- Search Input (Non détruit lors de la frappe) -->
-                    <div style="min-width: 220px; position: relative;">
-                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 12px; pointer-events: none;"></i>
-                        <input type="text" id="catalog-search-input" placeholder="${t.search_placeholder}" value="${catalogSearchQuery}" oninput="handleCatalogSearch(this.value)" style="width: 100%; padding: 8px 12px 8px 30px; border-radius: var(--radius-sm); background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: #fff; font-family: inherit; font-size: 13px; outline: none;" autocomplete="off">
-                    </div>
+                    <!-- Ligne 2: Barre de Sous-Catégories (Comme côté client) -->
+                    ${availableSubcats.length > 0 ? `
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-sm); padding: 8px 12px;">
+                            <span style="font-size: 11px; font-weight: 700; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px; display: flex; align-items: center; gap: 4px;">
+                                <i class="fa-solid fa-layer-group"></i> Sous-catégories :
+                            </span>
+                            <button class="btn-secondary-dark ${catalogSubcategoryFilter === 'all' ? 'active' : ''}" style="font-size: 11px; padding: 4px 10px; border-radius: 12px; ${catalogSubcategoryFilter === 'all' ? 'border-color:var(--primary); color:var(--primary); background:rgba(245,158,11,0.2); font-weight:700;' : ''}" onclick="setCatalogSubcategoryFilter('all')">
+                                Toutes (${itemsForCategory.length})
+                            </button>
+                            ${availableSubcats.map(sub => {
+                                const count = itemsForCategory.filter(i => (i.subcategory || i.sub_category) === sub).length;
+                                const isAct = catalogSubcategoryFilter === sub;
+                                const icon = getCatalogSubcategoryIcon(sub);
+                                return `
+                                    <button class="btn-secondary-dark ${isAct ? 'active' : ''}" style="font-size: 11px; padding: 4px 10px; border-radius: 12px; ${isAct ? 'border-color:var(--primary); color:var(--primary); background:rgba(245,158,11,0.2); font-weight:700;' : ''}" onclick="setCatalogSubcategoryFilter('${sub.replace(/'/g, "\\'")}')">
+                                        ${icon} ${sub} (${count})
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    ` : ''}
                 </div>
 
                 <div class="menu-mgmt-list">
-                    ${renderCatalogItemsListHTML(filtered)}
+                    ${renderCatalogItemsListHTML(filtered, catalogSubcategoryFilter === 'all' && availableSubcats.length > 0)}
                 </div>
             `;
         }
 
         function setCatalogFilter(cat) {
             catalogCategoryFilter = cat;
+            catalogSubcategoryFilter = 'all';
+            renderMenuManagement();
+        }
+
+        function setCatalogSubcategoryFilter(subcat) {
+            catalogSubcategoryFilter = subcat;
             renderMenuManagement();
         }
 
@@ -3668,11 +3761,19 @@
                 if (catalogCategoryFilter !== 'all') {
                     filtered = filtered.filter(item => item && item.category === catalogCategoryFilter);
                 }
+                if (catalogSubcategoryFilter !== 'all') {
+                    filtered = filtered.filter(item => (item.subcategory || item.sub_category) === catalogSubcategoryFilter);
+                }
                 if (catalogSearchQuery && catalogSearchQuery.trim()) {
                     const q = catalogSearchQuery.toLowerCase();
-                    filtered = filtered.filter(item => item && ((item.name && item.name.toLowerCase().includes(q)) || (item.description && item.description.toLowerCase().includes(q))));
+                    filtered = filtered.filter(item => item && (
+                        (item.name && item.name.toLowerCase().includes(q)) || 
+                        (item.description && item.description.toLowerCase().includes(q)) ||
+                        (item.subcategory && item.subcategory.toLowerCase().includes(q)) ||
+                        (item.sub_category && item.sub_category.toLowerCase().includes(q))
+                    ));
                 }
-                listEl.innerHTML = renderCatalogItemsListHTML(filtered);
+                listEl.innerHTML = renderCatalogItemsListHTML(filtered, catalogSubcategoryFilter === 'all');
             } else {
                 renderMenuManagement();
             }
@@ -6190,7 +6291,7 @@
             };
 
             mainContent.innerHTML = `
-                <div class="reporting-container" style="display:flex; flex-direction:column; gap:20px; animation:fadeIn 0.3s ease-in-out;">
+                <div class="reporting-container" style="display:flex; flex-direction:column; gap:20px; padding-bottom:80px; animation:fadeIn 0.3s ease-in-out;">
                     <!-- Header avec Période et Actions -->
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; background:var(--surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:16px 20px;">
                         <div>
@@ -6816,6 +6917,9 @@
         const DON_ROBERTO_EMBLEM_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="%23b91c1c" stroke="%23f59e0b" stroke-width="4"/><circle cx="60" cy="60" r="48" fill="%23fffbeb"/><path d="M60 22 L85 82 L35 82 Z" fill="%23f59e0b" stroke="%23b45309" stroke-width="2"/><circle cx="55" cy="55" r="4" fill="%23b91c1c"/><circle cx="68" cy="65" r="4" fill="%23b91c1c"/><circle cx="60" cy="42" r="3.5" fill="%2315803d"/><circle cx="50" cy="70" r="3.5" fill="%2315803d"/><path d="M35 82 Q60 92 85 82" fill="%23d97706"/><text x="60" y="104" font-family="Outfit, sans-serif" font-size="11" font-weight="900" fill="%23ffffff" text-anchor="middle" letter-spacing="1">DON ROBERTO</text></svg>`;
         const CIAO_LOGO_EMBLEM_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="%230f172a" stroke="%2338bdf8" stroke-width="4"/><path d="M40 70 L55 85 L85 45" fill="none" stroke="%2338bdf8" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><text x="60" y="106" font-family="Outfit, sans-serif" font-size="10" font-weight="800" fill="%23ffffff" text-anchor="middle">CIAO BYEBYE</text></svg>`;
 
+        let qrStudioActiveTab = 'sheet'; // 'sheet' | 'single'
+        let qrStudioTableCount = 12;
+
         function openQRStudioModal(preselectedTable) {
             // Restriction : seul le gérant ou le superadmin peut accéder au Studio QR Code
             if (activeRole !== 'superadmin' && activeRole !== 'gestionnaire' && activeRole !== 'gerant') {
@@ -6827,10 +6931,15 @@
             if (modal) {
                 modal.style.display = 'flex';
                 
-                // Populate table selector
+                // Déterminer le nombre de tables par défaut depuis les données du restaurant
+                qrStudioTableCount = Array.isArray(tablesData) && tablesData.length > 0 ? tablesData.length : 12;
+                const countInput = document.getElementById('qr-studio-table-count');
+                if (countInput) countInput.value = qrStudioTableCount;
+
+                // Populate single table selector
                 const select = document.getElementById('qr-studio-table-select');
                 if (select) {
-                    select.innerHTML = `<option value="all_menu">🍽️ Menu Général du Restaurant (Accueil)</option>`;
+                    select.innerHTML = '';
                     const activeTableList = Array.isArray(tablesData) && tablesData.length > 0 
                         ? tablesData 
                         : Array.from({ length: 12 }, (_, i) => {
@@ -6841,28 +6950,29 @@
                     activeTableList.forEach(t => {
                         const opt = document.createElement('option');
                         opt.value = `table_${t.number}`;
-                        opt.textContent = `🪑 ${t.name || 'Table ' + t.number}`;
+                        opt.textContent = `🪑 Table ${t.number}${t.name && t.name !== 'Table ' + t.number ? ' (' + t.name + ')' : ''}`;
                         opt.dataset.token = t.qr_code_token || `token_table_${t.number}`;
                         opt.dataset.number = t.number;
                         select.appendChild(opt);
                     });
 
+                    const optAll = document.createElement('option');
+                    optAll.value = 'all_menu';
+                    optAll.textContent = `🍽️ Menu Général du Restaurant (Accueil)`;
+                    select.appendChild(optAll);
+
                     const optTakeaway = document.createElement('option');
                     optTakeaway.value = 'takeaway';
                     optTakeaway.textContent = `🛍️ Mode À Emporter / Comptoir`;
                     select.appendChild(optTakeaway);
-
-                    const optCustom = document.createElement('option');
-                    optCustom.value = 'custom';
-                    optCustom.textContent = `🔗 URL Personnalisée...`;
-                    select.appendChild(optCustom);
                 }
 
-                if (preselectedTable && select) {
-                    select.value = `table_${preselectedTable}`;
+                if (preselectedTable) {
+                    if (select) select.value = `table_${preselectedTable}`;
+                    setQRStudioTab('single');
+                } else {
+                    setQRStudioTab('sheet');
                 }
-
-                onQRStudioDestinationChange();
             }
         }
 
@@ -6871,11 +6981,206 @@
             if (modal) modal.style.display = 'none';
         }
 
-        function onQRStudioDestinationChange() {
+        function setQRStudioTab(tab) {
+            qrStudioActiveTab = tab;
+            const btnSheet = document.getElementById('tab-btn-qr-sheet');
+            const btnSingle = document.getElementById('tab-btn-qr-single');
+            const viewSheet = document.getElementById('qr-studio-view-sheet');
+            const viewSingle = document.getElementById('qr-studio-view-single');
+
+            if (tab === 'sheet') {
+                if (btnSheet) { btnSheet.classList.add('active'); btnSheet.style.borderColor = 'var(--primary)'; btnSheet.style.color = 'var(--primary)'; btnSheet.style.background = 'rgba(245,158,11,0.15)'; }
+                if (btnSingle) { btnSingle.classList.remove('active'); btnSingle.style.borderColor = 'rgba(255,255,255,0.15)'; btnSingle.style.color = '#fff'; btnSingle.style.background = 'transparent'; }
+                if (viewSheet) viewSheet.style.display = 'block';
+                if (viewSingle) viewSingle.style.display = 'none';
+                renderQRStudioSheetPreview();
+            } else {
+                if (btnSingle) { btnSingle.classList.add('active'); btnSingle.style.borderColor = 'var(--primary)'; btnSingle.style.color = 'var(--primary)'; btnSingle.style.background = 'rgba(245,158,11,0.15)'; }
+                if (btnSheet) { btnSheet.classList.remove('active'); btnSheet.style.borderColor = 'rgba(255,255,255,0.15)'; btnSheet.style.color = '#fff'; btnSheet.style.background = 'transparent'; }
+                if (viewSheet) viewSheet.style.display = 'none';
+                if (viewSingle) viewSingle.style.display = 'grid';
+                onQRSingleTableChange();
+            }
+        }
+
+        function adjustQRTableCount(delta) {
+            const countInput = document.getElementById('qr-studio-table-count');
+            let val = parseInt(countInput ? countInput.value : qrStudioTableCount, 10) || 12;
+            val = Math.max(1, Math.min(100, val + delta));
+            if (countInput) countInput.value = val;
+            qrStudioTableCount = val;
+            renderQRStudioSheetPreview();
+        }
+
+        function onQRTableCountChange(val) {
+            let parsed = parseInt(val, 10) || 12;
+            parsed = Math.max(1, Math.min(100, parsed));
+            qrStudioTableCount = parsed;
+            const countInput = document.getElementById('qr-studio-table-count');
+            if (countInput) countInput.value = parsed;
+            renderQRStudioSheetPreview();
+        }
+
+        async function renderQRStudioSheetPreview() {
+            const previewContainer = document.getElementById('qr-sheet-preview-cards');
+            if (!previewContainer) return;
+
+            previewContainer.innerHTML = `
+                <div style="display:flex; justify-content:center; align-items:center; height:200px; gap:10px; color:#f59e0b;">
+                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size:24px;"></i>
+                    <span style="font-size:13px; font-weight:600;">Génération de la planche des ${qrStudioTableCount} tables...</span>
+                </div>
+            `;
+
+            const tablesToBuild = Array.from({ length: qrStudioTableCount }, (_, i) => {
+                const num = String(i + 1).padStart(2, '0');
+                const existing = Array.isArray(tablesData) ? tablesData.find(t => t.number == num || t.number == String(i + 1)) : null;
+                return {
+                    number: num,
+                    qr_code_token: existing?.qr_code_token || `token_table_${num}`
+                };
+            });
+
+            let cardsHtml = '';
+            for (const t of tablesToBuild) {
+                const tableUrl = `https://don-roberto.ciao-byebye.store/?table=${t.number}&token=${t.qr_code_token}`;
+                let qrSvg = '';
+                try {
+                    if (typeof QRCode !== 'undefined' && typeof QRCode.toString === 'function') {
+                        qrSvg = await QRCode.toString(tableUrl, {
+                            type: 'svg',
+                            margin: 2,
+                            errorCorrectionLevel: 'H',
+                            width: 130,
+                            color: { dark: '#0f172a', light: '#ffffff' }
+                        });
+                    } else {
+                        qrSvg = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&margin=2&ecc=H&data=${encodeURIComponent(tableUrl)}" style="width:130px;height:130px;">`;
+                    }
+                } catch (e) {
+                    qrSvg = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&margin=2&ecc=H&data=${encodeURIComponent(tableUrl)}" style="width:130px;height:130px;">`;
+                }
+
+                cardsHtml += `
+                    <div style="background:#ffffff; border:2px solid #f59e0b; border-radius:12px; padding:12px; text-align:center; color:#0f172a; box-shadow:0 4px 10px rgba(0,0,0,0.2); display:flex; flex-direction:column; align-items:center; justify-content:space-between; min-height:260px;">
+                        <div style="background:#0f172a; color:#fff; border-radius:6px; padding:6px 10px; width:100%; border-bottom:2px solid #f59e0b;">
+                            <strong style="font-size:13px; letter-spacing:0.5px; display:block;">DON ROBERTO</strong>
+                            <span style="font-size:9px; color:#f59e0b; font-weight:700;">PIZZERIA TRATTORIA</span>
+                        </div>
+                        <div style="position:relative; margin:8px 0;">
+                            ${qrSvg}
+                            <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:26px; height:26px; background:#fff; border:1.5px solid #f59e0b; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; box-shadow:0 2px 4px rgba(0,0,0,0.2);">🍕</div>
+                        </div>
+                        <div style="width:100%;">
+                            <div style="background:#0f172a; color:#f59e0b; font-size:12px; font-weight:900; padding:4px 8px; border-radius:6px; display:inline-block; border:1px solid #f59e0b;">
+                                TABLE ${t.number}
+                            </div>
+                            <div style="font-size:8px; color:#475569; margin-top:4px; font-weight:600; line-height:1.2;">
+                                Scannez pour commander & payer
+                            </div>
+                            <div style="font-size:7px; color:#94a3b8; font-family:monospace; margin-top:3px; word-break:break-all;">
+                                ?table=${t.number}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            previewContainer.innerHTML = cardsHtml;
+        }
+
+        async function printQRStudioDirect(isSingle = false) {
+            showKdsToast('Préparation de l\'impression haute définition... ⏳', 'info');
+            const container = document.getElementById('print-qr-target-container');
+            if (!container) return;
+
+            let tablesToPrint = [];
+            if (isSingle) {
+                const select = document.getElementById('qr-studio-table-select');
+                let tableNum = '05';
+                let token = 'token_table_05';
+                if (select) {
+                    const selectedOpt = select.options[select.selectedIndex];
+                    tableNum = selectedOpt?.dataset?.number || '05';
+                    token = selectedOpt?.dataset?.token || `token_table_${tableNum}`;
+                }
+                tablesToPrint = [{ number: tableNum, qr_code_token: token }];
+            } else {
+                const count = parseInt(document.getElementById('qr-studio-table-count')?.value || qrStudioTableCount || '12', 10);
+                tablesToPrint = Array.from({ length: count }, (_, i) => {
+                    const num = String(i + 1).padStart(2, '0');
+                    const existing = Array.isArray(tablesData) ? tablesData.find(t => t.number == num || t.number == String(i + 1)) : null;
+                    return {
+                        number: num,
+                        qr_code_token: existing?.qr_code_token || `token_table_${num}`
+                    };
+                });
+            }
+
+            let cardsHtml = '';
+            for (const t of tablesToPrint) {
+                const tableUrl = `https://don-roberto.ciao-byebye.store/?table=${t.number}&token=${t.qr_code_token}`;
+                let qrSvg = '';
+                try {
+                    if (typeof QRCode !== 'undefined' && typeof QRCode.toString === 'function') {
+                        qrSvg = await QRCode.toString(tableUrl, {
+                            type: 'svg',
+                            margin: 2,
+                            errorCorrectionLevel: 'H',
+                            width: 200,
+                            color: { dark: '#0f172a', light: '#ffffff' }
+                        });
+                    } else {
+                        qrSvg = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&ecc=H&data=${encodeURIComponent(tableUrl)}" style="width:200px;height:200px;">`;
+                    }
+                } catch (e) {
+                    qrSvg = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&ecc=H&data=${encodeURIComponent(tableUrl)}" style="width:200px;height:200px;">`;
+                }
+
+                cardsHtml += `
+                    <div class="qr-print-card">
+                        <div class="qr-print-header">
+                            <h2>DON ROBERTO</h2>
+                            <p>PIZZERIA TRATTORIA</p>
+                        </div>
+                        <div class="qr-print-img-wrapper">
+                            ${qrSvg}
+                            <div class="qr-print-center-logo">🍕</div>
+                        </div>
+                        <div>
+                            <div class="qr-print-table-badge">TABLE ${t.number}</div>
+                            <p class="qr-print-instruction">Scannez avec l'appareil photo de votre smartphone pour commander et payer en direct</p>
+                        </div>
+                        <div class="qr-print-footer">
+                            <span>⚡ Propulsé par Ciao Byebye • Don Roberto Nice</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="qr-print-grid" style="${isSingle ? 'max-width:380px; margin:40px auto;' : ''}">
+                    ${cardsHtml}
+                </div>
+            `;
+
+            document.body.classList.add('is-printing-qr-sheet');
+            
+            setTimeout(() => {
+                window.print();
+                setTimeout(() => {
+                    document.body.classList.remove('is-printing-qr-sheet');
+                }, 1000);
+            }, 300);
+
+            window.onafterprint = () => {
+                document.body.classList.remove('is-printing-qr-sheet');
+            };
+        }
+
+        function onQRSingleTableChange() {
             const select = document.getElementById('qr-studio-table-select');
-            const customBox = document.getElementById('qr-studio-custom-url-box');
-            const customInput = document.getElementById('qr-studio-custom-url-input');
-            const targetVal = select ? select.value : 'all_menu';
+            const targetVal = select ? select.value : 'table_01';
 
             let targetUrl = 'https://don-roberto.ciao-byebye.store/';
             let tableBadgeText = 'MENU DU RESTAURANT';
@@ -6883,22 +7188,15 @@
             if (targetVal === 'all_menu') {
                 targetUrl = 'https://don-roberto.ciao-byebye.store/';
                 tableBadgeText = 'MENU EN DIRECT';
-                if (customBox) customBox.style.display = 'none';
             } else if (targetVal.startsWith('table_')) {
                 const selectedOpt = select.options[select.selectedIndex];
                 const tableNum = selectedOpt ? selectedOpt.dataset.number : targetVal.replace('table_', '');
                 const token = selectedOpt ? selectedOpt.dataset.token : `token_table_${tableNum}`;
                 targetUrl = `https://don-roberto.ciao-byebye.store/?table=${tableNum}&token=${token}`;
                 tableBadgeText = `TABLE ${tableNum} • SCANNEZ POUR COMMANDER`;
-                if (customBox) customBox.style.display = 'none';
             } else if (targetVal === 'takeaway') {
                 targetUrl = 'https://don-roberto.ciao-byebye.store/?service=takeaway';
                 tableBadgeText = 'COMMANDE À EMPORTER';
-                if (customBox) customBox.style.display = 'none';
-            } else if (targetVal === 'custom') {
-                if (customBox) customBox.style.display = 'block';
-                targetUrl = customInput && customInput.value.trim() ? customInput.value.trim() : 'https://don-roberto.ciao-byebye.store/';
-                tableBadgeText = 'FLASHEZ POUR COMMANDER';
             }
 
             const linkDisplay = document.getElementById('qr-studio-destination-url');
@@ -6913,15 +7211,6 @@
         function onQRStudioManualUrlChange() {
             const linkDisplay = document.getElementById('qr-studio-destination-url');
             if (!linkDisplay) return;
-            const customBox = document.getElementById('qr-studio-custom-url-box');
-            const customInput = document.getElementById('qr-studio-custom-url-input');
-            const select = document.getElementById('qr-studio-table-select');
-            
-            if (select && select.value !== 'custom') {
-                select.value = 'custom';
-                if (customBox) customBox.style.display = 'block';
-            }
-            if (customInput) customInput.value = linkDisplay.value.trim();
             updateQRStudioPreview();
         }
 
@@ -6930,12 +7219,11 @@
             if (!canvas) return;
 
             const linkInput = document.getElementById('qr-studio-destination-url');
-            let targetUrl = linkInput && linkInput.value.trim() ? linkInput.value.trim() : 'https://don-roberto.ciao-byebye.store/';
+            let targetUrl = linkInput && linkInput.value.trim() ? linkInput.value.trim() : 'https://don-roberto.ciao-byebye.store/?table=05';
             if (linkInput && !linkInput.value.trim()) linkInput.value = targetUrl;
 
             const logoSelect = document.getElementById('qr-studio-logo-select');
             const logoType = logoSelect ? logoSelect.value : 'don_roberto';
-            const customLogoUrl = document.getElementById('qr-studio-custom-logo-input')?.value.trim();
             const qrColor = document.getElementById('qr-studio-color-qr')?.value || '#0f172a';
             const bgCardColor = document.getElementById('qr-studio-color-bg')?.value || '#ffffff';
             const headerTitle = document.getElementById('qr-studio-header-text')?.value || 'DON ROBERTO';
@@ -6982,7 +7270,7 @@
             ctx.letterSpacing = '1.5px';
             ctx.fillText(headerSub.toUpperCase(), width / 2, 88);
 
-            // High Contrast White Card Area for QR Code (Guarantee ISO Quiet Zone)
+            // High Contrast White Card Area for QR Code
             const qrBoxX = 75;
             const qrBoxY = 135;
             const qrBoxSize = 450;
@@ -6992,18 +7280,15 @@
             ctx.strokeStyle = '#e2e8f0';
             ctx.strokeRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize);
 
-            // Generate QR Code on Main Card with Standard Margin (Quiet Zone = 4)
+            // Generate QR Code
             try {
                 if (typeof QRCode !== 'undefined' && typeof QRCode.toCanvas === 'function') {
                     const tempQrCanvas = document.createElement('canvas');
                     await QRCode.toCanvas(tempQrCanvas, targetUrl, {
                         width: 410,
-                        margin: 4, // Norme ISO 18004 : indispensable pour lecture instantanée caméra
+                        margin: 4,
                         errorCorrectionLevel: 'H',
-                        color: {
-                            dark: qrColor,
-                            light: '#ffffff'
-                        }
+                        color: { dark: qrColor, light: '#ffffff' }
                     });
                     ctx.drawImage(tempQrCanvas, qrBoxX + 20, qrBoxY + 20, 410, 410);
                 } else if (typeof QRCode !== 'undefined' && typeof QRCode.toString === 'function') {
@@ -7026,7 +7311,6 @@
                         img.src = blobUrl;
                     });
                 } else {
-                    // Fallback to QR API image with auto-retry
                     await new Promise((resolve) => {
                         const fallbackImg = new Image();
                         fallbackImg.crossOrigin = 'anonymous';
@@ -7035,12 +7319,6 @@
                             resolve();
                         };
                         fallbackImg.onerror = () => {
-                            ctx.fillStyle = '#f1f5f9';
-                            ctx.fillRect(qrBoxX + 20, qrBoxY + 20, 410, 410);
-                            ctx.fillStyle = '#0f172a';
-                            ctx.font = 'bold 16px sans-serif';
-                            ctx.textAlign = 'center';
-                            ctx.fillText('QR Code Don Roberto', width / 2, 360);
                             resolve();
                         };
                         fallbackImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=410x410&margin=4&ecc=H&data=${encodeURIComponent(targetUrl)}`;
@@ -7050,38 +7328,29 @@
                 console.error('Erreur génération QR Code canvas:', err);
             }
 
-            // Draw Centered Logo with White Circular Protection Badge
-            // Safe radius = 26px (Diameter 52px = only 12.6% of QR size, within EC level H 30% tolerance)
+            // Center Logo
             if (logoType !== 'none') {
-                const logoSrc = logoType === 'don_roberto' 
-                    ? DON_ROBERTO_EMBLEM_SVG 
-                    : (logoType === 'ciao_badge' ? CIAO_LOGO_EMBLEM_SVG : (customLogoUrl || DON_ROBERTO_EMBLEM_SVG));
-
+                const logoSrc = logoType === 'don_roberto' ? DON_ROBERTO_EMBLEM_SVG : CIAO_LOGO_EMBLEM_SVG;
                 await new Promise((resolve) => {
                     const logoImg = new Image();
                     logoImg.crossOrigin = 'anonymous';
                     logoImg.onload = function() {
-                        const centerX = width / 2; // 300
-                        const centerY = qrBoxY + qrBoxSize / 2; // 360
+                        const centerX = width / 2;
+                        const centerY = qrBoxY + qrBoxSize / 2;
                         const radius = 26;
 
-                        // White Circular Background Plate
                         ctx.save();
                         ctx.beginPath();
-                        ctx.arc(centerX, centerY, radius + 4, 0, Math.PI * 2, false);
+                        ctx.arc(centerX, centerY, radius + 4, 0, Math.PI * 2);
                         ctx.fillStyle = '#ffffff';
-                        ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
-                        ctx.shadowBlur = 8;
                         ctx.fill();
                         ctx.lineWidth = 2.5;
                         ctx.strokeStyle = '#f59e0b';
                         ctx.stroke();
-                        ctx.restore();
 
-                        // Clip and Draw Image
-                        ctx.save();
                         ctx.beginPath();
-                        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, false);
+                        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                        ctx.closePath();
                         ctx.clip();
                         ctx.drawImage(logoImg, centerX - radius, centerY - radius, radius * 2, radius * 2);
                         ctx.restore();
@@ -7092,21 +7361,18 @@
                 });
             }
 
-            // Bottom Footer Badge Ribbon
+            // Bottom Ribbon Call To Action
             ctx.fillStyle = '#0f172a';
             ctx.fillRect(30, 610, width - 60, 95);
-
             ctx.lineWidth = 2;
             ctx.strokeStyle = '#f59e0b';
             ctx.strokeRect(30, 610, width - 60, 95);
 
-            // Footer Call To Action
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 18px Outfit, sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(footerText, width / 2, 650);
 
-            // Security Disclaimer Subtext
             ctx.fillStyle = '#94a3b8';
             ctx.font = '500 11px Outfit, sans-serif';
             ctx.fillText('⚡ Commande Sans Attente • Paiement Sécurisé Ciao Byebye', width / 2, 680);
@@ -7117,14 +7383,14 @@
             if (!canvas) return;
 
             const select = document.getElementById('qr-studio-table-select');
-            const val = select ? select.value : 'menu';
-            const fileName = `QR_DonRoberto_${val.toUpperCase()}.png`;
+            const val = select ? select.value : 'table';
+            const fileName = `Chevalet_DonRoberto_${val.toUpperCase()}.png`;
 
             const link = document.createElement('a');
             link.download = fileName;
             link.href = canvas.toDataURL('image/png');
             link.click();
-            showKdsToast(`QR Code téléchargé : ${fileName} 📥`, 'success');
+            showKdsToast(`Chevalet téléchargé : ${fileName} 📥`, 'success');
         }
 
         function copyQRStudioLink() {
@@ -7138,146 +7404,6 @@
                     showKdsToast('Lien copié ! 📋', 'success');
                 });
             }
-        }
-
-        async function printQRStudioTablesSheet() {
-            const activeTableList = Array.isArray(tablesData) && tablesData.length > 0 
-                ? tablesData 
-                : Array.from({ length: 12 }, (_, i) => {
-                    const num = String(i + 1).padStart(2, '0');
-                    return { number: num, name: `Table ${num}`, qr_code_token: `token_table_${num}` };
-                });
-
-            showKdsToast('Génération des 12 QR Codes vectoriels en cours... ⏳', 'info');
-
-            // Generate vector SVGs for each table using local QRCode engine
-            let cardsHtml = '';
-            for (const t of activeTableList) {
-                const tableUrl = `https://don-roberto.ciao-byebye.store/?table=${t.number}&token=${t.qr_code_token || 'token_table_' + t.number}`;
-                let qrSvg = '';
-                try {
-                    if (typeof QRCode !== 'undefined' && typeof QRCode.toString === 'function') {
-                        qrSvg = await QRCode.toString(tableUrl, {
-                            type: 'svg',
-                            margin: 2,
-                            errorCorrectionLevel: 'M',
-                            width: 180,
-                            color: { dark: '#0f172a', light: '#ffffff' }
-                        });
-                    } else {
-                        qrSvg = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(tableUrl)}" style="width:180px;height:180px;">`;
-                    }
-                } catch (e) {
-                    qrSvg = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(tableUrl)}" style="width:180px;height:180px;">`;
-                }
-
-                cardsHtml += `
-                    <div class="qr-stand-card">
-                        <div class="qr-stand-header">
-                            <h2>DON ROBERTO</h2>
-                            <p>PIZZERIA TRATTORIA</p>
-                        </div>
-                        <div class="qr-stand-body">
-                            <div class="qr-image-wrapper">
-                                ${qrSvg}
-                                <div class="qr-center-logo">🍕</div>
-                            </div>
-                            <div class="table-badge">TABLE ${t.number}</div>
-                            <p class="scan-instruction">Scannez avec votre smartphone pour commander et payer directement</p>
-                        </div>
-                        <div class="qr-stand-footer">
-                            <span>⚡ Propulsé par Ciao Byebye • Don Roberto Nice</span>
-                        </div>
-                    </div>
-                `;
-            }
-
-            const sheetHtml = `
-                <!DOCTYPE html>
-                <html lang="fr">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Planche Chevalets QR Code - Don Roberto Pizzeria Trattoria</title>
-                    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-                    <style>
-                        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
-                        body { background: #f8fafc; padding: 20px; color: #0f172a; }
-                        .no-print-bar { background: #0f172a; color: #fff; padding: 14px 20px; border-radius: 12px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
-                        .btn-print { background: #f59e0b; color: #000; font-weight: 800; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
-                        .sheet-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; max-width: 1000px; margin: 0 auto; }
-                        .qr-stand-card { background: #ffffff; border: 3px solid #f59e0b; border-radius: 16px; padding: 20px; text-align: center; page-break-inside: avoid; position: relative; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
-                        .qr-stand-header { background: #0f172a; color: #ffffff; padding: 12px; border-radius: 10px; margin-bottom: 16px; border-bottom: 3px solid #f59e0b; }
-                        .qr-stand-header h2 { font-size: 22px; font-weight: 900; letter-spacing: 0.5px; }
-                        .qr-stand-header p { font-size: 11px; color: #f59e0b; font-weight: 700; letter-spacing: 1.5px; margin-top: 2px; }
-                        .qr-image-wrapper { position: relative; display: inline-block; margin: 10px 0; }
-                        .qr-image-wrapper svg { width: 180px; height: 180px; display: block; border-radius: 8px; }
-                        .qr-center-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 38px; height: 38px; background: #ffffff; border: 2px solid #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-                        .table-badge { background: #0f172a; color: #f59e0b; font-size: 18px; font-weight: 900; padding: 8px 16px; border-radius: 8px; display: inline-block; margin: 12px 0 6px 0; letter-spacing: 1px; border: 1px solid #f59e0b; }
-                        .scan-instruction { font-size: 11px; color: #475569; font-weight: 600; max-width: 240px; margin: 0 auto; line-height: 1.3; }
-                        .qr-stand-footer { margin-top: 14px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 10px; color: #94a3b8; font-weight: 600; }
-                        @media print {
-                            .no-print-bar { display: none !important; }
-                            body { padding: 0; background: #fff; }
-                            .sheet-grid { gap: 15px; }
-                            .qr-stand-card { border-width: 2px; box-shadow: none; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="no-print-bar">
-                        <div>
-                            <strong style="font-size:16px;">🖨️ Planche Prête à Imprimer : 12 Tables Don Roberto</strong>
-                            <div style="font-size:12px; color:#94a3b8; margin-top:2px;">Format A4 idéal pour chevalets de table, autocollants ou découpe sous plexiglas.</div>
-                        </div>
-                        <div style="display:flex; gap:10px;">
-                            <button class="btn-print" onclick="window.print()">🖨️ Lancer l'Impression</button>
-                            <button class="btn-print" onclick="window.close()" style="background:#ef4444; color:#fff;">Fermer</button>
-                        </div>
-                    </div>
-                    <div class="sheet-grid">
-                        ${cardsHtml}
-                    </div>
-                </body>
-                </html>
-            `;
-
-            // Open window or use hidden iframe fallback
-            try {
-                const printWindow = window.open('', '_blank');
-                if (printWindow) {
-                    printWindow.document.open();
-                    printWindow.document.write(sheetHtml);
-                    printWindow.document.close();
-                    setTimeout(() => {
-                        try { printWindow.focus(); printWindow.print(); } catch (e) {}
-                    }, 500);
-                    return;
-                }
-            } catch (e) {
-                console.warn('Popup bloquée, utilisation de l\'iframe d\'impression directe');
-            }
-
-            // Fallback: Invisible iframe printing
-            let iframe = document.getElementById('qr-print-iframe');
-            if (!iframe) {
-                iframe = document.createElement('iframe');
-                iframe.id = 'qr-print-iframe';
-                iframe.style.position = 'fixed';
-                iframe.style.right = '0';
-                iframe.style.bottom = '0';
-                iframe.style.width = '0';
-                iframe.style.height = '0';
-                iframe.style.border = '0';
-                document.body.appendChild(iframe);
-            }
-            const doc = iframe.contentWindow.document;
-            doc.open();
-            doc.write(sheetHtml);
-            doc.close();
-            setTimeout(() => {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-            }, 600);
         }
 
         function startKDSTour() {
@@ -7694,33 +7820,76 @@
                 <button onclick="closeQRStudioModal()" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer;"><i class="fa-solid fa-times"></i></button>
             </div>
 
-            <!-- Two-Column Studio Layout -->
-            <div style="display:grid; grid-template-columns:1fr 1.1fr; gap:24px; align-items:start;">
-                
+            <!-- Tab Navigation Bar -->
+            <div style="display:flex; gap:10px; margin-bottom:18px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:12px;">
+                <button id="tab-btn-qr-sheet" type="button" class="btn-secondary-dark active" onclick="setQRStudioTab('sheet')" style="padding:10px 18px; font-weight:800; font-size:13px; border-radius:10px; display:flex; align-items:center; gap:8px; cursor:pointer; border:1px solid var(--primary); color:var(--primary); background:rgba(245,158,11,0.15);">
+                    <i class="fa-solid fa-table-cells"></i> 1. Planche Complète de Tables (Toutes les tables)
+                </button>
+                <button id="tab-btn-qr-single" type="button" class="btn-secondary-dark" onclick="setQRStudioTab('single')" style="padding:10px 18px; font-weight:800; font-size:13px; border-radius:10px; display:flex; align-items:center; gap:8px; cursor:pointer; border:1px solid rgba(255,255,255,0.15); color:#fff; background:transparent;">
+                    <i class="fa-solid fa-chair"></i> 2. Chevalet Unique de Remplacement (1 seule table)
+                </button>
+            </div>
+
+            <!-- VIEW 1: PLANCHE COMPLÈTE DE TABLES -->
+            <div id="qr-studio-view-sheet" style="display:block;">
+                <!-- Toolbar Paramétrage Planche -->
+                <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:14px; padding:16px 20px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                    <div>
+                        <div style="font-size:13px; font-weight:800; color:#f59e0b; display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-circle-info"></i> Identification automatique des tables par QR Code
+                        </div>
+                        <div style="font-size:12px; color:#cbd5e1; margin-top:4px; max-width:540px; line-height:1.4;">
+                            Chaque table possède son <strong>lien unique et son QR Code dédié</strong> (Table 01 à N). Les commandes passées par les clients sont automatiquement associées à la bonne table sans saisie manuelle.
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                        <div style="display:flex; align-items:center; gap:8px; background:rgba(0,0,0,0.4); padding:6px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.1);">
+                            <span style="font-size:12px; color:var(--text-muted); font-weight:600;">Nombre de tables :</span>
+                            <button type="button" onclick="adjustQRTableCount(-1)" style="width:28px; height:28px; border-radius:6px; background:rgba(255,255,255,0.1); color:#fff; border:none; font-size:16px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center;">-</button>
+                            <input type="number" id="qr-studio-table-count" min="1" max="100" value="12" onchange="onQRTableCountChange(this.value)" style="width:50px; text-align:center; font-size:15px; font-weight:900; background:transparent; border:1px solid rgba(245,158,11,0.5); border-radius:6px; color:#f59e0b; padding:4px;">
+                            <button type="button" onclick="adjustQRTableCount(1)" style="width:28px; height:28px; border-radius:6px; background:rgba(255,255,255,0.1); color:#fff; border:none; font-size:16px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center;">+</button>
+                        </div>
+                        <button type="button" class="action-btn" onclick="printQRStudioDirect(false)" style="background:#f59e0b; color:#000; font-weight:900; padding:10px 18px; border:none; font-size:13px; display:inline-flex; align-items:center; gap:8px; cursor:pointer; border-radius:8px; box-shadow:0 4px 12px rgba(245,158,11,0.3);">
+                            <i class="fa-solid fa-print"></i> Imprimer la Planche Complète
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Live Sheet Grid Preview -->
+                <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); letter-spacing:1px;">
+                        Aperçu des Chevalets de la Planche :
+                    </span>
+                    <span style="font-size:11px; color:#94a3b8;">
+                        Format optimisé A4 prêt à imprimer (2 par page ou planche complète)
+                    </span>
+                </div>
+
+                <div id="qr-sheet-preview-cards" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:14px; max-height:55vh; overflow-y:auto; padding:16px; background:rgba(0,0,0,0.3); border-radius:14px; border:1px solid rgba(255,255,255,0.06);">
+                    <!-- Dynamic cards injected via renderQRStudioSheetPreview() -->
+                </div>
+            </div>
+
+            <!-- VIEW 2: CHEVALET UNIQUE DE REMPLACEMENT -->
+            <div id="qr-studio-view-single" style="display:none; grid-template-columns:1fr 1.1fr; gap:24px; align-items:start;">
                 <!-- Left Column : Settings & Controls -->
                 <div style="display:flex; flex-direction:column; gap:14px;">
                     
-                    <!-- 1. Destination / Table -->
+                    <!-- 1. Sélection de la Table -->
                     <div class="pos-form-group">
                         <label style="font-size:12px; font-weight:700; color:#f59e0b; display:flex; align-items:center; gap:6px;">
-                            <i class="fa-solid fa-location-dot"></i> 1. Destination du QR Code :
+                            <i class="fa-solid fa-chair"></i> 1. Table à Remplacer :
                         </label>
-                        <select id="qr-studio-table-select" onchange="onQRStudioDestinationChange()" class="glass-select" style="width:100%; padding:10px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:#fff; font-size:13px;">
-                            <option value="all_menu">🍽️ Menu Général du Restaurant (Accueil)</option>
+                        <select id="qr-studio-table-select" onchange="onQRSingleTableChange()" class="glass-select" style="width:100%; padding:10px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:#fff; font-size:13px;">
+                            <!-- Populated dynamically -->
                         </select>
                     </div>
 
-                    <!-- Custom URL input (hidden by default) -->
-                    <div id="qr-studio-custom-url-box" style="display:none;" class="pos-form-group">
-                        <label style="font-size:11px; color:var(--text-muted);">URL personnalisée :</label>
-                        <input type="text" id="qr-studio-custom-url-input" oninput="onQRStudioDestinationChange()" placeholder="https://..." style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 10px; color:#fff; font-size:12px;">
-                    </div>
-
-                    <!-- Editable Destination Link -->
+                    <!-- URL générée automatiquement -->
                     <div class="pos-form-group">
                         <label style="font-size:11px; color:#f59e0b; font-weight:700; display:flex; justify-content:space-between;">
-                            <span>Lien de redirection (modifiable en direct) :</span>
-                            <span style="font-size:10px; color:var(--text-muted); font-weight:normal;">✏️ Modifiable</span>
+                            <span>URL générée automatiquement pour cette table :</span>
+                            <span style="font-size:10px; color:#10b981; font-weight:normal;">⚡ Auto-configuré</span>
                         </label>
                         <div style="display:flex; gap:6px;">
                             <input type="text" id="qr-studio-destination-url" oninput="onQRStudioManualUrlChange()" placeholder="https://don-roberto.ciao-byebye.store/?table=05" style="flex:1; background:rgba(0,0,0,0.4); border:1px solid rgba(245,158,11,0.3); border-radius:8px; padding:8px 10px; color:#38bdf8; font-size:12px; font-family:monospace; outline:none;">
@@ -7736,15 +7905,8 @@
                         <select id="qr-studio-logo-select" onchange="updateQRStudioPreview()" class="glass-select" style="width:100%; padding:10px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:#fff; font-size:13px;">
                             <option value="don_roberto">🍕 Logo Officiel Don Roberto (Pizza & Trattoria)</option>
                             <option value="ciao_badge">🍽️ Badge Ciao Byebye</option>
-                            <option value="custom_url">🖼️ Logo personnalisé (URL image)</option>
                             <option value="none">🚫 Sans logo (QR Code nu)</option>
                         </select>
-                    </div>
-
-                    <!-- Custom Logo URL input (hidden by default) -->
-                    <div id="qr-studio-custom-logo-box" style="display:none;" class="pos-form-group">
-                        <label style="font-size:11px; color:var(--text-muted);">URL du logo personnalisé (PNG transparent recommandé) :</label>
-                        <input type="text" id="qr-studio-custom-logo-input" oninput="updateQRStudioPreview()" placeholder="https://votresite.com/logo.png" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:8px 10px; color:#fff; font-size:12px;">
                     </div>
 
                     <!-- 3. Styling & Text -->
@@ -7790,48 +7952,43 @@
                         </div>
                     </div>
 
-                    <!-- Planche d'impression complète -->
-                    <div style="background:rgba(245,158,11,0.08); border:1px dashed rgba(245,158,11,0.4); border-radius:10px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <strong style="font-size:12px; color:#f59e0b; display:block;">🖨️ Planche Complète des 12 Tables</strong>
-                            <span style="font-size:11px; color:var(--text-muted);">Générez les 12 chevalets prêts à imprimer sur format A4</span>
-                        </div>
-                        <button type="button" class="action-btn" onclick="printQRStudioTablesSheet()" style="background:#f59e0b; color:#000; font-weight:800; border:none; padding:8px 14px; font-size:12px; white-space:nowrap;">
-                            <i class="fa-solid fa-print"></i> Imprimer Planche
-                        </button>
-                    </div>
-
                 </div>
 
                 <!-- Right Column : Live Canvas Preview & Actions -->
                 <div style="display:flex; flex-direction:column; align-items:center; background:rgba(0,0,0,0.4); border-radius:14px; padding:16px; border:1px solid rgba(255,255,255,0.08);">
                     <span style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); letter-spacing:1px; margin-bottom:12px;">
-                        Aperçu Réel du Chevalet / Sticker (Haute Résolution) :
+                        Aperçu Réel du Chevalet Unique :
                     </span>
 
                     <!-- HD Canvas Viewport -->
-                    <div style="max-width:320px; width:100%; box-shadow:0 15px 35px rgba(0,0,0,0.6); border-radius:10px; overflow:hidden; margin-bottom:16px; background:#fff;">
+                    <div style="max-width:300px; width:100%; box-shadow:0 15px 35px rgba(0,0,0,0.6); border-radius:10px; overflow:hidden; margin-bottom:16px; background:#fff;">
                         <canvas id="qr-studio-canvas" style="width:100%; height:auto; display:block;"></canvas>
                     </div>
 
                     <!-- Action Buttons -->
                     <div style="display:flex; gap:10px; width:100%; justify-content:center; flex-wrap:wrap;">
-                        <button type="button" class="action-btn" onclick="downloadQRStudioPNG()" style="flex:1; min-width:160px; background:#10b981; color:#0f172a; font-weight:800; border:none; padding:10px 16px; font-size:13px; display:inline-flex; align-items:center; justify-content:center; gap:8px;">
-                            <i class="fa-solid fa-download"></i> Télécharger le PNG HD
+                        <button type="button" class="action-btn" onclick="printQRStudioDirect(true)" style="flex:1; min-width:140px; background:#f59e0b; color:#000; font-weight:800; border:none; padding:10px 14px; font-size:12px; display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; border-radius:8px;">
+                            <i class="fa-solid fa-print"></i> Imprimer ce Chevalet
                         </button>
-                        <button type="button" class="action-btn secondary" onclick="closeQRStudioModal()" style="padding:10px 16px; font-size:13px;">
-                            Fermer
+                        <button type="button" class="action-btn" onclick="downloadQRStudioPNG()" style="flex:1; min-width:140px; background:#10b981; color:#0f172a; font-weight:800; border:none; padding:10px 14px; font-size:12px; display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; border-radius:8px;">
+                            <i class="fa-solid fa-download"></i> Télécharger PNG
                         </button>
                     </div>
 
                     <div style="margin-top:12px; font-size:11px; color:#94a3b8; text-align:center; line-height:1.4;">
-                        <i class="fa-solid fa-circle-check" style="color:#10b981;"></i> <strong>Correction d'Erreur ECC Niveau H (30%) :</strong> Le QR Code reste 100% lisible et instantanément flashable même avec le logo au centre.
+                        <i class="fa-solid fa-circle-check" style="color:#10b981;"></i> <strong>Correction d'Erreur ECC Niveau H (30%) :</strong> QR Code 100% lisible et immédiatement flashable.
                     </div>
                 </div>
+            </div>
 
+            <!-- Footer Close -->
+            <div style="display:flex; justify-content:flex-end; margin-top:18px; border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;">
+                <button type="button" onclick="closeQRStudioModal()" style="padding:8px 18px; background:rgba(255,255,255,0.1); color:#fff; border:none; border-radius:8px; font-size:12px; cursor:pointer;">Fermer</button>
             </div>
 
         </div>
     </div>
+    <!-- Conteneur d'impression direct (invisible à l'écran, activé uniquement par window.print via @media print) -->
+    <div id="print-qr-target-container"></div>
 </body>
 </html>
