@@ -1737,6 +1737,67 @@ describe('Ciao Byebye - API & Backend Functional Test Suite', () => {
         const csvText = await csvRes.text();
         assert.ok(csvText.includes('ID_Commande;Date_Heure;Table;Client;Montant_EUR'));
     });
+
+    test('66. GET & POST & PATCH /api/tickets - should manage support tickets and incident lifecycle', async () => {
+        // 1. Création d'un ticket d'incident urgent
+        const createRes = await fetch(`${BASE_URL}/api/tickets`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                subject: 'Panne imprimante ticket cuisine #02',
+                description: 'L\'imprimante thermique du poste chaud ne sort plus les coupons de commande.',
+                category: 'materiel_imprimante',
+                priority: 'urgente',
+                restaurant_id: 'don-roberto',
+                created_by_role: 'cuisine',
+                created_by_name: 'Chef Marco',
+                table_number: '04'
+            })
+        });
+        assert.strictEqual(createRes.status, 201);
+        const ticket = await createRes.json();
+        assert.ok(ticket.id);
+        assert.ok(ticket.ticket_number.startsWith('INC-'));
+        assert.strictEqual(ticket.priority, 'urgente');
+        assert.strictEqual(ticket.status, 'ouvert');
+
+        // 2. Récupération des tickets
+        const listRes = await fetch(`${BASE_URL}/api/tickets?status=ouvert`);
+        assert.strictEqual(listRes.status, 200);
+        const tickets = await listRes.json();
+        assert.ok(Array.isArray(tickets));
+        const found = tickets.find(t => t.id === ticket.id);
+        assert.ok(found);
+
+        // 3. Traitement Admin : Réponse et passage au statut "en_cours" puis "resolu"
+        const patchRes = await fetch(`${BASE_URL}/api/tickets/${ticket.id}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                status: 'resolu',
+                admin_response: 'Redémarrage du spouleur d\'impression à distance effectué. Le bac papier a été réinitialisé.',
+                assigned_to: 'Support HQ Zaki'
+            })
+        });
+        assert.strictEqual(patchRes.status, 200);
+        const updated = await patchRes.json();
+        assert.strictEqual(updated.status, 'resolu');
+        assert.ok(updated.resolved_at);
+
+        // 4. Ajout d'un message additionnel de confirmation par le restaurant
+        const msgRes = await fetch(`${BASE_URL}/api/tickets/${ticket.id}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sender_role: 'cuisine',
+                sender_name: 'Chef Marco',
+                message: 'Merci beaucoup ! L\'imprimante remarche parfaitement.'
+            })
+        });
+        assert.strictEqual(msgRes.status, 201);
+        const msgData = await msgRes.json();
+        assert.strictEqual(msgData.sender_name, 'Chef Marco');
+    });
 });
 
 

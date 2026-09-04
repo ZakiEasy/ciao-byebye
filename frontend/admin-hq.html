@@ -163,6 +163,9 @@
             <button class="action-btn secondary" id="tab-btn-crm" onclick="switchHqTab('crm')">
                 <i class="fa-solid fa-bullseye"></i> CRM & Leads Commerciaux
             </button>
+            <button class="action-btn secondary" id="tab-btn-tickets" onclick="switchHqTab('tickets')">
+                <i class="fa-solid fa-headset"></i> Incidents & Support (<span id="hq-tickets-badge">0</span>)
+            </button>
         </div>
 
         <!-- Section 1 : Déploiements & Multi-Tenants -->
@@ -302,6 +305,82 @@
                 </div>
                 <div id="crm-leads-preview-table">
                     <!-- Rempli dynamiquement -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 6 : Traitement des Incidents & Support -->
+        <div id="section-tickets" class="hq-section" style="display:none;">
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:rgba(239,68,68,0.15); color:#f87171;"><i class="fa-solid fa-circle-exclamation"></i></div>
+                    <div>
+                        <div class="kpi-val" id="kpi-tickets-open">0</div>
+                        <div class="kpi-lbl">Incidents Ouverts / Non Traités</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:rgba(245,158,11,0.15); color:#f59e0b;"><i class="fa-solid fa-spinner"></i></div>
+                    <div>
+                        <div class="kpi-val" id="kpi-tickets-pending">0</div>
+                        <div class="kpi-lbl">En cours de résolution</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:rgba(16,185,129,0.15); color:#34d399;"><i class="fa-solid fa-check-double"></i></div>
+                    <div>
+                        <div class="kpi-val" id="kpi-tickets-resolved">0</div>
+                        <div class="kpi-lbl">Incidents Résolus</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:rgba(56,189,248,0.15); color:#38bdf8;"><i class="fa-solid fa-bolt"></i></div>
+                    <div>
+                        <div class="kpi-val" id="kpi-tickets-avg-time">&lt; 15 min</div>
+                        <div class="kpi-lbl">Temps Moyen de Réponse Support</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="deploy-table-wrapper">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--glass-border); flex-wrap:wrap; gap:12px;">
+                    <h3 style="font-size:16px; font-weight:800; color:#fff;"><i class="fa-solid fa-headset" style="color:#ef4444;"></i> Console de Traitement des Incidents & Support Client</h3>
+                    <div style="display:flex; gap:8px;">
+                        <select id="hq-ticket-filter-status" onchange="loadHqTickets()" class="glass-select" style="font-size:12px;">
+                            <option value="tous">Tous les Statuts</option>
+                            <option value="ouvert" selected>🔴 Ouverts</option>
+                            <option value="en_cours">🟡 En Cours</option>
+                            <option value="resolu">🟢 Résolus</option>
+                            <option value="ferme">⚪ Fermés</option>
+                        </select>
+                        <select id="hq-ticket-filter-priority" onchange="loadHqTickets()" class="glass-select" style="font-size:12px;">
+                            <option value="tous">Toutes les Priorités</option>
+                            <option value="urgente">🚨 Urgent</option>
+                            <option value="haute">⚠️ Haute</option>
+                            <option value="normale">🟢 Normale</option>
+                        </select>
+                        <button onclick="loadHqTickets()" class="action-btn secondary" style="font-size:12px; padding:6px 10px;">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div style="overflow-x:auto;">
+                    <table class="deploy-table">
+                        <thead>
+                            <tr>
+                                <th>N° Ticket & Urgence</th>
+                                <th>Établissement & Émetteur</th>
+                                <th>Catégorie</th>
+                                <th>Sujet & Description</th>
+                                <th>Statut & Résolution</th>
+                                <th>Action Traitement HQ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hq-tickets-table-body">
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -625,6 +704,7 @@
             else if (tabId === 'pos') fetchPosIntegrations();
             else if (tabId === 'reviews') fetchReviewsSettings();
             else if (tabId === 'crm') fetchCrmLeads();
+            else if (tabId === 'tickets') loadHqTickets();
         }
 
         // --- MODULES SAAS MANAGEMENT ---
@@ -849,6 +929,181 @@
             }
         }
 
+        // --- TICKETS SUPPORT & INCIDENTS ---
+        let hqTicketsData = [];
+
+        async function loadHqTickets() {
+            const tableBody = document.getElementById('hq-tickets-table-body');
+            const statusFilter = document.getElementById('hq-ticket-filter-status')?.value || 'tous';
+            const priorityFilter = document.getElementById('hq-ticket-filter-priority')?.value || 'tous';
+
+            if (!tableBody) return;
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Chargement des tickets...</td></tr>`;
+
+            try {
+                let url = `/api/tickets?status=${statusFilter}&priority=${priorityFilter}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                hqTicketsData = Array.isArray(data) ? data : [];
+
+                const openCount = hqTicketsData.filter(t => t.status === 'ouvert').length;
+                const pendingCount = hqTicketsData.filter(t => t.status === 'en_cours').length;
+                const resolvedCount = hqTicketsData.filter(t => t.status === 'resolu' || t.status === 'ferme').length;
+
+                const openKpi = document.getElementById('kpi-tickets-open');
+                const pendingKpi = document.getElementById('kpi-tickets-pending');
+                const resolvedKpi = document.getElementById('kpi-tickets-resolved');
+                const badgeNav = document.getElementById('hq-tickets-badge');
+
+                if (openKpi) openKpi.textContent = openCount;
+                if (pendingKpi) pendingKpi.textContent = pendingCount;
+                if (resolvedKpi) resolvedKpi.textContent = resolvedCount;
+                if (badgeNav) badgeNav.textContent = openCount;
+
+                renderHqTicketsTable(hqTicketsData);
+            } catch (err) {
+                console.error(err);
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:20px;">Erreur chargement des tickets.</td></tr>`;
+            }
+        }
+
+        function renderHqTicketsTable(tickets) {
+            const tableBody = document.getElementById('hq-tickets-table-body');
+            if (!tableBody) return;
+
+            if (tickets.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">Aucun ticket d'incident trouvé pour ce filtre.</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = tickets.map(ticket => {
+                let priorityClass = 'status-trial';
+                let priorityText = 'Normale';
+                if (ticket.priority === 'urgente') {
+                    priorityClass = 'status-overdue';
+                    priorityText = '🚨 URGENT';
+                } else if (ticket.priority === 'haute') {
+                    priorityClass = 'status-provisioning';
+                    priorityText = '⚠️ Haute';
+                }
+
+                let statusBadge = `<span class="badge-status status-overdue">🔴 Ouvert</span>`;
+                if (ticket.status === 'en_cours') statusBadge = `<span class="badge-status status-provisioning">🟡 En cours</span>`;
+                else if (ticket.status === 'resolu') statusBadge = `<span class="badge-status status-active">🟢 Résolu</span>`;
+                else if (ticket.status === 'ferme') statusBadge = `<span class="badge-status" style="background:rgba(148,163,184,0.2); color:#94a3b8;">⚪ Fermé</span>`;
+
+                const formattedDate = new Date(ticket.created_at).toLocaleString('fr-FR', {
+                    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+                });
+
+                return `
+                    <tr>
+                        <td>
+                            <strong style="color:var(--primary); font-family:monospace;">${ticket.ticket_number}</strong>
+                            <div style="margin-top:4px;"><span class="badge-status ${priorityClass}">${priorityText}</span></div>
+                        </td>
+                        <td>
+                            <strong style="color:#fff;">${ticket.restaurant_id.toUpperCase()}</strong>
+                            <div style="font-size:11px; color:var(--text-muted);">${ticket.created_by_name} (${ticket.created_by_role})</div>
+                            ${ticket.table_number ? `<div style="font-size:10px; color:#38bdf8;">Table : ${ticket.table_number}</div>` : ''}
+                        </td>
+                        <td>
+                            <span style="font-size:11px; font-weight:700; text-transform:uppercase; color:#94a3b8;">${ticket.category}</span>
+                        </td>
+                        <td style="max-width:280px;">
+                            <strong style="color:#fff; display:block; font-size:13px; margin-bottom:2px;">${ticket.subject}</strong>
+                            <span style="font-size:11.5px; color:#cbd5e1; display:block; line-height:1.3;">${ticket.description}</span>
+                            <span style="font-size:10px; color:var(--text-muted); margin-top:4px; display:block;">Reçu le : ${formattedDate}</span>
+                        </td>
+                        <td>
+                            ${statusBadge}
+                            ${ticket.admin_response ? `<div style="font-size:11px; color:#34d399; margin-top:4px; font-style:italic;">"${ticket.admin_response.substring(0, 45)}..."</div>` : ''}
+                        </td>
+                        <td>
+                            <button onclick="openHqResolveModal('${ticket.id}')" class="action-btn" style="font-size:11px; padding:5px 10px; background:#10b981; color:#000; font-weight:800;">
+                                <i class="fa-solid fa-reply"></i> Traiter / Répondre
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openHqResolveModal(ticketId) {
+            const ticket = hqTicketsData.find(t => t.id === ticketId);
+            if (!ticket) return;
+
+            const modalContainer = document.getElementById('deployment-modal-container');
+            if (!modalContainer) return;
+
+            modalContainer.innerHTML = `
+                <div class="modal-overlay" style="display:flex;" onclick="closeModal(event)">
+                    <div class="glass-card" style="max-width:600px; width:90%; padding:24px; border:1px solid rgba(245,158,11,0.5);">
+                        <h3 style="margin-top:0; font-size:18px; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+                            <span><i class="fa-solid fa-headset" style="color:var(--primary);"></i> Traitement Ticket ${ticket.ticket_number}</span>
+                            <button type="button" class="action-btn secondary" onclick="closeModal()" style="padding:2px 8px;">✕</button>
+                        </h3>
+
+                        <div style="background:rgba(0,0,0,0.3); padding:12px; border-radius:8px; border:1px solid var(--glass-border); margin-bottom:16px;">
+                            <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Demandeur : <strong>${ticket.created_by_name} (${ticket.restaurant_id})</strong></div>
+                            <h4 style="margin:0 0 6px 0; font-size:14px; color:#fff;">${ticket.subject}</h4>
+                            <p style="margin:0; font-size:12.5px; color:#cbd5e1; line-height:1.4;">${ticket.description}</p>
+                        </div>
+
+                        <form onsubmit="submitHqTicketResolution(event, '${ticket.id}')">
+                            <div style="margin-bottom:14px;">
+                                <label style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px;">Changer le Statut :</label>
+                                <select id="resolve-status" class="glass-select" style="width:100%;">
+                                    <option value="en_cours" ${ticket.status==='en_cours'?'selected':''}>🟡 En Cours de Traitement</option>
+                                    <option value="resolu" ${ticket.status==='resolu'||ticket.status==='ouvert'?'selected':''}>🟢 Résolu (Clôturer avec succès)</option>
+                                    <option value="ferme" ${ticket.status==='ferme'?'selected':''}>⚪ Fermé (Sans suite / Résolu)</option>
+                                </select>
+                            </div>
+
+                            <div style="margin-bottom:16px;">
+                                <label style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:6px;">Réponse Officielle Support HQ :</label>
+                                <textarea id="resolve-response" rows="4" placeholder="Saisissez la réponse explicative ou les instructions pour le restaurant..." required style="width:100%; padding:10px; background:rgba(0,0,0,0.4); border:1px solid var(--glass-border); border-radius:8px; color:#fff; font-size:13px; resize:vertical;">${ticket.admin_response || ''}</textarea>
+                            </div>
+
+                            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                                <button type="button" class="action-btn secondary" onclick="closeModal()">Annuler</button>
+                                <button type="submit" class="action-btn" style="background:#10b981; color:#000; font-weight:800;">
+                                    <i class="fa-solid fa-paper-plane"></i> Transmettre au Restaurant
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function submitHqTicketResolution(e, ticketId) {
+            e.preventDefault();
+            const status = document.getElementById('resolve-status').value;
+            const admin_response = document.getElementById('resolve-response').value;
+
+            try {
+                const res = await fetch(`/api/tickets/${ticketId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status,
+                        admin_response,
+                        assigned_to: 'Support HQ Zaki'
+                    })
+                });
+
+                if (res.ok) {
+                    alert('Ticket traité et réponse transmise au restaurant avec succès ! 🚀');
+                    closeModal();
+                    loadHqTickets();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erreur enregistrement résolution ticket.');
+            }
+        }
+
         function logoutHQ() {
             sessionStorage.removeItem('ciao_byebye_auth');
             sessionStorage.removeItem('ciao_byebye_user');
@@ -858,6 +1113,7 @@
 
         // Chargement initial
         fetchDeployments();
+        loadHqTickets();
     </script>
 </body>
 </html>

@@ -342,6 +342,39 @@ async function initDatabase() {
       ('loyverse', 'Loyverse POS', 'cloud_saas', 'Caisse enregistreuse POS multi-langues et programme de fidélité intégré.', 'fa-solid fa-globe', 'Multi-Langues', 'disconnected')
       ON CONFLICT (provider) DO NOTHING;
     `);
+
+    // Tables du Système de Support & Traitement des Incidents
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS support_tickets (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        ticket_number VARCHAR(20) UNIQUE NOT NULL,
+        restaurant_id VARCHAR(100) DEFAULT 'don-roberto',
+        created_by_role VARCHAR(50) DEFAULT 'gerant',
+        created_by_name VARCHAR(100) DEFAULT 'Don Roberto Staff',
+        category VARCHAR(50) NOT NULL DEFAULT 'autre',
+        priority VARCHAR(20) NOT NULL DEFAULT 'normale',
+        subject VARCHAR(255) NOT NULL,
+        description TEXT NOT NULL,
+        table_number VARCHAR(20),
+        order_id UUID,
+        status VARCHAR(30) NOT NULL DEFAULT 'ouvert',
+        admin_response TEXT,
+        assigned_to VARCHAR(100),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        resolved_at TIMESTAMP WITH TIME ZONE
+      );
+
+      CREATE TABLE IF NOT EXISTS ticket_messages (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        ticket_id UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
+        sender_role VARCHAR(50) NOT NULL,
+        sender_name VARCHAR(100) NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     console.log('[DB] Schéma et migrations initialisés avec succès.');
   } catch (err) {
     console.error('[DB] Erreur initialisation schéma:', err);
@@ -383,6 +416,210 @@ app.get('/formation', (req, res) => {
 const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
 // 1. Récupérer le menu du restaurant avec les fiches techniques ingrédients
+// ==========================================
+// MODULE SYSTEME DE REQUETES & INCIDENTS (SUPPORT B2B & ADMIN HQ)
+// ==========================================
+
+async function generateNextTicketNumber() {
+  try {
+    const result = await pool.query("SELECT COUNT(*) as count FROM support_tickets");
+    const count = parseInt(result.rows[0].count, 10) + 1;
+    const year = new Date().getFullYear();
+    return `INC-${year}-${String(count).padStart(3, '0')}`;
+  } catch (e) {
+    return `INC-${Date.now().toString().substring(7)}`;
+  }
+}
+
+app.get('/api/tickets', async (req, res) => {
+  try {
+    const { status, priority, category, restaurant_id } = req.query;
+    let query = `
+      SELECT t.*,
+             COALESCE(
+               json_agg(
+                 json_build_object(
+                   'id', tm.id,
+                   'sender_role', tm.sender_role,
+                   'sender_name', tm.sender_name,
+                   'message', tm.message,
+                   'created_at', tm.created_at
+                 ) ORDER BY tm.created_at ASC
+               ) FILTER (WHERE tm.id IS NOT NULL), '[]'
+             ) as messages
+      FROM support_tickets t
+      LEFT JOIN ticket_messages tm ON t.id = tm.ticket_id
+      WHERE 1=1
+    `;
+    const params = [];
+    let paramIdx = 1;
+
+    if (status && status !== 'tous') {
+      query += ` AND t.status = $${paramIdx++}`;
+      params.push(status);
+    }
+    if (priority && priority !== 'tous') {
+      query += ` AND t.priority = $${paramIdx++}`;
+      params.push(priority);
+    }
+    if (category && category !== 'tous') {
+      query += ` AND t.category = $${paramIdx++}`;
+      params.push(category);
+    }
+    if (restaurant_id) {
+      query += ` AND t.restaurant_id = $${paramIdx++}`;
+      params.push(restaurant_id);
+    }
+
+    query += ` GROUP BY t.id ORDER BY CASE WHEN t.priority = 'urgente' THEN 1 WHEN t.priority = 'haute' THEN 2 ELSE 3 END, t.created_at DESC`;
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des tickets:', error);
+    res.status(500).json({ error: 'Erreur serveur récupération tickets' });
+  }
+});
+
+app.post('/api/tickets', async (req, res) => {
+  try {
+    const {
+      subject,
+      description,
+      category = 'autre',
+      priority = 'normale',
+      restaurant_id = 'don-roberto',
+      created_by_role = 'gerant',
+      created_by_name = 'Don Roberto Staff',
+      table_number,
+      order_id
+    } = req.body;
+
+    if (!subject || !description) {
+      return res.status(400).json({ error: 'Le sujet et la description sont obligatoires.' });
+    }
+
+    const ticketNumber = await generateNextTicketNumber();
+    const validOrderId = isUUID(order_id) ? order_id : null;
+
+    const result = await pool.query(
+      `INSERT INTO support_tickets 
+       (ticket_number, restaurant_id, created_by_role, created_by_name, category, priority, subject, description, table_number, order_id, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'ouvert')
+       RETURNING *`,
+      [ticketNumber, restaurant_id, created_by_role, created_by_name, category, priority, subject, description, table_number, validOrderId]
+    );
+
+    const ticket = result.rows[0];
+    io.emit('ticket_created', ticket);
+
+    res.status(201).json(ticket);
+  } catch (error) {
+    console.error('Erreur création ticket support:', error);
+    res.status(500).json({ error: 'Erreur création ticket' });
+  }
+});
+
+app.get('/api/tickets/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!isUUID(id)) {
+      return res.status(400).json({ error: 'ID de ticket invalide' });
+    }
+
+    const ticketRes = await pool.query('SELECT * FROM support_tickets WHERE id = $1', [id]);
+    if (ticketRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Ticket introuvable' });
+    }
+
+    const ticket = ticketRes.rows[0];
+    const messagesRes = await pool.query('SELECT * FROM ticket_messages WHERE ticket_id = $1 ORDER BY created_at ASC', [id]);
+    ticket.messages = messagesRes.rows;
+
+    res.json(ticket);
+  } catch (error) {
+    console.error('Erreur lecture ticket:', error);
+    res.status(500).json({ error: 'Erreur lecture ticket' });
+  }
+});
+
+app.patch('/api/tickets/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, admin_response, assigned_to } = req.body;
+
+    if (!isUUID(id)) {
+      return res.status(400).json({ error: 'ID de ticket invalide' });
+    }
+
+    const resolvedAt = (status === 'resolu' || status === 'ferme') ? new Date() : null;
+
+    const result = await pool.query(
+      `UPDATE support_tickets 
+       SET status = COALESCE($1, status),
+           admin_response = COALESCE($2, admin_response),
+           assigned_to = COALESCE($3, assigned_to),
+           updated_at = CURRENT_TIMESTAMP,
+           resolved_at = COALESCE($4, resolved_at)
+       WHERE id = $5
+       RETURNING *`,
+      [status, admin_response, assigned_to, resolvedAt, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Ticket introuvable' });
+    }
+
+    const updatedTicket = result.rows[0];
+
+    if (admin_response && admin_response.trim()) {
+      await pool.query(
+        `INSERT INTO ticket_messages (ticket_id, sender_role, sender_name, message)
+         VALUES ($1, 'superadmin', 'Support HQ Ciao Byebye', $2)`,
+        [id, admin_response.trim()]
+      );
+    }
+
+    io.emit('ticket_updated', updatedTicket);
+
+    res.json(updatedTicket);
+  } catch (error) {
+    console.error('Erreur traitement ticket admin:', error);
+    res.status(500).json({ error: 'Erreur traitement ticket' });
+  }
+});
+
+app.post('/api/tickets/:id/messages', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { sender_role = 'gerant', sender_name = 'Staff', message } = req.body;
+
+    if (!isUUID(id)) {
+      return res.status(400).json({ error: 'ID de ticket invalide' });
+    }
+    if (!message || !message.trim()) {
+      return res.status(400).json({ error: 'Le message est obligatoire.' });
+    }
+
+    const msgRes = await pool.query(
+      `INSERT INTO ticket_messages (ticket_id, sender_role, sender_name, message)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [id, sender_role, sender_name, message.trim()]
+    );
+
+    await pool.query('UPDATE support_tickets SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [id]);
+
+    const newMsg = msgRes.rows[0];
+    io.emit('ticket_message_added', { ticket_id: id, message: newMsg });
+
+    res.status(201).json(newMsg);
+  } catch (error) {
+    console.error('Erreur ajout message ticket:', error);
+    res.status(500).json({ error: 'Erreur ajout message ticket' });
+  }
+});
+
 app.get('/api/menu', async (req, res) => {
   try {
     const result = await pool.query(`
