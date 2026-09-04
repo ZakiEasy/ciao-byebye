@@ -147,21 +147,21 @@ async function generateTableSheets() {
            .font('Helvetica-Bold')
            .text(`TABLE ${table.number} • ${table.zone.toUpperCase()}`, x + 20, badgeY + 8, { width: cardWidth - 40, align: 'center' });
 
-        // 5. Instruction & Lien direct
+        // 5. Instruction & Pied de carte
         doc.fillColor('#334155')
-           .fontSize(8.5)
+           .fontSize(9)
            .font('Helvetica-Bold')
-           .text('Scannez pour commander & payer en direct', x + 10, y + 288, { width: cardWidth - 20, align: 'center' });
+           .text('Scannez pour commander & payer en direct', x + 10, y + 292, { width: cardWidth - 20, align: 'center' });
 
         doc.fillColor('#64748b')
-           .fontSize(6.5)
+           .fontSize(7.5)
            .font('Helvetica')
-           .text(`?table=${table.number}&token=${table.token.substring(0, 18)}...`, x + 10, y + 304, { width: cardWidth - 20, align: 'center' });
+           .text('Menu interactif • Appels serveur • Paiement rapide', x + 10, y + 310, { width: cardWidth - 20, align: 'center' });
 
         doc.fillColor('#94a3b8')
-           .fontSize(6)
+           .fontSize(6.5)
            .font('Helvetica-Oblique')
-           .text('⚡ Ciao Byebye Solution • Don Roberto Nice', x + 10, y + 338, { width: cardWidth - 20, align: 'center' });
+           .text('Ciao Byebye Solution • Don Roberto Nice', x + 10, y + 338, { width: cardWidth - 20, align: 'center' });
     }
 
     doc.end();
