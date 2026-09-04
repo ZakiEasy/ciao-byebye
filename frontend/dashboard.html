@@ -908,6 +908,10 @@
                         <button class="tools-dropdown-item" id="btn-kds-tour" onclick="startKDSTour(); closeToolsMenu();">
                             <i class="fa-solid fa-graduation-cap" style="color:#38bdf8; width:16px;"></i> Visite Guidée KDS
                         </button>
+                        <!-- Centre de Formation -->
+                        <a href="/formation/" target="_blank" class="tools-dropdown-item" style="text-decoration:none; color:#f59e0b; font-weight:700; display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-graduation-cap" style="color:#f59e0b; width:16px;"></i> 🎓 Centre de Formation
+                        </a>
                     </div>
                 </div>
             </nav>
@@ -5985,8 +5989,8 @@
                 // Populate quick table test pills
                 const quickBox = document.getElementById('qr-audit-quick-tables');
                 if (quickBox) {
-                    const activeTableList = Array.isArray(tablesData) && tablesData.length > 0 
-                        ? tablesData.slice(0, 8) 
+                    const activeTableList = Array.isArray(floorPlanTables) && floorPlanTables.length > 0 
+                        ? floorPlanTables.slice(0, 8) 
                         : [{ number: '01' }, { number: '02' }, { number: '03' }, { number: '04' }, { number: '05' }];
                     quickBox.innerHTML = activeTableList.map(t => `
                         <button class="action-btn secondary" onclick="testQuickTableAudit('${t.number}', '${t.qr_code_token || ''}')" style="font-size:11px; padding:4px 10px;">
@@ -6920,7 +6924,7 @@
         let qrStudioActiveTab = 'sheet'; // 'sheet' | 'single'
         let qrStudioTableCount = 12;
 
-        function openQRStudioModal(preselectedTable) {
+        async function openQRStudioModal(preselectedTable) {
             // Restriction : seul le gérant ou le superadmin peut accéder au Studio QR Code
             if (activeRole !== 'superadmin' && activeRole !== 'gestionnaire' && activeRole !== 'gerant') {
                 showKdsToast('Accès restreint : Seuls le gérant et le superadmin peuvent accéder au Studio QR Code.', 'error');
@@ -6931,8 +6935,30 @@
             if (modal) {
                 modal.style.display = 'flex';
                 
+                // Charger le plan de tables depuis l'API si non chargé
+                if (!Array.isArray(floorPlanTables) || floorPlanTables.length === 0) {
+                    try {
+                        const res = await fetch('/api/tables/layout');
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (Array.isArray(data) && data.length > 0) {
+                                floorPlanTables = data;
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Erreur chargement tables pour QR Studio:', e);
+                    }
+                }
+
+                const tablesList = (Array.isArray(floorPlanTables) && floorPlanTables.length > 0)
+                    ? floorPlanTables
+                    : Array.from({ length: 12 }, (_, i) => {
+                        const num = String(i + 1).padStart(2, '0');
+                        return { number: num, name: `Table ${num}`, qr_code_token: `token_table_${num}` };
+                    });
+
                 // Déterminer le nombre de tables par défaut depuis les données du restaurant
-                qrStudioTableCount = Array.isArray(tablesData) && tablesData.length > 0 ? tablesData.length : 12;
+                qrStudioTableCount = tablesList.length;
                 const countInput = document.getElementById('qr-studio-table-count');
                 if (countInput) countInput.value = qrStudioTableCount;
 
@@ -6940,19 +6966,13 @@
                 const select = document.getElementById('qr-studio-table-select');
                 if (select) {
                     select.innerHTML = '';
-                    const activeTableList = Array.isArray(tablesData) && tablesData.length > 0 
-                        ? tablesData 
-                        : Array.from({ length: 12 }, (_, i) => {
-                            const num = String(i + 1).padStart(2, '0');
-                            return { number: num, name: `Table ${num}`, qr_code_token: `token_table_${num}` };
-                        });
-
-                    activeTableList.forEach(t => {
+                    tablesList.forEach(t => {
+                        const numStr = String(t.number).padStart(2, '0');
                         const opt = document.createElement('option');
-                        opt.value = `table_${t.number}`;
-                        opt.textContent = `🪑 Table ${t.number}${t.name && t.name !== 'Table ' + t.number ? ' (' + t.name + ')' : ''}`;
-                        opt.dataset.token = t.qr_code_token || `token_table_${t.number}`;
-                        opt.dataset.number = t.number;
+                        opt.value = `table_${numStr}`;
+                        opt.textContent = `🪑 Table ${numStr}${t.name && t.name !== 'Table ' + numStr ? ' (' + t.name + ')' : ''}`;
+                        opt.dataset.token = t.qr_code_token || `token_table_${numStr}`;
+                        opt.dataset.number = numStr;
                         select.appendChild(opt);
                     });
 
@@ -6968,7 +6988,8 @@
                 }
 
                 if (preselectedTable) {
-                    if (select) select.value = `table_${preselectedTable}`;
+                    const padTable = String(preselectedTable).padStart(2, '0');
+                    if (select) select.value = `table_${padTable}`;
                     setQRStudioTab('single');
                 } else {
                     setQRStudioTab('sheet');
@@ -7034,7 +7055,7 @@
 
             const tablesToBuild = Array.from({ length: qrStudioTableCount }, (_, i) => {
                 const num = String(i + 1).padStart(2, '0');
-                const existing = Array.isArray(tablesData) ? tablesData.find(t => t.number == num || t.number == String(i + 1)) : null;
+                const existing = Array.isArray(floorPlanTables) ? floorPlanTables.find(t => t.number == num || t.number == String(i + 1)) : null;
                 return {
                     number: num,
                     qr_code_token: existing?.qr_code_token || `token_table_${num}`
@@ -7109,7 +7130,7 @@
                 const count = parseInt(document.getElementById('qr-studio-table-count')?.value || qrStudioTableCount || '12', 10);
                 tablesToPrint = Array.from({ length: count }, (_, i) => {
                     const num = String(i + 1).padStart(2, '0');
-                    const existing = Array.isArray(tablesData) ? tablesData.find(t => t.number == num || t.number == String(i + 1)) : null;
+                    const existing = Array.isArray(floorPlanTables) ? floorPlanTables.find(t => t.number == num || t.number == String(i + 1)) : null;
                     return {
                         number: num,
                         qr_code_token: existing?.qr_code_token || `token_table_${num}`

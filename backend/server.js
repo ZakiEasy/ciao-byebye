@@ -375,6 +375,9 @@ app.use((req, res, next) => {
 // Servir les fichiers statiques du dossier frontend et du centre de formation
 app.use(express.static(path.join(__dirname, '../frontend')));
 app.use('/formation', express.static(path.join(__dirname, '../formation')));
+app.get('/formation', (req, res) => {
+  res.sendFile(path.join(__dirname, '../formation/index.html'));
+});
 
 // Helper de validation de format UUID pour Postgres
 const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
