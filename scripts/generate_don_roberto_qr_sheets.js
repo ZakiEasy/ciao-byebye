@@ -4,7 +4,9 @@ const PDFDocument = require('pdfkit');
 const QRCode = require('qrcode');
 
 async function generateTableSheets() {
-    console.log('🎨 Génération de la planche PDF des 12 Chevalets de Table pour Don Roberto...');
+    console.log('🎨 Génération de la planche PDF des 12 Chevalets de Table avec le Logo Officiel Don Roberto...');
+
+    const logoPath = path.join(__dirname, '../frontend/assets/logo-don-roberto.png');
 
     const tables = [
         { number: '01', name: 'Table 01', token: 'token_don-roberto_table_01', zone: 'Salle Principale' },
@@ -26,9 +28,9 @@ async function generateTableSheets() {
         size: 'A4',
         margin: 30,
         info: {
-            Title: 'Chevalets de Table QR Code — Don Roberto Nice',
+            Title: 'Chevalets de Table QR Code Officiels — Don Roberto Nice',
             Author: 'Ciao Byebye Solution',
-            Subject: 'Planche des 12 Chevalets de Table QR Code Haute Définition'
+            Subject: 'Planche des 12 Chevalets de Table avec Logo Officiel Don Roberto'
         }
     });
 
@@ -69,36 +71,41 @@ async function generateTableSheets() {
            .lineWidth(0.8)
            .stroke('#e2e8f0');
 
-        // 2. En-tête Ruban Sombre
-        doc.roundedRect(x + 8, y + 8, cardWidth - 16, 52, 6)
+        // 2. En-tête Ruban Sombre avec Logo Officiel Don Roberto
+        doc.roundedRect(x + 8, y + 8, cardWidth - 16, 56, 6)
            .fill('#0f172a');
 
         // Ligne Or
-        doc.rect(x + 8, y + 57, cardWidth - 16, 3)
+        doc.rect(x + 8, y + 61, cardWidth - 16, 3)
            .fill('#f59e0b');
 
-        doc.fillColor('#ffffff')
-           .fontSize(15)
-           .font('Helvetica-Bold')
-           .text('DON ROBERTO', x + 8, y + 16, { width: cardWidth - 16, align: 'center' });
+        if (fs.existsSync(logoPath)) {
+            // Intégration du logo officiel Don Roberto dans l'en-tête
+            doc.image(logoPath, x + (cardWidth - 120) / 2, y + 12, { width: 120, height: 44, fit: [120, 44], align: 'center', valign: 'center' });
+        } else {
+            doc.fillColor('#ffffff')
+               .fontSize(15)
+               .font('Helvetica-Bold')
+               .text('DON ROBERTO', x + 8, y + 16, { width: cardWidth - 16, align: 'center' });
 
-        doc.fillColor('#f59e0b')
-           .fontSize(8)
-           .font('Helvetica-Bold')
-           .text('PIZZERIA TRATTORIA • NICE', x + 8, y + 36, { width: cardWidth - 16, align: 'center' });
+            doc.fillColor('#f59e0b')
+               .fontSize(8)
+               .font('Helvetica-Bold')
+               .text('PIZZERIA TRATTORIA • NICE', x + 8, y + 36, { width: cardWidth - 16, align: 'center' });
+        }
 
         // 3. Génération Image QR Code HD
         const qrBuffer = await QRCode.toBuffer(targetUrl, {
             type: 'png',
-            width: 320,
+            width: 340,
             margin: 2,
             errorCorrectionLevel: 'H',
             color: { dark: '#0f172a', light: '#ffffff' }
         });
 
-        const qrSize = 170;
+        const qrSize = 166;
         const qrX = x + (cardWidth - qrSize) / 2;
-        const qrY = y + 72;
+        const qrY = y + 74;
 
         // Encadrement du QR Code
         doc.roundedRect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 10, 6)
@@ -106,16 +113,26 @@ async function generateTableSheets() {
 
         doc.image(qrBuffer, qrX, qrY, { width: qrSize, height: qrSize });
 
-        // Écusson central pizza dans le QR Code
+        // Écusson central avec Logo Officiel Don Roberto dans le QR Code
         const centerX = x + cardWidth / 2;
         const centerY = qrY + qrSize / 2;
-        doc.circle(centerX, centerY, 14)
+        const radius = 20;
+
+        doc.save();
+        doc.circle(centerX, centerY, radius + 2)
            .fillAndStroke('#ffffff', '#f59e0b');
-        
-        doc.fillColor('#0f172a')
-           .fontSize(12)
-           .font('Helvetica-Bold')
-           .text('🍕', centerX - 7, centerY - 6);
+        doc.lineWidth(1.5);
+
+        if (fs.existsSync(logoPath)) {
+            doc.circle(centerX, centerY, radius).clip();
+            doc.image(logoPath, centerX - radius, centerY - 14, { width: radius * 2, height: 28, fit: [radius * 2, 28], align: 'center', valign: 'center' });
+        } else {
+            doc.fillColor('#0f172a')
+               .fontSize(12)
+               .font('Helvetica-Bold')
+               .text('🍕', centerX - 7, centerY - 6);
+        }
+        doc.restore();
 
         // 4. Badge Table
         const badgeY = y + 252;
@@ -144,13 +161,13 @@ async function generateTableSheets() {
         doc.fillColor('#94a3b8')
            .fontSize(6)
            .font('Helvetica-Oblique')
-           .text('⚡ Ciao Byebye Solution', x + 10, y + 338, { width: cardWidth - 20, align: 'center' });
+           .text('⚡ Ciao Byebye Solution • Don Roberto Nice', x + 10, y + 338, { width: cardWidth - 20, align: 'center' });
     }
 
     doc.end();
 
     await new Promise((resolve) => stream.on('finish', resolve));
-    console.log('✅ Planche PDF 12 Chevalets générée avec succès :');
+    console.log('✅ Planche PDF 12 Chevalets avec Logo Officiel générée avec succès :');
     console.log('   - ' + pdfPath);
     console.log('   - ' + publicPdfPath);
 }
