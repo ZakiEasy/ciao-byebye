@@ -172,4 +172,126 @@ async function generateTableSheets() {
     console.log('   - ' + publicPdfPath);
 }
 
-generateTableSheets().catch(console.error);
+async function generateMiniStickersSheet() {
+    console.log('🎨 Génération de la planche PDF des Autocollants Mini 2.5 x 2.5 cm Don Roberto...');
+
+    const logoPath = path.join(__dirname, '../frontend/assets/logo-don-roberto.png');
+
+    const tables = [
+        { number: '01', token: 'token_don-roberto_table_01' },
+        { number: '02', token: 'token_don-roberto_table_02' },
+        { number: '03', token: 'token_don-roberto_table_03' },
+        { number: '04', token: 'token_don-roberto_table_04' },
+        { number: '05', token: 'token_don-roberto_table_05' },
+        { number: '06', token: 'token_don-roberto_table_06' },
+        { number: '07', token: 'token_don-roberto_table_07' },
+        { number: '08', token: 'token_don-roberto_table_08' },
+        { number: '09', token: 'token_don-roberto_table_09' },
+        { number: '10', token: 'token_don-roberto_table_10' },
+        { number: '11', token: 'token_don-roberto_table_11' },
+        { number: '12', token: 'token_don-roberto_table_12' }
+    ];
+
+    // 2.5 cm = 70.866 points (1 cm = 28.3465 pt)
+    const stickerSize = 70.866; // 2.5 x 2.5 cm
+
+    // A4: 595.28 x 841.89 pt
+    const doc = new PDFDocument({
+        size: 'A4',
+        margin: 20,
+        info: {
+            Title: 'Autocollants 2.5x2.5cm QR Code Don Roberto Nice',
+            Author: 'Ciao Byebye Solution',
+            Subject: 'Planche de Mini QR Codes Autocollants pour Tables'
+        }
+    });
+
+    const pdfPath = path.join(__dirname, '../formation/autocollants_don_roberto_12_tables_2.5x2.5cm.pdf');
+    const publicPdfPath = path.join(__dirname, '../frontend/autocollants_don_roberto_12_tables_2.5x2.5cm.pdf');
+
+    const stream = fs.createWriteStream(pdfPath);
+    doc.pipe(stream);
+    doc.pipe(fs.createWriteStream(publicPdfPath));
+
+    // Grille 6 colonnes x 9 lignes = 54 vignettes par page (plusieurs exemplaires par table)
+    const cols = 6;
+    const rows = 9;
+    const marginX = (595.28 - (cols * stickerSize)) / (cols + 1);
+    const marginY = (841.89 - (rows * stickerSize)) / (rows + 1);
+
+    // Titre de la page
+    doc.fillColor('#0f172a').fontSize(14).font('Helvetica-Bold').text('DON ROBERTO — Planche d\'Autocollants 2.5 cm x 2.5 cm', 20, 15, { align: 'center' });
+
+    let stickerIndex = 0;
+    // On génère 4 exemplaires par table (48 vignettes au total)
+    const stickersList = [];
+    for (let rep = 0; rep < 4; rep++) {
+        for (const t of tables) {
+            stickersList.push(t);
+        }
+    }
+
+    for (let i = 0; i < stickersList.length; i++) {
+        const table = stickersList[i];
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+
+        const x = marginX + col * (stickerSize + marginX);
+        const y = 35 + marginY + row * (stickerSize + marginY);
+
+        const targetUrl = `https://don-roberto.ciao-byebye.store/?table=${table.number}&token=${table.token}`;
+
+        // Contour du sticker (pointillé léger pour la découpe)
+        doc.roundedRect(x, y, stickerSize, stickerSize, 4)
+           .fillAndStroke('#ffffff', '#cbd5e1');
+        doc.lineWidth(0.5);
+
+        // Bandeau supérieur Don Roberto
+        doc.roundedRect(x + 2, y + 2, stickerSize - 4, 11, 2).fill('#0f172a');
+        doc.fillColor('#f59e0b').fontSize(5).font('Helvetica-Bold').text(`T. ${table.number}`, x + 2, y + 5, { width: stickerSize - 4, align: 'center' });
+
+        // QR Code
+        const qrBuffer = await QRCode.toBuffer(targetUrl, {
+            type: 'png',
+            width: 180,
+            margin: 0,
+            errorCorrectionLevel: 'M',
+            color: { dark: '#0f172a', light: '#ffffff' }
+        });
+
+        const qrSize = 48; // ~ 1.7 cm
+        const qrX = x + (stickerSize - qrSize) / 2;
+        const qrY = y + 14;
+
+        doc.image(qrBuffer, qrX, qrY, { width: qrSize, height: qrSize });
+
+        // Petit logo au centre du QR Code
+        if (fs.existsSync(logoPath)) {
+            const centerX = x + stickerSize / 2;
+            const centerY = qrY + qrSize / 2;
+            const r = 6;
+            doc.save();
+            doc.circle(centerX, centerY, r + 1).fillAndStroke('#ffffff', '#f59e0b');
+            doc.circle(centerX, centerY, r).clip();
+            doc.image(logoPath, centerX - r, centerY - 4, { width: r * 2, height: 8, fit: [r * 2, 8], align: 'center', valign: 'center' });
+            doc.restore();
+        }
+
+        // Bas du sticker
+        doc.fillColor('#0f172a').fontSize(4.5).font('Helvetica-Bold').text('SCANNEZ & PAYEZ', x + 2, y + stickerSize - 7, { width: stickerSize - 4, align: 'center' });
+    }
+
+    doc.end();
+    await new Promise((resolve) => stream.on('finish', resolve));
+    console.log('✅ Planche Autocollants 2.5x2.5cm générée avec succès :');
+    console.log('   - ' + pdfPath);
+    console.log('   - ' + publicPdfPath);
+}
+
+async function run() {
+    await generateTableSheets();
+    await generateMiniStickersSheet();
+}
+
+run().catch(console.error);
+
