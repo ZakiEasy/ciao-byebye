@@ -2993,7 +2993,8 @@ const defaultSSOProfiles = {
 async function clientSSO(provider) {
     activeClientSSOProvider = provider || 'Google';
     showToast(`Redirection vers le service de connexion ${activeClientSSOProvider}... ⏳`, 'info');
-    const table = currentTableNumber || '05';
+    const tableEl = document.getElementById('table-number');
+    const table = (tableEl ? tableEl.innerText.trim() : null) || localStorage.getItem('ciao_table_number') || '05';
     window.location.href = `/api/auth/sso/client-init?provider=${encodeURIComponent(activeClientSSOProvider.toLowerCase())}&table=${encodeURIComponent(table)}&return_url=${encodeURIComponent(window.location.pathname + window.location.search)}`;
     return;
 
