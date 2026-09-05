@@ -1250,6 +1250,9 @@
             <button class="action-btn secondary" id="btn-manual-refresh" onclick="fetchOrders(); showKdsToast('Commandes actualisées 🔄', 'success');" style="font-size:12px; padding:6px 10px; color:#38bdf8; border-color:rgba(56,189,248,0.4);" title="Actualiser immédiatement les commandes reçues">
                 <i class="fa-solid fa-arrows-rotate"></i>
             </button>
+            <button class="action-btn secondary theme-toggle-btn" id="btn-dashboard-toggle-theme" onclick="toggleAppTheme()" style="font-size:12px; padding:6px 10px; color:#f59e0b; border-color:rgba(245,158,11,0.5); background:rgba(245,158,11,0.1);" title="Basculer Mode Clair / Sombre">
+                <i class="fa-solid fa-sun" id="theme-toggle-icon-dash"></i>
+            </button>
 
             <!-- Unpaid Orders Quick Modal Trigger -->
             <button class="action-btn secondary" id="btn-unpaid-orders" onclick="openUnpaidOrdersModal()" style="font-size:12px; padding:6px 10px; color:#f59e0b; border-color:rgba(245,158,11,0.5); background:rgba(245,158,11,0.1);" title="Voir la liste des commandes non payées à encaisser">
@@ -1768,7 +1771,21 @@
             }
         }
 
+        function toggleAppTheme() {
+            const isLight = document.body.classList.toggle('theme-light');
+            localStorage.setItem('ciao_app_theme', isLight ? 'light' : 'dark');
+            const iconDash = document.getElementById('theme-toggle-icon-dash');
+            if (iconDash) iconDash.className = isLight ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('ciao_app_theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('theme-light');
+                const iconDash = document.getElementById('theme-toggle-icon-dash');
+                if (iconDash) iconDash.className = 'fa-solid fa-moon';
+            }
+
             document.getElementById('user-email').innerText = loggedUserEmail;
             
             const langSelect = document.getElementById('kds-lang-select');

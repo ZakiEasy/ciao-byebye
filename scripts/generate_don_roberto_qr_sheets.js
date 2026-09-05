@@ -296,7 +296,9 @@ async function generateTakeAwayPosterA4() {
 
     const doc = new PDFDocument({
         size: 'A4',
-        margin: 40,
+        margin: 0,
+        autoFirstPage: true,
+        bufferPages: true,
         info: {
             Title: 'Affiche A4 Take Away — Don Roberto Nice',
             Author: 'Ciao Byebye Solution',

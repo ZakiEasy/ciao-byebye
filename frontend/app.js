@@ -1105,7 +1105,24 @@ async function loadActiveTheme() {
 // APPLICATION LIFECYCLE & MENU LOGIC
 // ==========================================
 
+function toggleAppTheme() {
+    const isLight = document.body.classList.toggle('theme-light');
+    localStorage.setItem('ciao_app_theme', isLight ? 'light' : 'dark');
+    const themeIcon = document.getElementById('theme-toggle-icon');
+    if (themeIcon) {
+        themeIcon.className = isLight ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialisation du thème clair / sombre
+    const savedTheme = localStorage.getItem('ciao_app_theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('theme-light');
+        const themeIcon = document.getElementById('theme-toggle-icon');
+        if (themeIcon) themeIcon.className = 'fa-solid fa-moon';
+    }
+
     const langSelect = document.getElementById('lang-select');
     if (langSelect) langSelect.value = currentLang;
     const currSelect = document.getElementById('currency-select');

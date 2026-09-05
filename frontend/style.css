@@ -4422,52 +4422,60 @@ input:checked + .switch-slider:before {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: radial-gradient(circle at center, rgba(15, 23, 42, 0.4) 0%, rgba(2, 6, 23, 0.72) 100%);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
+    background: rgba(2, 6, 23, 0.45);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     z-index: 9999;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
     transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.walkthrough-overlay * {
+    pointer-events: auto;
 }
 
 .walkthrough-highlight-box {
     position: absolute;
-    border: 3px solid #38bdf8;
-    box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.58), 0 0 25px rgba(56, 189, 248, 0.85), inset 0 0 15px rgba(56, 189, 248, 0.25);
+    border: 3px solid #f59e0b;
+    box-shadow: 0 0 0 9999px rgba(2, 6, 23, 0.65), 0 0 30px rgba(245, 158, 11, 0.9), inset 0 0 15px rgba(245, 158, 11, 0.3);
     border-radius: 14px;
     pointer-events: none;
     transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 10000;
+    background: transparent;
     animation: walkthroughGlowPulse 2s infinite alternate ease-in-out;
 }
 
 @keyframes walkthroughGlowPulse {
     0% {
-        box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.58), 0 0 15px rgba(56, 189, 248, 0.6);
-        border-color: #38bdf8;
+        box-shadow: 0 0 0 9999px rgba(2, 6, 23, 0.62), 0 0 20px rgba(245, 158, 11, 0.7);
+        border-color: #f59e0b;
     }
     100% {
-        box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.58), 0 0 32px rgba(56, 189, 248, 0.95), inset 0 0 12px rgba(56, 189, 248, 0.35);
-        border-color: #7dd3fc;
+        box-shadow: 0 0 0 9999px rgba(2, 6, 23, 0.62), 0 0 35px rgba(251, 191, 36, 1), inset 0 0 16px rgba(251, 191, 36, 0.4);
+        border-color: #fbbf24;
     }
 }
 
 .walkthrough-card {
     position: relative;
-    max-width: 450px;
+    max-width: 480px;
     width: 100%;
-    background: rgba(15, 23, 42, 0.96);
-    border: 1.5px solid rgba(56, 189, 248, 0.4);
+    background: rgba(15, 23, 42, 0.98);
+    border: 2px solid #f59e0b;
     border-radius: 20px;
     padding: 24px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 35px rgba(56, 189, 248, 0.25);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 35px rgba(245, 158, 11, 0.35);
     z-index: 10001;
     color: #fff;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    animation: tourCardSlideIn 0.3s ease;
+}
     animation: tourCardSlideIn 0.3s ease;
 }
 
@@ -5496,6 +5504,57 @@ input:checked + .switch-slider:before {
         margin-bottom: 12px !important;
         font-size: 16px !important;
     }
+
+/* ==========================================================================
+   THEME CLAIR (LIGHT MODE) - PERMUTABLE UTILISATEUR (CLIENT, KDS, ADMIN)
+   ========================================================================== */
+body.theme-light {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --text-primary: #0f172a;
+    --text-muted: #64748b;
+    --glass-bg: rgba(255, 255, 255, 0.92);
+    --glass-border: rgba(15, 23, 42, 0.12);
+    --shadow-main: 0 10px 30px 0 rgba(15, 23, 42, 0.08);
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+}
+
+body.theme-light .glass,
+body.theme-light .glass-panel,
+body.theme-light .app-header,
+body.theme-light .dashboard-sidebar,
+body.theme-light .dashboard-header,
+body.theme-light .kds-header,
+body.theme-light .stat-card,
+body.theme-light .category-nav,
+body.theme-light .product-card {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-color: rgba(226, 232, 240, 0.9) !important;
+    color: #0f172a !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.theme-light .product-title,
+body.theme-light .stat-value,
+body.theme-light h1, body.theme-light h2, body.theme-light h3, body.theme-light h4,
+body.theme-light .kds-card-header,
+body.theme-light .sidebar-nav-link {
+    color: #0f172a !important;
+}
+
+body.theme-light .product-desc,
+body.theme-light .stat-label,
+body.theme-light .text-muted {
+    color: #64748b !important;
+}
+
+body.theme-light .theme-toggle-btn {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
 
     .pay-btn {
         padding: 14px !important;
