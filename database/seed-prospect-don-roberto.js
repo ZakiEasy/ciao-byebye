@@ -96,11 +96,12 @@ async function seedDonRobertoProspect() {
       { number: '09', name: 'Table 09', max_covers: 4, zone: 'salle', shape: 'square', pos_x: 60, pos_y: 300 },
       { number: '10', name: 'Table 10', max_covers: 4, zone: 'salle', shape: 'square', pos_x: 180, pos_y: 300 },
       { number: '11', name: 'Table 11', max_covers: 4, zone: 'salle', shape: 'square', pos_x: 300, pos_y: 300 },
-      { number: '12', name: 'Comptoir Bar 6P', max_covers: 6, zone: 'comptoir', shape: 'bar', pos_x: 420, pos_y: 300 }
+      { number: '12', name: 'Comptoir Bar 6P', max_covers: 6, zone: 'comptoir', shape: 'bar', pos_x: 420, pos_y: 300 },
+      { number: '99', name: 'TAKE AWAY • À EMPORTER', max_covers: 20, zone: 'a_emporter', shape: 'square', pos_x: 540, pos_y: 300 }
     ];
 
     for (const t of donRobertoTables) {
-      const token = `token_donroberto_table_${t.number}`;
+      const token = t.number === '99' ? 'token_don-roberto_take_away' : `token_donroberto_table_${t.number}`;
       await pool.query(`
         INSERT INTO tables (number, name, max_covers, actual_covers, qr_code_token, service_status, zone, shape, pos_x, pos_y)
         VALUES ($1, $2, $3, 0, $4, 'libre', $5, $6, $7, $8)
@@ -114,7 +115,7 @@ async function seedDonRobertoProspect() {
           pos_y = EXCLUDED.pos_y
       `, [t.number, t.name, t.max_covers, token, t.zone, t.shape, t.pos_x, t.pos_y]);
     }
-    console.log('✅ 12 tables créées (11 tables assises 4P + 1 table comptoir 6P = 50 couverts)');
+    console.log('✅ 13 tables créées (11 tables assises + 1 comptoir + 1 zone TAKE AWAY / Vente à emporter)');
 
     // 4. Création des 4 comptes d'accès opérationnels
     const allTableNumbers = donRobertoTables.map(t => t.number);

@@ -288,10 +288,127 @@ async function generateMiniStickersSheet() {
     console.log('   - ' + publicPdfPath);
 }
 
+async function generateTakeAwayPosterA4() {
+    console.log('🎨 Génération de l\'Affiche A4 Take Away / Vente à Emporter Don Roberto...');
+
+    const logoPath = path.join(__dirname, '../frontend/assets/logo-don-roberto.png');
+    const targetUrl = 'https://don-roberto.ciao-byebye.store/?table=99&token=token_don-roberto_take_away&mode=takeaway';
+
+    const doc = new PDFDocument({
+        size: 'A4',
+        margin: 40,
+        info: {
+            Title: 'Affiche A4 Take Away — Don Roberto Nice',
+            Author: 'Ciao Byebye Solution',
+            Subject: 'Commandes à Emporter & Drive QR Code'
+        }
+    });
+
+    const pdfPath = path.join(__dirname, '../formation/affiche_take_away_don_roberto_A4.pdf');
+    const publicPdfPath = path.join(__dirname, '../frontend/affiche_take_away_don_roberto_A4.pdf');
+
+    const stream = fs.createWriteStream(pdfPath);
+    doc.pipe(stream);
+    doc.pipe(fs.createWriteStream(publicPdfPath));
+
+    const width = 595.28;
+    const height = 841.89;
+
+    // 1. En-tête Fond Sombre Luxe
+    doc.rect(0, 0, width, 180).fill('#0f172a');
+    doc.rect(0, 175, width, 6).fill('#f59e0b');
+
+    if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, (width - 240) / 2, 25, { width: 240, height: 90, fit: [240, 90], align: 'center' });
+    }
+
+    doc.fillColor('#f59e0b')
+       .fontSize(16)
+       .font('Helvetica-Bold')
+       .text('PIZZERIA TRATTORIA • NICE', 0, 125, { width: width, align: 'center' });
+
+    doc.fillColor('#ffffff')
+       .fontSize(13)
+       .font('Helvetica')
+       .text('COMMANDE À EMPORTER • TAKE AWAY', 0, 148, { width: width, align: 'center' });
+
+    // 2. Badge Titre Central
+    doc.roundedRect((width - 380) / 2, 210, 380, 50, 12).fill('#f59e0b');
+    doc.fillColor('#0f172a')
+       .fontSize(20)
+       .font('Helvetica-Bold')
+       .text('COMMANDER À EMPORTER', 0, 224, { width: width, align: 'center' });
+
+    // 3. QR Code Géant A4 (280x280)
+    const qrSize = 280;
+    const qrX = (width - qrSize) / 2;
+    const qrY = 285;
+
+    doc.roundedRect(qrX - 15, qrY - 15, qrSize + 30, qrSize + 30, 20)
+       .fillAndStroke('#ffffff', '#cbd5e1');
+    doc.lineWidth(2);
+
+    const qrBuffer = await QRCode.toBuffer(targetUrl, {
+        type: 'png',
+        width: 600,
+        margin: 2,
+        errorCorrectionLevel: 'H',
+        color: { dark: '#0f172a', light: '#ffffff' }
+    });
+
+    doc.image(qrBuffer, qrX, qrY, { width: qrSize, height: qrSize });
+
+    // Logo central écusson dans le QR Code
+    const centerX = width / 2;
+    const centerY = qrY + qrSize / 2;
+    const r = 35;
+
+    doc.save();
+    doc.circle(centerX, centerY, r + 3).fillAndStroke('#ffffff', '#f59e0b');
+    doc.lineWidth(2.5);
+
+    if (fs.existsSync(logoPath)) {
+        doc.circle(centerX, centerY, r).clip();
+        doc.image(logoPath, centerX - r, centerY - 24, { width: r * 2, height: 48, fit: [r * 2, 48], align: 'center', valign: 'center' });
+    }
+    doc.restore();
+
+    // 4. Instructions & Étapes
+    doc.fillColor('#0f172a')
+       .fontSize(16)
+       .font('Helvetica-Bold')
+       .text('Scannez ce QR Code avec votre téléphone', 0, 615, { width: width, align: 'center' });
+
+    doc.fillColor('#475569')
+       .fontSize(12)
+       .font('Helvetica')
+       .text('1. Choisissez vos Pizzas & Spécialités Italiennes\n2. Réglez en ligne de façon 100% sécurisée\n3. Récupérez votre commande au comptoir !', 0, 642, { width: width, align: 'center', lineGap: 6 });
+
+    // 5. Bas de page / Footer
+    doc.rect(0, height - 70, width, 70).fill('#0f172a');
+    doc.fillColor('#f59e0b')
+       .fontSize(12)
+       .font('Helvetica-Bold')
+       .text('DON ROBERTO • 158 Avenue de la Californie, 06200 Nice', 0, height - 52, { width: width, align: 'center' });
+
+    doc.fillColor('#94a3b8')
+       .fontSize(9)
+       .font('Helvetica')
+       .text('Service Click & Collect Express par Ciao Byebye Solution', 0, height - 32, { width: width, align: 'center' });
+
+    doc.end();
+    await new Promise((resolve) => stream.on('finish', resolve));
+    console.log('✅ Affiche A4 Take Away générée avec succès :');
+    console.log('   - ' + pdfPath);
+    console.log('   - ' + publicPdfPath);
+}
+
 async function run() {
     await generateTableSheets();
     await generateMiniStickersSheet();
+    await generateTakeAwayPosterA4();
 }
 
 run().catch(console.error);
+
 
