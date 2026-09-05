@@ -2662,32 +2662,60 @@ async function submitCustomerReview() {
 // 6. VISITE GUIDÉE & WALKTHROUGH TOUR ENGINE (CLIENT PWA)
 // ========================================================
 
+// ========================================================
+// 6. VISITE GUIDÉE & WALKTHROUGH TOUR ENGINE (CLIENT PWA)
+// ========================================================
+
 let clientWalkthroughStep = 0;
 const clientWalkthroughSteps = [
     {
-        target: '.category-chips-nav',
+        target: '.category-nav',
         title: "1. Navigation & Filtres de Carte",
-        desc: "Parcourez facilement toutes les catégories du restaurant : Boissons, Entrées, Plats, Vins et Desserts en 1 clic."
+        desc: "Parcourez facilement toutes les catégories du restaurant : Boissons, Entrées, Plats et Desserts en 1 clic !"
     },
     {
         target: '#menu-container',
-        title: "2. Personnalisation & Ingrédients",
-        desc: "Cliquez sur n'importe quel plat pour le personnaliser : retirez un ingrédient, signalez une allergie ou choisissez votre cuisson !"
+        title: "2. Choix & Personnalisation des Plats",
+        desc: "Consultez les photos HD et détails des pizzas & spécialités italiennes. Cliquez sur Ajouter pour composer votre commande."
     },
     {
-        target: '#cart-btn',
-        title: "3. Panier & Numérotation des Sièges",
-        desc: "Retrouvez vos articles choisis et attribuez chaque plat à un convive précis (Place 1, Place 2...) pour un service fluide."
+        target: '#cart-floating-btn',
+        title: "3. Panier Flottant & Attribution des Sièges",
+        desc: "Cliquez sur votre panier flottant pour récapituler vos choix, vérifier votre total et attribuer chaque plat à un convive !"
     },
     {
         target: '#payment-modal',
+        action: () => {
+            // Ouvrir la modale de paiement automatiquement si non ouverte
+            const modal = document.getElementById('payment-modal');
+            const overlay = document.getElementById('payment-modal-overlay');
+            if (modal && overlay) {
+                overlay.style.display = 'block';
+                modal.style.display = 'block';
+            }
+        },
+        cleanup: () => {
+            // Fermer la modale à la fin de cette étape
+            const modal = document.getElementById('payment-modal');
+            const overlay = document.getElementById('payment-modal-overlay');
+            if (modal && overlay) {
+                overlay.style.display = 'none';
+                modal.style.display = 'none';
+            }
+        },
         title: "4. Division d'Addition & Moyens de Paiement",
-        desc: "Réglez l'addition seul ou divisez-la équitablement (1/2, 1/3, 1/4...). Vous pouvez payer par CB, Titre-Restaurant (Swile, Edenred, Conecs) ou Espèces !"
+        desc: "Réglez votre part ou divisez l'addition équitablement. Vous pouvez payer directement par Carte Bancaire, Apple Pay, Titre-Restaurant ou Espèces en Caisse !"
     },
     {
         target: '#header-table-badge',
-        title: "5. Suivi Cuisine en Direct & E-Réputation",
-        desc: "Suivez l'avancement de votre commande en direct et partagez votre avis en 5 étoiles sur Google Avis pour soutenir l'établissement !"
+        action: () => {
+            openSharedTableOrdersModal();
+        },
+        cleanup: () => {
+            closeSharedTableOrdersModal();
+        },
+        title: "5. Suivi Cuisine en Direct & Partage d'Avis",
+        desc: "Suivez en temps réel le statut de préparation de votre table en cuisine et donnez votre avis en 5 étoiles !"
     }
 ];
 
@@ -2703,6 +2731,11 @@ function renderClientWalkthroughStep() {
     if (!step) {
         stopClientWalkthrough();
         return;
+    }
+
+    // Exécuter l'action spécifique à l'étape (ex: ouvrir une modale)
+    if (typeof step.action === 'function') {
+        step.action();
     }
 
     const titleEl = document.getElementById('walkthrough-title');
@@ -2730,7 +2763,6 @@ function renderClientWalkthroughStep() {
     const cardEl = document.getElementById('walkthrough-card');
 
     if (targetEl && box) {
-        // Faire défiler l'écran vers l'élément avec une marge suffisante
         targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
         setTimeout(() => {
@@ -2744,16 +2776,14 @@ function renderClientWalkthroughStep() {
             if (cardEl) {
                 cardEl.style.position = 'absolute';
                 const viewportHeight = window.innerHeight;
-                // Si l'élément ciblé se trouve dans la moitié bas de l'écran -> Placer la carte au-dessus
                 if (rect.top > viewportHeight / 2) {
                     cardEl.style.top = `${Math.max(10, rect.top + window.scrollY - 220)}px`;
                 } else {
-                    // Sinon placer la carte sous l'élément ciblé
                     cardEl.style.top = `${rect.bottom + window.scrollY + 16}px`;
                 }
                 cardEl.style.left = `${Math.max(16, Math.min(window.innerWidth - 500, rect.left))}px`;
             }
-        }, 150);
+        }, 200);
     } else if (box) {
         box.style.display = 'none';
         if (cardEl) {
@@ -2765,6 +2795,11 @@ function renderClientWalkthroughStep() {
 }
 
 function nextClientWalkthroughStep() {
+    const currentStepObj = clientWalkthroughSteps[clientWalkthroughStep];
+    if (currentStepObj && typeof currentStepObj.cleanup === 'function') {
+        currentStepObj.cleanup();
+    }
+
     if (clientWalkthroughStep < clientWalkthroughSteps.length - 1) {
         clientWalkthroughStep++;
         renderClientWalkthroughStep();
@@ -2774,6 +2809,11 @@ function nextClientWalkthroughStep() {
 }
 
 function prevClientWalkthroughStep() {
+    const currentStepObj = clientWalkthroughSteps[clientWalkthroughStep];
+    if (currentStepObj && typeof currentStepObj.cleanup === 'function') {
+        currentStepObj.cleanup();
+    }
+
     if (clientWalkthroughStep > 0) {
         clientWalkthroughStep--;
         renderClientWalkthroughStep();
@@ -2781,6 +2821,11 @@ function prevClientWalkthroughStep() {
 }
 
 function stopClientWalkthrough() {
+    const currentStepObj = clientWalkthroughSteps[clientWalkthroughStep];
+    if (currentStepObj && typeof currentStepObj.cleanup === 'function') {
+        currentStepObj.cleanup();
+    }
+
     const overlay = document.getElementById('walkthrough-overlay');
     if (overlay) overlay.style.display = 'none';
     localStorage.setItem('ciao_client_tour_seen', 'true');

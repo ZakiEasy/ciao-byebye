@@ -5595,31 +5595,37 @@
         const kdsTourSteps = [
             {
                 target: '#tab-btn-kds',
+                action: () => switchTab('kds'),
                 title: "1. File de Commandes & Temporisation KDS",
                 desc: "Visualisez les bons envoyés par les clients et serveurs en temps réel. Suivez les temps de préparation avec les codes couleurs vert, orange et rouge."
             },
             {
                 target: '#tab-btn-tables',
+                action: () => switchTab('tables'),
                 title: "2. Plan de Salle 2D Interactif",
                 desc: "Gérez l'attribution des tables, l'occupation des couverts, et fusionnez/séparez les tables d'un simple glisser-déposer."
             },
             {
                 target: '#tab-btn-stocks',
+                action: () => switchTab('stocks'),
                 title: "3. Fiches Techniques & BOM 86",
                 desc: "Décompte automatique des ingrédients en cuisine dès qu'une commande est validée, avec mise en rupture 86 automatique."
             },
             {
                 target: '#tab-btn-reviews',
+                action: () => switchTab('reviews'),
                 title: "4. Hub E-Réputation & Sync Google/TripAdvisor",
                 desc: "Consultez les notes des clients et configurez la redirection 1-clic vers Google Avis pour doper votre classement sans effort."
             },
             {
                 target: '#tab-btn-pos',
+                action: () => switchTab('pos'),
                 title: "5. Hub d'Intégration Caisses (25+ Logiciels POS)",
                 desc: "Connectez Ciao Byebye en 1 clic à L'Addition, Lightspeed, Zelty, Square, SumUp, Innovorder et synchronisez vos tickets sans changer de matériel."
             },
             {
                 target: '#tab-btn-modules',
+                action: () => switchTab('modules'),
                 title: "6. Formules (Essentiel/Pro/Chaînes) & Activation",
                 desc: "Activez ou désactivez les modules à la carte en fonction de votre offre Ciao Byebye choisie (49€, 99€ ou 199€ HT/mois)."
             }
@@ -7805,6 +7811,10 @@
             if (!step) {
                 stopKDSTour();
                 return;
+            }
+
+            if (typeof step.action === 'function') {
+                step.action();
             }
 
             const titleEl = document.getElementById('kds-walkthrough-title');
