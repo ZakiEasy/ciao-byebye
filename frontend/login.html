@@ -431,9 +431,9 @@
 
         // SSO triggers via OAuth 2.0 Backend
         function triggerSSO(provider) {
-            const selectedStaffEmail = document.getElementById('sso-profile') ? document.getElementById('sso-profile').value : '';
-            console.log(`Initialisation de l'authentification SSO avec ${provider}...`);
-            window.location.href = `/api/auth/sso/client-init?provider=${encodeURIComponent(provider.toLowerCase())}&return_url=/dashboard.html`;
+            const selectedStaffEmail = document.getElementById('sso-profile') ? document.getElementById('sso-profile').value : 'gerant.don-roberto@ciao-byebye.fr';
+            console.log(`Initialisation de l'authentification SSO avec ${provider} pour ${selectedStaffEmail}...`);
+            window.location.href = `/api/auth/sso/client-init?provider=${encodeURIComponent(provider.toLowerCase())}&return_url=/dashboard.html&staff_email=${encodeURIComponent(selectedStaffEmail)}`;
         }
 
         // Manual fallback login handling

@@ -3605,9 +3605,9 @@ app.get('/api/auth/sso/callback', async (req, res) => {
     return res.redirect(`${returnUrl}${returnUrl.includes('?') ? '&' : '?'}sso_provider=${provider || 'google'}&sso_name=${encodeURIComponent(formattedName)}&sso_email=${encodeURIComponent(userEmail)}`);
   }
 
-  let loginEmail = (email || '').trim().toLowerCase();
+  let loginEmail = (email || stateData.staffEmail || '').trim().toLowerCase();
   if (!loginEmail) {
-    if (provider === 'google') loginEmail = 'superadmin@ciao-byebye.fr';
+    if (provider === 'google') loginEmail = 'gerant.don-roberto@ciao-byebye.fr';
     else if (provider === 'apple') loginEmail = 'maitre@atelier-chris.fr';
     else if (provider === 'microsoft') loginEmail = 'david@atelier-chris.fr';
     else loginEmail = 'boss@atelier-chris.fr';
@@ -3746,11 +3746,13 @@ app.get('/api/auth/sso/client-init', (req, res) => {
   const provider = (req.query.provider || 'google').toLowerCase();
   const table = req.query.table || '05';
   const returnUrl = req.query.return_url || `/?table=${table}`;
+  const staffEmail = req.query.staff_email || '';
+  const isStaff = returnUrl.includes('dashboard') || returnUrl.includes('admin') || !!staffEmail;
   const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
   const host = req.get('host');
   const scheme = (protocol === 'http' && !host.includes('localhost')) ? 'https' : protocol;
   const redirectUri = `${scheme}://${host}/api/auth/sso/callback`;
-  const statePayload = JSON.stringify({ client_sso: true, table, returnUrl });
+  const statePayload = JSON.stringify({ client_sso: !isStaff, isStaff: isStaff, table, returnUrl, staffEmail });
 
   if (provider === 'google' && process.env.GOOGLE_CLIENT_ID) {
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20profile%20email&state=${encodeURIComponent(statePayload)}`;
