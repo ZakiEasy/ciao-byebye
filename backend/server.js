@@ -3599,8 +3599,9 @@ app.get('/api/auth/sso/callback', async (req, res) => {
   if (isClientSSO) {
     const returnUrl = stateData.returnUrl || (typeof state === 'string' && !state.startsWith('{') ? state : `/?table=${table || stateData.table || '05'}`);
     const userEmail = email || 'client.google@gmail.com';
-    const userName = userEmail.split('@')[0].replace('.', ' ');
-    const formattedName = userName.charAt(0).toUpperCase() + userName.slice(1);
+    const rawName = userEmail.split('@')[0].replace('.', ' ');
+    const firstName = rawName.split(' ')[0];
+    const formattedName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
     return res.redirect(`${returnUrl}${returnUrl.includes('?') ? '&' : '?'}sso_provider=${provider || 'google'}&sso_name=${encodeURIComponent(formattedName)}&sso_email=${encodeURIComponent(userEmail)}`);
   }
 
