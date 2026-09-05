@@ -3587,8 +3587,17 @@ app.post('/api/menu/scrape-url', async (req, res) => {
 app.get('/api/auth/sso/callback', async (req, res) => {
   const { provider, state, email, client_sso, table } = req.query;
 
-  if (client_sso === 'true') {
-    const returnUrl = state || `/?table=${table || '05'}`;
+  let stateData = {};
+  if (state) {
+    try {
+      stateData = JSON.parse(state);
+    } catch (e) {}
+  }
+
+  const isClientSSO = client_sso === 'true' || stateData.client_sso === true;
+
+  if (isClientSSO) {
+    const returnUrl = stateData.returnUrl || (typeof state === 'string' && !state.startsWith('{') ? state : `/?table=${table || stateData.table || '05'}`);
     const userEmail = email || 'client.google@gmail.com';
     const userName = userEmail.split('@')[0].replace('.', ' ');
     const formattedName = userName.charAt(0).toUpperCase() + userName.slice(1);
@@ -3738,10 +3747,12 @@ app.get('/api/auth/sso/client-init', (req, res) => {
   const returnUrl = req.query.return_url || `/?table=${table}`;
   const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
   const host = req.get('host');
-  const redirectUri = `${protocol === 'http' && !host.includes('localhost') ? 'https' : protocol}://${host}/api/auth/sso/callback?client_sso=true&table=${table}`;
+  const scheme = (protocol === 'http' && !host.includes('localhost')) ? 'https' : protocol;
+  const redirectUri = `${scheme}://${host}/api/auth/sso/callback`;
+  const statePayload = JSON.stringify({ client_sso: true, table, returnUrl });
 
   if (provider === 'google' && process.env.GOOGLE_CLIENT_ID) {
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20profile%20email&state=${encodeURIComponent(returnUrl)}`;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20profile%20email&state=${encodeURIComponent(statePayload)}`;
     return res.redirect(authUrl);
   } else if (provider === 'microsoft' && process.env.MICROSOFT_CLIENT_ID) {
     const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${process.env.MICROSOFT_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20profile%20email&state=${encodeURIComponent(returnUrl)}`;
