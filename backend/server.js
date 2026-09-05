@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const { Pool } = require('pg');
 
 const app = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -3735,7 +3736,9 @@ app.get('/api/auth/sso/client-init', (req, res) => {
   const provider = (req.query.provider || 'google').toLowerCase();
   const table = req.query.table || '05';
   const returnUrl = req.query.return_url || `/?table=${table}`;
-  const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/sso/callback?client_sso=true&table=${table}`;
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  const host = req.get('host');
+  const redirectUri = `${protocol === 'http' && !host.includes('localhost') ? 'https' : protocol}://${host}/api/auth/sso/callback?client_sso=true&table=${table}`;
 
   if (provider === 'google' && process.env.GOOGLE_CLIENT_ID) {
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20profile%20email&state=${encodeURIComponent(returnUrl)}`;
