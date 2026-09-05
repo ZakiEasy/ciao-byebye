@@ -2725,18 +2725,42 @@ function renderClientWalkthroughStep() {
         ).join('');
     }
 
-    // Positionner la boîte de surbrillance
+    // Positionner la boîte de surbrillance et la carte d'explication sans masquer l'élément cibles
     const targetEl = document.querySelector(step.target);
+    const cardEl = document.getElementById('walkthrough-card');
+
     if (targetEl && box) {
-        const rect = targetEl.getBoundingClientRect();
-        box.style.display = 'block';
-        box.style.top = `${Math.max(0, rect.top - 8 + window.scrollY)}px`;
-        box.style.left = `${Math.max(0, rect.left - 8)}px`;
-        box.style.width = `${rect.width + 16}px`;
-        box.style.height = `${rect.height + 16}px`;
+        // Faire défiler l'écran vers l'élément avec une marge suffisante
         targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        setTimeout(() => {
+            const rect = targetEl.getBoundingClientRect();
+            box.style.display = 'block';
+            box.style.top = `${Math.max(0, rect.top - 8 + window.scrollY)}px`;
+            box.style.left = `${Math.max(0, rect.left - 8)}px`;
+            box.style.width = `${rect.width + 16}px`;
+            box.style.height = `${rect.height + 16}px`;
+
+            if (cardEl) {
+                cardEl.style.position = 'absolute';
+                const viewportHeight = window.innerHeight;
+                // Si l'élément ciblé se trouve dans la moitié bas de l'écran -> Placer la carte au-dessus
+                if (rect.top > viewportHeight / 2) {
+                    cardEl.style.top = `${Math.max(10, rect.top + window.scrollY - 220)}px`;
+                } else {
+                    // Sinon placer la carte sous l'élément ciblé
+                    cardEl.style.top = `${rect.bottom + window.scrollY + 16}px`;
+                }
+                cardEl.style.left = `${Math.max(16, Math.min(window.innerWidth - 500, rect.left))}px`;
+            }
+        }, 150);
     } else if (box) {
         box.style.display = 'none';
+        if (cardEl) {
+            cardEl.style.position = 'relative';
+            cardEl.style.top = 'auto';
+            cardEl.style.left = 'auto';
+        }
     }
 }
 

@@ -5512,41 +5512,71 @@ body.theme-light {
     --bg-primary: #f8fafc;
     --bg-secondary: #ffffff;
     --text-primary: #0f172a;
-    --text-muted: #64748b;
-    --glass-bg: rgba(255, 255, 255, 0.92);
-    --glass-border: rgba(15, 23, 42, 0.12);
-    --shadow-main: 0 10px 30px 0 rgba(15, 23, 42, 0.08);
+    --text-muted: #475569;
+    --glass-bg: #ffffff;
+    --glass-border: rgba(15, 23, 42, 0.15);
+    --shadow-main: 0 10px 30px 0 rgba(15, 23, 42, 0.1);
     background-color: #f1f5f9 !important;
+    background: #f1f5f9 !important;
     color: #0f172a !important;
 }
 
 body.theme-light .glass,
 body.theme-light .glass-panel,
+body.theme-light .glass-card,
 body.theme-light .app-header,
 body.theme-light .dashboard-sidebar,
 body.theme-light .dashboard-header,
 body.theme-light .kds-header,
+body.theme-light .kds-container,
+body.theme-light .kds-card,
+body.theme-light .kds-column,
+body.theme-light .kds-ticket,
 body.theme-light .stat-card,
 body.theme-light .category-nav,
-body.theme-light .product-card {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-color: rgba(226, 232, 240, 0.9) !important;
+body.theme-light .product-card,
+body.theme-light .pos-modal-card,
+body.theme-light .pos-modal-overlay > div,
+body.theme-light .table-plan-container,
+body.theme-light .table-card-2d,
+body.theme-light .welcome-section,
+body.theme-light .menu-section,
+body.theme-light .cart-summary,
+body.theme-light .account-drawer,
+body.theme-light .site-header,
+body.theme-light main,
+body.theme-light div[class*="card"] {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
     color: #0f172a !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08) !important;
 }
 
 body.theme-light .product-title,
 body.theme-light .stat-value,
-body.theme-light h1, body.theme-light h2, body.theme-light h3, body.theme-light h4,
+body.theme-light h1, body.theme-light h2, body.theme-light h3, body.theme-light h4, body.theme-light h5,
 body.theme-light .kds-card-header,
-body.theme-light .sidebar-nav-link {
-    color: #0f172a !important;
+body.theme-light .sidebar-nav-link,
+body.theme-light label,
+body.theme-light span,
+body.theme-light p,
+body.theme-light div {
+    color: #0f172a;
 }
 
 body.theme-light .product-desc,
 body.theme-light .stat-label,
-body.theme-light .text-muted {
-    color: #64748b !important;
+body.theme-light .text-muted,
+body.theme-light .sub-text {
+    color: #475569 !important;
+}
+
+body.theme-light input,
+body.theme-light select,
+body.theme-light textarea {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
 }
 
 body.theme-light .theme-toggle-btn {

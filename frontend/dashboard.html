@@ -7828,16 +7828,37 @@
             }
 
             const targetEl = document.querySelector(step.target);
+            const cardEl = document.getElementById('kds-walkthrough-card');
+
             if (targetEl && box) {
-                const rect = targetEl.getBoundingClientRect();
-                box.style.display = 'block';
-                box.style.top = `${Math.max(0, rect.top - 6 + window.scrollY)}px`;
-                box.style.left = `${Math.max(0, rect.left - 6)}px`;
-                box.style.width = `${rect.width + 12}px`;
-                box.style.height = `${rect.height + 12}px`;
                 targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                setTimeout(() => {
+                    const rect = targetEl.getBoundingClientRect();
+                    box.style.display = 'block';
+                    box.style.top = `${Math.max(0, rect.top - 6 + window.scrollY)}px`;
+                    box.style.left = `${Math.max(0, rect.left - 6)}px`;
+                    box.style.width = `${rect.width + 12}px`;
+                    box.style.height = `${rect.height + 12}px`;
+
+                    if (cardEl) {
+                        cardEl.style.position = 'absolute';
+                        const viewportHeight = window.innerHeight;
+                        if (rect.top > viewportHeight / 2) {
+                            cardEl.style.top = `${Math.max(10, rect.top + window.scrollY - 220)}px`;
+                        } else {
+                            cardEl.style.top = `${rect.bottom + window.scrollY + 16}px`;
+                        }
+                        cardEl.style.left = `${Math.max(16, Math.min(window.innerWidth - 500, rect.left))}px`;
+                    }
+                }, 150);
             } else if (box) {
                 box.style.display = 'none';
+                if (cardEl) {
+                    cardEl.style.position = 'relative';
+                    cardEl.style.top = 'auto';
+                    cardEl.style.left = 'auto';
+                }
             }
         }
 
