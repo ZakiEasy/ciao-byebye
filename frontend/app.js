@@ -2674,40 +2674,59 @@ const clientWalkthroughSteps = [
         desc: "Parcourez facilement toutes les catégories du restaurant : Boissons, Entrées, Plats et Desserts en 1 clic !"
     },
     {
-        target: '#menu-container',
-        title: "2. Choix & Personnalisation des Plats",
-        desc: "Consultez les photos HD et détails des pizzas & spécialités italiennes. Cliquez sur Ajouter pour composer votre commande."
+        target: '#custom-modal',
+        action: () => {
+            if (products && products.length > 0) {
+                openCustomModal(products[0].id);
+            }
+        },
+        cleanup: () => {
+            closeCustomModal();
+        },
+        title: "2. Personnalisation & Choix des Ingrédients",
+        desc: "Retirez un ingrédient, choisissez la cuisson de votre viande, ajoutez un supplément et attribuez votre plat à un siège précis !"
     },
     {
-        target: '#cart-floating-btn',
-        title: "3. Panier Flottant & Attribution des Sièges",
-        desc: "Cliquez sur votre panier flottant pour récapituler vos choix, vérifier votre total et attribuer chaque plat à un convive !"
+        target: '#cart-panel',
+        action: () => {
+            // S'assurer qu'au moins 1 article est dans le panier pour la démo
+            if (cart.length === 0 && products && products.length > 0) {
+                addToCart(products[0].id);
+            }
+            const panel = document.getElementById('cart-panel');
+            const overlay = document.getElementById('cart-panel-overlay');
+            if (panel && overlay) {
+                panel.classList.add('active');
+                overlay.classList.add('active');
+            }
+        },
+        cleanup: () => {
+            const panel = document.getElementById('cart-panel');
+            const overlay = document.getElementById('cart-panel-overlay');
+            if (panel && overlay) {
+                panel.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+        },
+        title: "3. Bandeau du Panier & Sièges Convives",
+        desc: "Visualisez le récapitulatif de votre commande, appliquez vos remises fidélité et vérifiez l'attribution de chaque convive."
     },
     {
         target: '#payment-modal',
         action: () => {
-            // Ouvrir la modale de paiement automatiquement si non ouverte
-            const modal = document.getElementById('payment-modal');
-            const overlay = document.getElementById('payment-modal-overlay');
-            if (modal && overlay) {
-                overlay.style.display = 'block';
-                modal.style.display = 'block';
+            if (cart.length === 0 && products && products.length > 0) {
+                addToCart(products[0].id);
             }
+            proceedToPayment();
         },
         cleanup: () => {
-            // Fermer la modale à la fin de cette étape
-            const modal = document.getElementById('payment-modal');
-            const overlay = document.getElementById('payment-modal-overlay');
-            if (modal && overlay) {
-                overlay.style.display = 'none';
-                modal.style.display = 'none';
-            }
+            closePayment();
         },
         title: "4. Division d'Addition & Moyens de Paiement",
-        desc: "Réglez votre part ou divisez l'addition équitablement. Vous pouvez payer directement par Carte Bancaire, Apple Pay, Titre-Restaurant ou Espèces en Caisse !"
+        desc: "Réglez votre part seul ou divisez l'addition équitablement (1/2, 1/3...). Vous pouvez payer par CB, Titre-Restaurant ou Espèces en Caisse !"
     },
     {
-        target: '#header-table-badge',
+        target: '#shared-orders-modal-overlay',
         action: () => {
             openSharedTableOrdersModal();
         },
@@ -2715,7 +2734,7 @@ const clientWalkthroughSteps = [
             closeSharedTableOrdersModal();
         },
         title: "5. Suivi Cuisine en Direct & Partage d'Avis",
-        desc: "Suivez en temps réel le statut de préparation de votre table en cuisine et donnez votre avis en 5 étoiles !"
+        desc: "Suivez en temps réel le statut de préparation de votre commande et laissez votre avis 5 étoiles sur Google pour soutenir Don Roberto !"
     }
 ];
 
@@ -2733,7 +2752,6 @@ function renderClientWalkthroughStep() {
         return;
     }
 
-    // Exécuter l'action spécifique à l'étape (ex: ouvrir une modale)
     if (typeof step.action === 'function') {
         step.action();
     }
@@ -2745,6 +2763,7 @@ function renderClientWalkthroughStep() {
     const nextBtn = document.getElementById('walkthrough-next-btn');
     const dotsEl = document.getElementById('walkthrough-dots');
     const box = document.getElementById('walkthrough-highlight-box');
+    const cardEl = document.getElementById('walkthrough-card');
 
     if (titleEl) titleEl.innerText = step.title;
     if (descEl) descEl.innerText = step.desc;
@@ -2758,40 +2777,31 @@ function renderClientWalkthroughStep() {
         ).join('');
     }
 
-    // Positionner la boîte de surbrillance et la carte d'explication sans masquer l'élément cibles
-    const targetEl = document.querySelector(step.target);
-    const cardEl = document.getElementById('walkthrough-card');
-
-    if (targetEl && box) {
-        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        setTimeout(() => {
+    // Positionner la boîte de surbrillance et la carte explicative
+    setTimeout(() => {
+        const targetEl = document.querySelector(step.target);
+        if (targetEl && box) {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             const rect = targetEl.getBoundingClientRect();
             box.style.display = 'block';
             box.style.top = `${Math.max(0, rect.top - 8 + window.scrollY)}px`;
             box.style.left = `${Math.max(0, rect.left - 8)}px`;
             box.style.width = `${rect.width + 16}px`;
             box.style.height = `${rect.height + 16}px`;
-
-            if (cardEl) {
-                cardEl.style.position = 'absolute';
-                const viewportHeight = window.innerHeight;
-                if (rect.top > viewportHeight / 2) {
-                    cardEl.style.top = `${Math.max(10, rect.top + window.scrollY - 220)}px`;
-                } else {
-                    cardEl.style.top = `${rect.bottom + window.scrollY + 16}px`;
-                }
-                cardEl.style.left = `${Math.max(16, Math.min(window.innerWidth - 500, rect.left))}px`;
-            }
-        }, 200);
-    } else if (box) {
-        box.style.display = 'none';
-        if (cardEl) {
-            cardEl.style.position = 'relative';
-            cardEl.style.top = 'auto';
-            cardEl.style.left = 'auto';
+        } else if (box) {
+            box.style.display = 'none';
         }
-    }
+
+        if (cardEl) {
+            // Toujours maintenir la carte explicative bien visible et centrée verticalement/horizontalement
+            cardEl.style.position = 'fixed';
+            cardEl.style.bottom = '24px';
+            cardEl.style.left = '50%';
+            cardEl.style.transform = 'translateX(-50%)';
+            cardEl.style.top = 'auto';
+            cardEl.style.zIndex = '100005';
+        }
+    }, 250);
 }
 
 function nextClientWalkthroughStep() {

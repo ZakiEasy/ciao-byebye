@@ -1029,9 +1029,9 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(6px);
-    z-index: 200;
+    z-index: 1000;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
@@ -1051,7 +1051,7 @@ body {
     width: calc(100% - 40px);
     max-width: 400px;
     border-radius: var(--radius-md);
-    z-index: 201;
+    z-index: 1001;
     display: flex;
     flex-direction: column;
     opacity: 0;
@@ -5497,6 +5497,8 @@ input:checked + .switch-slider:before {
         bottom: 0 !important;
         background: rgba(18, 18, 23, 0.98) !important;
         backdrop-filter: blur(12px) !important;
+    }
+
     .pay-btn {
         padding: 14px !important;
         font-size: 14.5px !important;
