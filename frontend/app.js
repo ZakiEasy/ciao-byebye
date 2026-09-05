@@ -536,6 +536,31 @@ function applyTranslations() {
 const GUEST_TTL_MS = 3 * 3600 * 1000; // 3 hours in milliseconds
 
 function initClientSession() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const ssoProviderParam = urlParams.get('sso_provider');
+    const ssoNameParam = urlParams.get('sso_name');
+    const ssoEmailParam = urlParams.get('sso_email');
+
+    if (ssoNameParam && ssoProviderParam) {
+        const finalName = decodeURIComponent(ssoNameParam);
+        const finalEmail = ssoEmailParam ? decodeURIComponent(ssoEmailParam) : '';
+        sessionStorage.setItem('ciao_byebye_client_auth', 'true');
+        sessionStorage.setItem('ciao_byebye_client_name', finalName);
+        sessionStorage.setItem('ciao_byebye_client_email', finalEmail);
+        sessionStorage.setItem('ciao_byebye_client_provider', ssoProviderParam);
+        localStorage.setItem('ciao_guest_name', finalName);
+        localStorage.setItem('kz_client_name', finalName);
+
+        // Nettoyer les paramètres de l'URL pour la propreté
+        urlParams.delete('sso_provider');
+        urlParams.delete('sso_name');
+        urlParams.delete('sso_email');
+        const cleanUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+        window.history.replaceState({}, document.title, cleanUrl);
+
+        showToast(`✨ Authentifié avec succès via ${ssoProviderParam.toUpperCase()} ! Bienvenue ${finalName} 🎁`, 'success');
+    }
+
     const isAuth = sessionStorage.getItem('ciao_byebye_client_auth') === 'true';
     const authName = sessionStorage.getItem('ciao_byebye_client_name');
     
@@ -2967,15 +2992,11 @@ const defaultSSOProfiles = {
 
 async function clientSSO(provider) {
     activeClientSSOProvider = provider || 'Google';
-    const conf = defaultSSOProfiles[activeClientSSOProvider] || defaultSSOProfiles['Google'];
+    showToast(`Redirection vers le service de connexion ${activeClientSSOProvider}... ⏳`, 'info');
+    const table = currentTableNumber || '05';
+    window.location.href = `/api/auth/sso/client-init?provider=${encodeURIComponent(activeClientSSOProvider.toLowerCase())}&table=${encodeURIComponent(table)}&return_url=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+    return;
 
-    const priorName = localStorage.getItem('kz_client_name') || localStorage.getItem('ciao_guest_name');
-    const finalName = (priorName && priorName !== 'Invité') ? priorName : conf.name;
-    const finalEmail = (priorName && priorName !== 'Invité') 
-        ? `${priorName.toLowerCase().replace(/\s+/g, '.')}${conf.accountDomain}`
-        : conf.email;
-
-    showToast(`Connexion sécurisée via ${activeClientSSOProvider}... ⏳`, 'info');
 
     try {
         await fetch('/api/auth/sso/client-verify', {

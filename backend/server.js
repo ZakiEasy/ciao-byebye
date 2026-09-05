@@ -3584,8 +3584,16 @@ app.post('/api/menu/scrape-url', async (req, res) => {
 // 7. Endpoint SSO Callback pour le portail cuisine / pro
 // 7. Endpoint SSO Callback pour le portail cuisine / pro
 app.get('/api/auth/sso/callback', async (req, res) => {
-  const { provider, state, email } = req.query;
-  
+  const { provider, state, email, client_sso, table } = req.query;
+
+  if (client_sso === 'true') {
+    const returnUrl = state || `/?table=${table || '05'}`;
+    const userEmail = email || 'client.google@gmail.com';
+    const userName = userEmail.split('@')[0].replace('.', ' ');
+    const formattedName = userName.charAt(0).toUpperCase() + userName.slice(1);
+    return res.redirect(`${returnUrl}${returnUrl.includes('?') ? '&' : '?'}sso_provider=${provider || 'google'}&sso_name=${encodeURIComponent(formattedName)}&sso_email=${encodeURIComponent(userEmail)}`);
+  }
+
   let loginEmail = (email || '').trim().toLowerCase();
   if (!loginEmail) {
     if (provider === 'google') loginEmail = 'superadmin@ciao-byebye.fr';
